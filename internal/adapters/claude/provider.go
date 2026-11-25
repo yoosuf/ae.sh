@@ -46,7 +46,7 @@ func New() *Provider {
 func (p *Provider) Name() string { return "claude" }
 
 func (p *Provider) Capabilities() integration.Capabilities {
-	return integration.Capabilities{StructuredOutput: true, Cancellation: true, Usage: true, SessionMetadata: true, Live: true}
+	return integration.Capabilities{StructuredOutput: true, Cancellation: true, Usage: true, SessionMetadata: true, Live: true, ModelSelection: true}
 }
 
 func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (integration.RunResult, error) {
@@ -64,6 +64,10 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 	p.register(request.TaskID, cancel)
 	defer p.unregister(request.TaskID)
 
+	model := request.RequestedModel
+	if model == "" {
+		model = p.Model
+	}
 	args := []string{"--bare"}
 	if request.SessionID != "" {
 		args = append(args, "--resume", request.SessionID)
@@ -97,8 +101,8 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 		"--allowedTools", tools,
 		"--permission-prompts", "none",
 	)
-	if p.Model != "" {
-		args = append(args, "--model", p.Model)
+	if model != "" {
+		args = append(args, "--model", model)
 	}
 	cmd := exec.CommandContext(runCtx, p.Binary, args...)
 	cmd.Dir = request.Workspace
@@ -109,10 +113,11 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 		return integration.RunResult{}, fmt.Errorf("claude invocation failed: %w: %s", err, sanitizeShort(stderr.String()))
 	}
 	var response struct {
-		Result       string         `json:"result"`
-		SessionID    string         `json:"session_id"`
-		Structured   map[string]any `json:"structured_output"`
-		TotalCostUSD *float64       `json:"total_cost_usd"`
+		Result       string                     `json:"result"`
+		SessionID    string                     `json:"session_id"`
+		Structured   map[string]any             `json:"structured_output"`
+		TotalCostUSD *float64                   `json:"total_cost_usd"`
+		ModelUsage   map[string]json.RawMessage `json:"modelUsage"`
 	}
 	if err := json.Unmarshal(stdout.Bytes(), &response); err != nil {
 		return integration.RunResult{}, fmt.Errorf("parse claude JSON output: %w", err)
@@ -125,13 +130,20 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 		sessionID = request.SessionID
 	}
 	exit := 0
+	actualModel := ""
+	if len(response.ModelUsage) == 1 {
+		for name := range response.ModelUsage {
+			actualModel = name
+		}
+	}
 	return integration.RunResult{
-		Output:     response.Structured,
-		ExitStatus: &exit,
-		Usage:      integration.Usage{Known: response.TotalCostUSD != nil, CostUSD: response.TotalCostUSD},
-		SessionID:  sessionID,
-		Model:      p.Model,
-		Simulated:  false,
+		Output:         response.Structured,
+		ExitStatus:     &exit,
+		Usage:          integration.Usage{Known: response.TotalCostUSD != nil, CostUSD: response.TotalCostUSD},
+		SessionID:      sessionID,
+		RequestedModel: model,
+		Model:          actualModel,
+		Simulated:      false,
 	}, nil
 }
 

@@ -62,6 +62,40 @@ func TestResumeUsesCodexExecResumeSubcommand(t *testing.T) {
 	}
 }
 
+func TestRequestedModelOverridesProviderModel(t *testing.T) {
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	script := filepath.Join(t.TempDir(), "codex-stub")
+	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AE_TEST_ARGS\"\nprintf '%s\\n' '{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"ok\"},\"model\":\"gpt-6.2-sol\"}'\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AE_TEST_ARGS", argsPath)
+	provider := New()
+	provider.Binary = script
+	provider.Model = "gpt-6-luna"
+	result, err := provider.Run(context.Background(), integration.RunRequest{
+		TaskID: "review", Skill: "code-review", Prompt: "review", Workspace: t.TempDir(),
+		Timeout: time.Second, RequestedModel: "gpt-6.2-sol",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	args := string(raw)
+	if !strings.Contains(args, "--model\ngpt-6.2-sol\n") {
+		t.Fatalf("requested model was not passed to Codex: %q", args)
+	}
+	if strings.Contains(args, "--model\ngpt-6-luna\n") {
+		t.Fatalf("provider model overrode requested model: %q", args)
+	}
+	if result.RequestedModel != "gpt-6.2-sol" || result.Model != "gpt-6.2-sol" {
+		t.Fatalf("model evidence mismatch: requested %q, actual %q", result.RequestedModel, result.Model)
+	}
+}
+
 func TestWriteUsesWorkspaceWriteSandbox(t *testing.T) {
 	argsPath := filepath.Join(t.TempDir(), "args.txt")
 	script := filepath.Join(t.TempDir(), "codex-stub")

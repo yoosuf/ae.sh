@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/routing"
 	"github.com/yoosuf/ae.sh/internal/util"
 	"github.com/yoosuf/ae.sh/internal/version"
 )
@@ -44,8 +45,45 @@ type Evidence struct {
 	ObjectsDir string `yaml:"objectsDir" json:"objectsDir"`
 }
 
+// Provider selects the default live provider and maps canonical routing
+// profiles to provider model IDs. Model IDs are local configuration, never
+// canonical skill content and never credentials.
 type Provider struct {
-	Default string `yaml:"default" json:"default"`
+	Default string                       `yaml:"default" json:"default"`
+	Routes  map[string]map[string]string `yaml:"routes,omitempty" json:"routes,omitempty"`
+}
+
+// DefaultRoutes are verified recommendations as of 2026-11-25. Aliases are
+// preferred where a provider supports them; the exact IDs must be rechecked
+// against the installed CLI before a live run. See docs/model-routing.md.
+func DefaultRoutes() map[string]map[string]string {
+	return map[string]map[string]string{
+		routing.Fast: {
+			"claude": "haiku",
+			"codex":  "gpt-6-luna",
+			"gemini": "gemini-3.5-flash-lite",
+		},
+		routing.Balanced: {
+			"claude": "sonnet",
+			"codex":  "gpt-6.2-sol",
+			"gemini": "gemini-4-hydrogen",
+		},
+		routing.DeepReasoning: {
+			"claude": "opus",
+			"codex":  "gpt-6.2-astra",
+			"gemini": "gemini-4-neon",
+		},
+		routing.IndependentReview: {
+			"claude": "fable",
+			"codex":  "gpt-6.2-astra",
+			"gemini": "gemini-4-carbon",
+		},
+		routing.Recovery: {
+			"claude": "opus",
+			"codex":  "gpt-6.2-astra",
+			"gemini": "gemini-4-carbon",
+		},
+	}
 }
 
 type Deployment struct {
@@ -114,7 +152,7 @@ func Default() Config {
 		Profiles:      []string{},
 		State:         State{Path: DefaultState},
 		Evidence:      Evidence{Dir: DefaultEvidence, ObjectsDir: DefaultObjects},
-		Provider:      Provider{Default: "fake"},
+		Provider:      Provider{Default: "fake", Routes: DefaultRoutes()},
 		Deployment:    Deployment{Scope: "local"},
 		Integrations: Integrations{
 			Jira:   Integration{Mode: "fixture", TokenEnv: "AE_JIRA_TOKEN", WebhookSecretEnv: "AE_JIRA_WEBHOOK_SECRET"},
@@ -172,6 +210,10 @@ func Load(path string) (Config, error) {
 	case "fake", "claude", "codex":
 	default:
 		return Config{}, fmt.Errorf("unsupported provider %q", cfg.Provider.Default)
+	}
+	cfg.Provider.Routes = mergeRoutes(DefaultRoutes(), cfg.Provider.Routes)
+	if err := routing.ValidateRoutes(cfg.Provider.Routes); err != nil {
+		return Config{}, fmt.Errorf("provider.routes: %w", err)
 	}
 	switch cfg.Deployment.Scope {
 	case "", "local":
@@ -331,6 +373,28 @@ func appendUniqueStrings(dst []string, src ...string) []string {
 		dst = append(dst, value)
 	}
 	return dst
+}
+
+// mergeRoutes keeps verified defaults and applies local overrides without
+// mutating the shared default map. Unknown keys survive so validation can
+// reject them instead of silently dropping user configuration.
+func mergeRoutes(defaults, overrides map[string]map[string]string) map[string]map[string]string {
+	merged := make(map[string]map[string]string, len(defaults)+len(overrides))
+	for profile, byProvider := range defaults {
+		merged[profile] = make(map[string]string, len(byProvider))
+		for provider, model := range byProvider {
+			merged[profile][provider] = model
+		}
+	}
+	for profile, byProvider := range overrides {
+		if merged[profile] == nil {
+			merged[profile] = make(map[string]string, len(byProvider))
+		}
+		for provider, model := range byProvider {
+			merged[profile][provider] = model
+		}
+	}
+	return merged
 }
 
 // Write serializes cfg to path. It refuses to overwrite an existing file

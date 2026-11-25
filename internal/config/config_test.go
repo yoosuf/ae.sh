@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/routing"
 	"github.com/yoosuf/ae.sh/internal/version"
 )
 
@@ -80,6 +81,44 @@ func TestLoadProfileRejectsIncludeCycle(t *testing.T) {
 	writeTestProfile(t, root, "b", "includes:\n  - a\n")
 	if _, err := LoadProfile(root, "a"); err == nil {
 		t.Fatal("profile include cycle was accepted")
+	}
+}
+
+func TestDefaultRoutesCoverCanonicalProfiles(t *testing.T) {
+	routes := DefaultRoutes()
+	if len(routes) != len(routing.Profiles) {
+		t.Fatalf("got %d routed profiles, want %d", len(routes), len(routing.Profiles))
+	}
+	for _, profile := range routing.Profiles {
+		for _, provider := range []string{"claude", "codex", "gemini"} {
+			if _, err := routing.ModelFor(routes, provider, profile); err != nil {
+				t.Errorf("default route %s/%s: %v", profile, provider, err)
+			}
+		}
+	}
+}
+
+func TestLoadRejectsInvalidModelRoutes(t *testing.T) {
+	cases := []struct {
+		name   string
+		routes string
+	}{
+		{name: "unknown-profile", routes: "    cheapest:\n      claude: haiku\n"},
+		{name: "credential-shaped-model", routes: "    fast:\n      claude: haiku?token=secret\n"},
+		{name: "unsupported-provider", routes: "    fast:\n      gemini-cli: gemini-4-neon\n"},
+		{name: "empty-model", routes: "    fast:\n      claude: \"\"\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), FileName)
+			content := fmt.Sprintf("schemaVersion: %q\nprovider:\n  default: fake\n  routes:\n%s", version.SchemaVersion, tc.routes)
+			if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Load(path); err == nil {
+				t.Fatal("invalid model route was accepted")
+			}
+		})
 	}
 }
 

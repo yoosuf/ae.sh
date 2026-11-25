@@ -12,6 +12,7 @@ import (
 	"github.com/yoosuf/ae.sh/internal/evidence"
 	"github.com/yoosuf/ae.sh/internal/integration"
 	"github.com/yoosuf/ae.sh/internal/policy"
+	"github.com/yoosuf/ae.sh/internal/routing"
 	"github.com/yoosuf/ae.sh/internal/util"
 	"github.com/yoosuf/ae.sh/internal/version"
 	"github.com/yoosuf/ae.sh/internal/workflow"
@@ -27,6 +28,11 @@ type Engine struct {
 	Root        string
 	KnownSkills map[string]bool
 	KnownAgents map[string]bool
+	// Routes maps canonical routing profiles to provider/model IDs from local
+	// config. AgentRoutes and SkillRoutes hold provider-neutral defaults.
+	Routes      map[string]map[string]string
+	AgentRoutes map[string]string
+	SkillRoutes map[string]string
 	// AllowWrites permits write-capable provider tools. The CLI only enables
 	// it for an explicitly confirmed run inside an AE-managed worktree.
 	AllowWrites bool
@@ -474,21 +480,53 @@ func (e *Engine) Cancel(ctx context.Context, runID, reason string) error {
 	return e.persist(ctx, &run)
 }
 
+// resolveRoute applies the fail-closed precedence: workflow task override,
+// then skill task class, then agent role default, then balanced. Workflow and
+// skill contracts outrank agent instructions; untrusted issue text never
+// participates. The fake provider is offline and needs no local model mapping.
+func (e *Engine) resolveRoute(task workflow.Task) (string, string, error) {
+	profile := task.RoutingProfile
+	if profile == "" {
+		profile = e.SkillRoutes[task.Skill]
+	}
+	if profile == "" {
+		profile = e.AgentRoutes[task.Agent]
+	}
+	resolved, err := routing.Normalize(profile)
+	if err != nil {
+		return "", "", err
+	}
+	if e.Provider.Name() == "fake" {
+		return resolved, "", nil
+	}
+	model, err := routing.ModelFor(e.Routes, e.Provider.Name(), resolved)
+	if err != nil {
+		return "", "", err
+	}
+	return resolved, model, nil
+}
+
 func (e *Engine) invoke(ctx context.Context, run Run, task workflow.Task) (integration.RunResult, error) {
 	prompt := buildPrompt(task, run)
 	workspace := run.Workspace
 	if workspace == "" {
 		workspace = "."
 	}
+	profile, model, err := e.resolveRoute(task)
+	if err != nil {
+		return integration.RunResult{}, err
+	}
 	req := integration.RunRequest{
-		RunID:     run.ID,
-		TaskID:    task.ID,
-		Skill:     task.Skill,
-		Agent:     task.Agent,
-		Prompt:    prompt,
-		Workspace: workspace,
-		Timeout:   parseDuration(task.Timeout),
-		Write:     e.AllowWrites,
+		RunID:          run.ID,
+		TaskID:         task.ID,
+		Skill:          task.Skill,
+		Agent:          task.Agent,
+		Prompt:         prompt,
+		Workspace:      workspace,
+		Timeout:        parseDuration(task.Timeout),
+		RoutingProfile: profile,
+		RequestedModel: model,
+		Write:          e.AllowWrites,
 	}
 	result, err := e.Provider.Run(ctx, req)
 	if err != nil {
@@ -503,15 +541,17 @@ func (e *Engine) invoke(ctx context.Context, run Run, task workflow.Task) (integ
 	}
 	kind := evidenceKind(task.Skill)
 	record, err := e.Evidence.Write(ctx, run.ID, seq, kind, "Task "+task.ID, run.Actor, map[string]any{
-		"skill":         task.Skill,
-		"agent":         task.Agent,
-		"provider":      e.Provider.Name(),
-		"model":         result.Model,
-		"workspace":     req.Workspace,
-		"output":        result.Output,
-		"simulated":     result.Simulated,
-		"writesAllowed": req.Write,
-		"note":          "Agent output is untrusted until verified by deterministic checks.",
+		"skill":          task.Skill,
+		"agent":          task.Agent,
+		"provider":       e.Provider.Name(),
+		"routingProfile": req.RoutingProfile,
+		"requestedModel": req.RequestedModel,
+		"model":          result.Model,
+		"workspace":      req.Workspace,
+		"output":         result.Output,
+		"simulated":      result.Simulated,
+		"writesAllowed":  req.Write,
+		"note":           "Agent output is untrusted until verified by deterministic checks.",
 	}, result.ExitStatus, &result.Usage, "")
 	if err != nil {
 		return result, err

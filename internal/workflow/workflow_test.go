@@ -82,6 +82,21 @@ tasks:
 	}
 }
 
+func TestParseRejectsUnknownRoutingProfile(t *testing.T) {
+	raw := workflowHeader + `
+tasks:
+  - id: plan
+    name: Plan
+    skill: unit-testing
+    routingProfile: cheapest
+    dependsOn: []
+`
+	_, err := Parse(framework.Relative(framework.Workflows, "bad-route.yaml"), []byte(raw), map[string]bool{"unit-testing": true}, nil)
+	if err == nil || !strings.Contains(err.Error(), "routingProfile") {
+		t.Fatalf("expected unknown routing profile rejection, got %v", err)
+	}
+}
+
 func TestParseRejectsUnknownSkillAndState(t *testing.T) {
 	base := `
 tasks:

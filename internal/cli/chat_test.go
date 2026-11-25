@@ -119,6 +119,57 @@ func TestChatFakeScriptPreservesSessionAndWritesEvidence(t *testing.T) {
 	}
 }
 
+func TestChatRouteIsRecordedInResultAndEvidence(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	cfg := initChatRepo(t, root)
+	const runID = "run-chat-route"
+	createChatRun(t, cfg, runID)
+	var stdout, stderr bytes.Buffer
+	app := App{Stdout: &stdout, Stderr: &stderr, Root: root, JSON: true,
+		Args: []string{"chat", "--provider", "fake", "--message", "hello", "--route", "deep-reasoning", "--run", runID, "--timeout", "10s"}}
+	if code := app.Run(ctx); code != ExitOK {
+		t.Fatalf("chat exited %d: %s %s", code, stdout.String(), stderr.String())
+	}
+	var result chatResult
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.RoutingProfile != "deep-reasoning" || len(result.Turns) != 1 {
+		t.Fatalf("unexpected routed chat result: %+v", result)
+	}
+	if result.Turns[0].RoutingProfile != "deep-reasoning" {
+		t.Fatalf("turn lost the routing profile: %+v", result.Turns[0])
+	}
+	store, err := sqliteadapter.Open(cfg.StatePath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	records, err := store.Evidence(ctx, runID)
+	if err != nil || len(records) != 1 {
+		t.Fatalf("expected one evidence record, got %d: %v", len(records), err)
+	}
+	var record evidence.Record
+	if err := json.Unmarshal([]byte(records[0].JSON), &record); err != nil {
+		t.Fatal(err)
+	}
+	if record.Data["routingProfile"] != "deep-reasoning" {
+		t.Fatalf("evidence lost the routing profile: %+v", record.Data)
+	}
+}
+
+func TestChatRejectsUnknownRoute(t *testing.T) {
+	root := t.TempDir()
+	initChatRepo(t, root)
+	var stdout, stderr bytes.Buffer
+	app := App{Stdout: &stdout, Stderr: &stderr, Root: root, JSON: true,
+		Args: []string{"chat", "--provider", "fake", "--message", "hello", "--route", "cheapest"}}
+	if code := app.Run(context.Background()); code != ExitValidation {
+		t.Fatalf("unknown route exited %d, want %d: %s", code, ExitValidation, stdout.String())
+	}
+}
+
 func TestChatLiveProviderRequiresExplicitConfirmation(t *testing.T) {
 	root := t.TempDir()
 	initChatRepo(t, root)

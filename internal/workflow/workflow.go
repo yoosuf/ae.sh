@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/routing"
 	"github.com/yoosuf/ae.sh/internal/schema"
 	"github.com/yoosuf/ae.sh/internal/util"
 )
@@ -23,6 +24,7 @@ type Task struct {
 	Type              string         `yaml:"type" json:"type"`
 	Skill             string         `yaml:"skill" json:"skill,omitempty"`
 	Agent             string         `yaml:"agent" json:"agent,omitempty"`
+	RoutingProfile    string         `yaml:"routingProfile" json:"routingProfile,omitempty"`
 	DependsOn         []string       `yaml:"dependsOn" json:"dependsOn"`
 	Timeout           string         `yaml:"timeout" json:"timeout,omitempty"`
 	Outputs           []string       `yaml:"outputs" json:"outputs,omitempty"`
@@ -137,6 +139,11 @@ func (w Workflow) Validate(knownSkills, knownAgents map[string]bool) error {
 		}
 		if task.Agent != "" && knownAgents != nil && !knownAgents[task.Agent] {
 			return fmt.Errorf("task %s references unknown agent %q", task.ID, task.Agent)
+		}
+		if task.RoutingProfile != "" {
+			if _, err := routing.Normalize(task.RoutingProfile); err != nil {
+				return fmt.Errorf("task %s routingProfile: %w", task.ID, err)
+			}
 		}
 		for _, dep := range task.DependsOn {
 			if _, ok := byID[dep]; !ok {

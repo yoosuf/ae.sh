@@ -18,7 +18,7 @@ func New() *Provider { return &Provider{} }
 func (p *Provider) Name() string { return "fake" }
 
 func (p *Provider) Capabilities() integration.Capabilities {
-	return integration.Capabilities{StructuredOutput: true, Cancellation: true, Usage: false, SessionMetadata: true, Live: false}
+	return integration.Capabilities{StructuredOutput: true, Cancellation: true, Usage: false, SessionMetadata: true, Live: false, ModelSelection: false}
 }
 
 func (p *Provider) Run(_ context.Context, request integration.RunRequest) (integration.RunResult, error) {
@@ -35,18 +35,21 @@ func (p *Provider) Run(_ context.Context, request integration.RunRequest) (integ
 	}
 	return integration.RunResult{
 		Output: map[string]any{
-			"simulated": true,
-			"taskId":    request.TaskID,
-			"skill":     request.Skill,
-			"agent":     request.Agent,
-			"result":    fmt.Sprintf("Simulated response to %q", request.Prompt),
-			"summary":   fmt.Sprintf("Simulated %s task completed by fake provider", request.Skill),
-			"artifacts": sortedArtifacts(request.Skill),
+			"simulated":      true,
+			"taskId":         request.TaskID,
+			"skill":          request.Skill,
+			"agent":          request.Agent,
+			"routingProfile": request.RoutingProfile,
+			"requestedModel": request.RequestedModel,
+			"result":         fmt.Sprintf("Simulated response to %q", request.Prompt),
+			"summary":        fmt.Sprintf("Simulated %s task completed by fake provider", request.Skill),
+			"artifacts":      sortedArtifacts(request.Skill),
 		},
-		ExitStatus: &exit,
-		Usage:      integration.Usage{Known: false},
-		SessionID:  sessionID,
-		Simulated:  true,
+		ExitStatus:     &exit,
+		Usage:          integration.Usage{Known: false},
+		SessionID:      sessionID,
+		RequestedModel: request.RequestedModel,
+		Simulated:      true,
 	}, nil
 }
 

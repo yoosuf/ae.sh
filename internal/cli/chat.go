@@ -11,6 +11,7 @@ import (
 	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
 	"github.com/yoosuf/ae.sh/internal/config"
 	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/routing"
 	"github.com/yoosuf/ae.sh/internal/util"
 )
 
@@ -29,6 +30,8 @@ type chatTurn struct {
 	Prompt           string            `json:"prompt"`
 	Response         string            `json:"response"`
 	SessionID        string            `json:"sessionId"`
+	RoutingProfile   string            `json:"routingProfile,omitempty"`
+	RequestedModel   string            `json:"requestedModel,omitempty"`
 	Model            string            `json:"model,omitempty"`
 	Simulated        bool              `json:"simulated"`
 	Usage            integration.Usage `json:"usage"`
@@ -36,12 +39,13 @@ type chatTurn struct {
 }
 
 type chatResult struct {
-	Provider  string     `json:"provider"`
-	SessionID string     `json:"sessionId,omitempty"`
-	Workspace string     `json:"workspace,omitempty"`
-	Turns     []chatTurn `json:"turns"`
-	DryRun    bool       `json:"dryRun"`
-	Note      string     `json:"note"`
+	Provider       string     `json:"provider"`
+	SessionID      string     `json:"sessionId,omitempty"`
+	Workspace      string     `json:"workspace,omitempty"`
+	RoutingProfile string     `json:"routingProfile,omitempty"`
+	Turns          []chatTurn `json:"turns"`
+	DryRun         bool       `json:"dryRun"`
+	Note           string     `json:"note"`
 }
 
 // cmdChat runs a bounded, opt-in conversation through a provider adapter. Each
@@ -55,6 +59,7 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 	sessionID := fs.String("session", "", "resume an existing provider session")
 	runID := fs.String("run", "", "optional run id for evidence persistence")
 	workspaceFlag := fs.String("workspace", "", "managed AE worktree for live providers")
+	route := fs.String("route", "", "routing profile: fast, balanced, deep-reasoning, independent-review, recovery")
 	dryRun := fs.Bool("dry-run", false, "preview the conversation without calling a provider")
 	confirmLive := fs.Bool("confirm-live", false, "authorize a live provider call")
 	timeoutRaw := fs.String("timeout", defaultChatTimeout.String(), "per-turn timeout, e.g. 5m")
@@ -83,6 +88,17 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+	profile, err := routing.Normalize(*route)
+	if err != nil {
+		return invalid("chat --route: %v", err)
+	}
+	requestedModel := ""
+	if provider.Name() != "fake" {
+		requestedModel, err = routing.ModelFor(cfg.Provider.Routes, provider.Name(), profile)
+		if err != nil {
+			return invalid("chat route: %v", err)
+		}
+	}
 	workspace := cfg.Root
 	if *workspaceFlag != "" {
 		workspace, err = validateManagedWorktree(ctx, cfg.Root, *workspaceFlag)
@@ -99,12 +115,13 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 		}
 	}
 	result := chatResult{
-		Provider:  provider.Name(),
-		SessionID: *sessionID,
-		Workspace: workspace,
-		Turns:     []chatTurn{},
-		DryRun:    *dryRun,
-		Note:      "Provider output is untrusted text; deterministic checks and independent review are still required.",
+		Provider:       provider.Name(),
+		SessionID:      *sessionID,
+		Workspace:      workspace,
+		RoutingProfile: profile,
+		Turns:          []chatTurn{},
+		DryRun:         *dryRun,
+		Note:           "Provider output is untrusted text; deterministic checks and independent review are still required.",
 	}
 	if *dryRun {
 		for i, prompt := range prompts {
@@ -131,14 +148,16 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 	}
 	for i, prompt := range prompts {
 		request := integration.RunRequest{
-			RunID:      engineRunID,
-			TaskID:     fmt.Sprintf("chat-%03d", i+1),
-			Skill:      "provider-chat",
-			Prompt:     util.Sanitize(prompt),
-			Workspace:  workspace,
-			Timeout:    timeout,
-			SessionID:  result.SessionID,
-			Persistent: true,
+			RunID:          engineRunID,
+			TaskID:         fmt.Sprintf("chat-%03d", i+1),
+			Skill:          "provider-chat",
+			Prompt:         util.Sanitize(prompt),
+			Workspace:      workspace,
+			Timeout:        timeout,
+			SessionID:      result.SessionID,
+			Persistent:     true,
+			RoutingProfile: profile,
+			RequestedModel: requestedModel,
 		}
 		response, err := provider.Run(ctx, request)
 		if err != nil {
@@ -154,25 +173,29 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 			result.SessionID = response.SessionID
 		}
 		turn := chatTurn{
-			Index:     i + 1,
-			Prompt:    request.Prompt,
-			Response:  util.Sanitize(renderChatOutput(response.Output)),
-			SessionID: result.SessionID,
-			Model:     response.Model,
-			Simulated: response.Simulated,
-			Usage:     response.Usage,
+			Index:          i + 1,
+			Prompt:         request.Prompt,
+			Response:       util.Sanitize(renderChatOutput(response.Output)),
+			SessionID:      result.SessionID,
+			RoutingProfile: profile,
+			RequestedModel: response.RequestedModel,
+			Model:          response.Model,
+			Simulated:      response.Simulated,
+			Usage:          response.Usage,
 		}
 		if *runID != "" {
 			record, err := appendRunEvidence(ctx, chatCfg, chatStore, *runID, "provider", fmt.Sprintf("Chat turn %d", turn.Index), "ae-chat", map[string]any{
-				"turn":      turn.Index,
-				"provider":  provider.Name(),
-				"sessionId": turn.SessionID,
-				"prompt":    turn.Prompt,
-				"response":  turn.Response,
-				"model":     turn.Model,
-				"simulated": turn.Simulated,
-				"usage":     turn.Usage,
-				"note":      result.Note,
+				"turn":           turn.Index,
+				"provider":       provider.Name(),
+				"sessionId":      turn.SessionID,
+				"prompt":         turn.Prompt,
+				"response":       turn.Response,
+				"routingProfile": turn.RoutingProfile,
+				"requestedModel": turn.RequestedModel,
+				"model":          turn.Model,
+				"simulated":      turn.Simulated,
+				"usage":          turn.Usage,
+				"note":           result.Note,
 			}, response.ExitStatus, &response.Usage)
 			if err != nil {
 				return err

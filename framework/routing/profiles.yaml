@@ -1,0 +1,29 @@
+schemaVersion: "1.0"
+profiles:
+  - id: fast
+    description: Low-latency routing for bounded extraction, classification, formatting, and deterministic handoff packets.
+    useFor: [jira-intake, unit-testing, agent-handoff]
+    constraints:
+      preferLowCost: "true"
+      requireDeterministicVerification: "true"
+  - id: balanced
+    description: Default coding route for well-scoped implementation, planning, and workflow tasks with normal review gates.
+    useFor: [requirement-analysis, acceptance-criteria, technical-planning, backend-development, frontend-engineer, git-worktree-management]
+    constraints:
+      requireTestsForCodeChanges: "true"
+  - id: deep-reasoning
+    description: Slower, higher-reasoning route for architecture, risk scoring, incident diagnosis, migrations, and orchestration.
+    useFor: [solution-architecture, risk-assessment, database-engineer, principal-architect, sre]
+    constraints:
+      requireExplicitAssumptions: "true"
+  - id: independent-review
+    description: Review route that must remain independent of the author and is not sufficient by itself to approve a change.
+    useFor: [code-review, security-engineer, code-reviewer]
+    constraints:
+      requireIndependentReviewer: "true"
+      neverSoleApproval: "true"
+  - id: recovery
+    description: Escalation route for remediation, release decisions, and blocked-work recovery after a failed or partially completed run.
+    useFor: [pull-request-management, release-engineer, remediation]
+    constraints:
+      requireObservedEvidence: "true"

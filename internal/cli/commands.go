@@ -88,14 +88,16 @@ func (a *App) cmdValidate(args []string) error {
 		}
 	}
 	a.emit(map[string]any{
-		"status":        "valid",
-		"schemaVersion": version.SchemaVersion,
-		"skills":        ctx.Catalogue.Slugs(),
-		"workflows":     workflowIDs,
-		"policies":      len(ctx.Policies.Policies),
-		"agents":        len(ctx.Agents),
-		"profiles":      config.KnownProfiles(),
-		"evaluations":   "authored; no behavioral/model evaluation executed",
+		"status":          "valid",
+		"schemaVersion":   version.SchemaVersion,
+		"skills":          ctx.Catalogue.Slugs(),
+		"workflows":       workflowIDs,
+		"policies":        len(ctx.Policies.Policies),
+		"agents":          len(ctx.Agents),
+		"routingProfiles": len(ctx.RoutingProfiles.Profiles),
+		"modelRoutes":     len(ctx.Config.Provider.Routes),
+		"profiles":        config.KnownProfiles(),
+		"evaluations":     "authored; no behavioral/model evaluation executed",
 	})
 	return nil
 }

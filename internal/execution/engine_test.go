@@ -159,6 +159,64 @@ func TestDryRunCreatesNoState(t *testing.T) {
 	}
 }
 
+func TestProviderEvidenceRecordsRoutingFields(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	tasks := `  - id: intake
+    name: Intake
+    skill: unit-testing
+    agent: qa-engineer
+    routingProfile: deep-reasoning
+    dependsOn: []
+    on:
+      state: analyzing
+  - id: plan
+    name: Plan
+    skill: unit-testing
+    dependsOn: [intake]
+    on:
+      state: planning
+`
+	engine := newEngine(t, root, tasks)
+	engine.SkillRoutes = map[string]string{"unit-testing": "fast"}
+	engine.AgentRoutes = map[string]string{"qa-engineer": "independent-review"}
+	run, _, err := engine.Start(ctx, execution.StartOptions{
+		Workflow: mustWorkflow(t, root), Issue: testIssue(), Provider: "fake", Actor: "tester",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	records, err := engine.Store.Evidence(ctx, run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var provider evidence.Record
+	found := false
+	for _, stored := range records {
+		var record evidence.Record
+		if err := json.Unmarshal([]byte(stored.JSON), &record); err != nil {
+			t.Fatal(err)
+		}
+		if record.Subject == "Task intake" {
+			provider, found = record, true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("no task evidence record was written for intake")
+	}
+	if provider.Data["routingProfile"] != "deep-reasoning" {
+		t.Fatalf("routing profile was not recorded: %+v", provider.Data)
+	}
+	if provider.Data["requestedModel"] != "" || provider.Data["model"] != "" {
+		t.Fatalf("fake provider claimed a model: %+v", provider.Data)
+	}
+	output, ok := provider.Data["output"].(map[string]any)
+	if !ok || output["routingProfile"] != "deep-reasoning" {
+		t.Fatalf("provider output lost the routing profile: %+v", provider.Data["output"])
+	}
+}
+
 func TestDeferredStartDoesNotInvokeProvider(t *testing.T) {
 	ctx := context.Background()
 	root := t.TempDir()

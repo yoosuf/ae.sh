@@ -23,6 +23,7 @@ import (
 // https://learn.chatgpt.com/docs/non-interactive-mode.md on 2026-11-25.
 type Provider struct {
 	Binary string
+	Model  string
 
 	mu      sync.Mutex
 	cancels map[string]context.CancelFunc
@@ -35,7 +36,7 @@ func New() *Provider {
 func (p *Provider) Name() string { return "codex" }
 
 func (p *Provider) Capabilities() integration.Capabilities {
-	return integration.Capabilities{StructuredOutput: true, Cancellation: true, Usage: true, SessionMetadata: true, Live: true}
+	return integration.Capabilities{StructuredOutput: true, Cancellation: true, Usage: true, SessionMetadata: true, Live: true, ModelSelection: true}
 }
 
 func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (integration.RunResult, error) {
@@ -66,7 +67,15 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 	if request.Write {
 		sandbox = "workspace-write"
 	}
-	args = append(args, "--json", "--sandbox", sandbox, request.Prompt)
+	model := request.RequestedModel
+	if model == "" {
+		model = p.Model
+	}
+	args = append(args, "--json", "--sandbox", sandbox)
+	if model != "" {
+		args = append(args, "--model", model)
+	}
+	args = append(args, request.Prompt)
 	cmd := exec.CommandContext(runCtx, p.Binary, args...)
 	cmd.Dir = request.Workspace
 	var stdout, stderr bytes.Buffer
@@ -78,6 +87,7 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 
 	var lastMessage string
 	var sessionID string
+	var actualModel string
 	var usage integration.Usage
 	scanner := bufio.NewScanner(bytes.NewReader(stdout.Bytes()))
 	scanner.Buffer(make([]byte, 64*1024), 8*1024*1024)
@@ -85,6 +95,7 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 		var event struct {
 			Type     string `json:"type"`
 			ThreadID string `json:"thread_id"`
+			Model    string `json:"model"`
 			Item     struct {
 				Type string `json:"type"`
 				Text string `json:"text"`
@@ -99,6 +110,9 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 		}
 		if event.ThreadID != "" {
 			sessionID = event.ThreadID
+		}
+		if event.Model != "" {
+			actualModel = event.Model
 		}
 		if event.Type == "item.completed" && event.Item.Type == "agent_message" && event.Item.Text != "" {
 			lastMessage = event.Item.Text
@@ -127,11 +141,13 @@ func (p *Provider) Run(ctx context.Context, request integration.RunRequest) (int
 	}
 	exit := 0
 	return integration.RunResult{
-		Output:     output,
-		ExitStatus: &exit,
-		Usage:      usage,
-		SessionID:  sessionID,
-		Simulated:  false,
+		Output:         output,
+		ExitStatus:     &exit,
+		Usage:          usage,
+		SessionID:      sessionID,
+		RequestedModel: model,
+		Model:          actualModel,
+		Simulated:      false,
 	}, nil
 }
 

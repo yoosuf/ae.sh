@@ -14,6 +14,7 @@ type Capabilities struct {
 	Usage            bool
 	SessionMetadata  bool
 	Live             bool
+	ModelSelection   bool
 }
 
 // RunRequest is one typed task invocation. Prompt text is sanitized by the
@@ -28,6 +29,11 @@ type RunRequest struct {
 	Timeout    time.Duration
 	SessionID  string // resume an existing provider conversation when supported
 	Persistent bool   // keep the session resumable; used by `ae chat`
+	// RoutingProfile is a provider-neutral intent from framework/routing.
+	RoutingProfile string
+	// RequestedModel is the local config mapping for RoutingProfile. Adapters
+	// must not ignore it when they advertise ModelSelection.
+	RequestedModel string
 	// Write permits file edits in Workspace. It is false unless the caller
 	// explicitly opts in and the workspace is an AE-managed worktree.
 	Write bool
@@ -43,12 +49,13 @@ type Usage struct {
 
 // RunResult is the typed result of a provider invocation.
 type RunResult struct {
-	Output     map[string]any `json:"output"`
-	ExitStatus *int           `json:"exitStatus"`
-	Usage      Usage          `json:"usage"`
-	SessionID  string         `json:"sessionId,omitempty"`
-	Model      string         `json:"model,omitempty"`
-	Simulated  bool           `json:"simulated"`
+	Output         map[string]any `json:"output"`
+	ExitStatus     *int           `json:"exitStatus"`
+	Usage          Usage          `json:"usage"`
+	SessionID      string         `json:"sessionId,omitempty"`
+	RequestedModel string         `json:"requestedModel,omitempty"`
+	Model          string         `json:"model,omitempty"` // actual model when the adapter can observe it
+	Simulated      bool           `json:"simulated"`
 }
 
 // Provider is the port implemented by Claude, Codex and fake adapters.

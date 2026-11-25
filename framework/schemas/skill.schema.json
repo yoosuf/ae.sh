@@ -51,6 +51,7 @@
           ]
         },
         "ae.skill-id": { "type": "string", "minLength": 1 },
+        "ae.model-class": { "enum": ["fast", "balanced", "deep-reasoning", "independent-review", "recovery"] },
         "ae.eval-fixture": { "type": "string", "minLength": 1 }
       }
     },

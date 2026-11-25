@@ -49,6 +49,40 @@ func TestResumeUsesClaudeResumeFlag(t *testing.T) {
 	}
 }
 
+func TestRequestedModelOverridesProviderModel(t *testing.T) {
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	script := filepath.Join(t.TempDir(), "claude-stub")
+	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AE_TEST_ARGS\"\nprintf '%s\\n' '{\"result\":\"ok\",\"session_id\":\"sess-model\",\"modelUsage\":{\"claude-sonnet-5-5\":{}}}'\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AE_TEST_ARGS", argsPath)
+	provider := New()
+	provider.Binary = script
+	provider.Model = "haiku"
+	result, err := provider.Run(context.Background(), integration.RunRequest{
+		TaskID: "review", Skill: "code-review", Prompt: "review", Workspace: t.TempDir(),
+		Timeout: time.Second, RequestedModel: "sonnet",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	args := string(raw)
+	if !strings.Contains(args, "--model\nsonnet\n") {
+		t.Fatalf("requested model was not passed to Claude: %q", args)
+	}
+	if strings.Contains(args, "--model\nhaiku\n") {
+		t.Fatalf("provider model overrode requested model: %q", args)
+	}
+	if result.RequestedModel != "sonnet" || result.Model != "claude-sonnet-5-5" {
+		t.Fatalf("model evidence mismatch: requested %q, actual %q", result.RequestedModel, result.Model)
+	}
+}
+
 func TestWriteUsesFileToolsWithoutShell(t *testing.T) {
 	argsPath := filepath.Join(t.TempDir(), "args.txt")
 	settingsCopy := filepath.Join(t.TempDir(), "settings.json")

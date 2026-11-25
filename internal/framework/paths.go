@@ -16,6 +16,7 @@ const (
 	Agents    = "agents"
 	Policies  = "policies"
 	Profiles  = "profiles"
+	Routing   = "routing"
 	Schemas   = "schemas"
 	Skills    = "skills"
 	Templates = "templates"

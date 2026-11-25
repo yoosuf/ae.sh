@@ -27,6 +27,7 @@
     "skills": { "type": "array", "minItems": 1, "items": { "type": "string" } },
     "providerPreference": { "type": "array", "minItems": 1, "items": { "enum": ["claude", "codex", "fake"] } },
     "fallbackPolicy": { "type": "string" },
+    "routingProfile": { "enum": ["fast", "balanced", "deep-reasoning", "independent-review", "recovery"] },
     "independence": { "enum": ["required", "not-required"] },
     "toolAllowlist": { "type": "array", "items": { "type": "string" } },
     "scopes": {

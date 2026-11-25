@@ -17,7 +17,7 @@ import (
 var assets embed.FS
 
 // Names are the canonical schema identifiers accepted by Validate.
-var Names = []string{"skill", "workflow", "agent", "policy", "issue", "evidence", "manifest", "review"}
+var Names = []string{"skill", "workflow", "agent", "policy", "routing", "issue", "evidence", "manifest", "review"}
 
 // Asset returns the raw bytes of a canonical schema.
 func Asset(name string) ([]byte, error) {

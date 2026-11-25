@@ -25,8 +25,12 @@ import (
 	"github.com/yoosuf/ae.sh/internal/framework"
 	"github.com/yoosuf/ae.sh/internal/integration"
 	"github.com/yoosuf/ae.sh/internal/policy"
+	"github.com/yoosuf/ae.sh/internal/routing"
+	"github.com/yoosuf/ae.sh/internal/schema"
+	"github.com/yoosuf/ae.sh/internal/util"
 	"github.com/yoosuf/ae.sh/internal/version"
 	"github.com/yoosuf/ae.sh/internal/workflow"
+	"gopkg.in/yaml.v3"
 )
 
 // Exit codes.
@@ -217,7 +221,7 @@ Commands:
   approve <run-id> --gate architecture --approver name [--role role]
   review --diff path/to.diff [--pr 123] [--run run-id] [--candidate-sha sha] [--base-sha sha]
   review resolve --run run-id --finding rev-... --status fixed|accepted|false-positive --reason text [--actor name]
-  chat --provider fake|claude|codex --message text|--script file.json [--session id] [--run run-id] [--workspace DIR] [--dry-run] [--confirm-live]
+  chat --provider fake|claude|codex --message text|--script file.json [--route fast|balanced|deep-reasoning|independent-review|recovery] [--session id] [--run run-id] [--workspace DIR] [--dry-run] [--confirm-live]
   autopilot --issue key|fixture | --resume run-id [--workflow feature-development] [--provider fake|claude|codex] [--approver name] [--confirm-gates] [--confirm-live] [--allow-writes] [--github-pr ref] [--comment --confirm-mutate] [--dry-run]
   verify <run-id> [--profile go,react]
   worktree prepare <run-id> | worktree clean <run-id>
@@ -278,11 +282,18 @@ func (a *App) loadConfig() (config.Config, error) {
 }
 
 type repoContext struct {
-	Config    config.Config
-	Catalogue catalog.Catalogue
-	Workflows []workflow.Workflow
-	Policies  policy.Bundle
-	Agents    map[string]bool
+	Config          config.Config
+	Catalogue       catalog.Catalogue
+	Workflows       []workflow.Workflow
+	Policies        policy.Bundle
+	RoutingProfiles routing.Catalogue
+	Agents          map[string]bool
+	AgentRoutes     map[string]string
+	SkillRoutes     map[string]string
+}
+
+type agentDefinition struct {
+	RoutingProfile string `yaml:"routingProfile"`
 }
 
 func (a *App) loadRepo() (repoContext, error) {
@@ -297,13 +308,58 @@ func (a *App) loadRepo() (repoContext, error) {
 	if broken := catBrokenReferences(cat); len(broken) > 0 {
 		return repoContext{}, invalid("broken skill references: %s", strings.Join(broken, ", "))
 	}
+	routingProfiles, err := routing.Load(cfg.Root)
+	if err != nil {
+		return repoContext{}, invalid("%v", err)
+	}
+	skillRoutes := make(map[string]string, len(cat.Skills))
+	for _, skill := range cat.Skills {
+		profile := skill.Metadata["ae.model-class"]
+		if profile == "" {
+			continue
+		}
+		resolved, err := routing.Normalize(profile)
+		if err != nil {
+			return repoContext{}, invalid("skill %s metadata ae.model-class: %v", skill.Slug, err)
+		}
+		skillRoutes[skill.Slug] = resolved
+	}
 	agents := map[string]bool{}
+	agentRoutes := map[string]string{}
 	agentDir := framework.Dir(cfg.Root, framework.Agents)
 	entries, err := os.ReadDir(agentDir)
 	if err == nil {
 		for _, entry := range entries {
-			if !entry.IsDir() && (strings.HasSuffix(entry.Name(), ".yaml") || strings.HasSuffix(entry.Name(), ".yml")) {
-				agents[strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))] = true
+			if entry.IsDir() || (!strings.HasSuffix(entry.Name(), ".yaml") && !strings.HasSuffix(entry.Name(), ".yml")) {
+				continue
+			}
+			id := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
+			agents[id] = true
+			raw, err := os.ReadFile(filepath.Join(agentDir, entry.Name()))
+			if err != nil {
+				return repoContext{}, invalid("read agent %s: %v", id, err)
+			}
+			var generic map[string]any
+			if err := yaml.Unmarshal(raw, &generic); err != nil {
+				return repoContext{}, invalid("parse agent %s: %v", id, err)
+			}
+			document, err := util.JSONValue(generic)
+			if err != nil {
+				return repoContext{}, invalid("agent %s must be JSON-serializable: %v", id, err)
+			}
+			if err := schema.Validate("agent", document); err != nil {
+				return repoContext{}, invalid("agent %s: %v", id, err)
+			}
+			var definition agentDefinition
+			if err := yaml.Unmarshal(raw, &definition); err != nil {
+				return repoContext{}, invalid("parse agent %s: %v", id, err)
+			}
+			if definition.RoutingProfile != "" {
+				resolved, err := routing.Normalize(definition.RoutingProfile)
+				if err != nil {
+					return repoContext{}, invalid("agent %s routingProfile: %v", id, err)
+				}
+				agentRoutes[id] = resolved
 			}
 		}
 	}
@@ -318,7 +374,16 @@ func (a *App) loadRepo() (repoContext, error) {
 	if err != nil {
 		return repoContext{}, invalid("%v", err)
 	}
-	return repoContext{Config: cfg, Catalogue: cat, Workflows: workflows, Policies: bundle, Agents: agents}, nil
+	return repoContext{
+		Config:          cfg,
+		Catalogue:       cat,
+		Workflows:       workflows,
+		Policies:        bundle,
+		RoutingProfiles: routingProfiles,
+		Agents:          agents,
+		AgentRoutes:     agentRoutes,
+		SkillRoutes:     skillRoutes,
+	}, nil
 }
 
 func catBrokenReferences(cat catalog.Catalogue) []string {
@@ -374,5 +439,8 @@ func (a *App) buildEngineWithStore(ctx repoContext, providerName string, store *
 		Root:        ctx.Config.Root,
 		KnownSkills: ctx.Catalogue.BySlugSet(),
 		KnownAgents: ctx.Agents,
+		Routes:      ctx.Config.Provider.Routes,
+		AgentRoutes: ctx.AgentRoutes,
+		SkillRoutes: ctx.SkillRoutes,
 	}, nil
 }
