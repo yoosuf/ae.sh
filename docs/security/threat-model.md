@@ -1,5 +1,10 @@
 # Threat model
 
+![Untrusted issue, repository, model, and tool inputs filtered through policy into allowed or blocked outcomes](../../assets/docs/security-fail-closed.png)
+
+The security model is fail-closed: only validated, policy-approved evidence
+passes forward, while untrusted content remains data rather than control input.
+
 Status: design-level STRIDE-style review for Phase 0–2. No penetration test or formal audit has been performed. No real vulnerabilities are known or published (see [`SECURITY.md`](../../SECURITY.md)).
 
 ## Assets

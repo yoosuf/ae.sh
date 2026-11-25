@@ -1,5 +1,10 @@
 # Profiles
 
+![A selected project profile routing verification checks across Go, Python, Node, React, Vue, Java, and Terraform](../assets/docs/profiles-toolchains.png)
+
+Profiles select checked-in verification commands for a stack; they are not
+automatic toolchain detection and missing checks fail closed.
+
 Profiles are checked-in, executable configuration under
 `framework/profiles/<id>/profile.yaml`. `ae verify` runs their `checks` locally and
 records the command, sanitized output, and real exit status as evidence. Missing

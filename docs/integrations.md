@@ -1,5 +1,10 @@
 # Integrations
 
+![External issue, provider, GitHub, and MCP inputs entering ae.sh through a policy boundary](../assets/docs/integrations-boundaries.png)
+
+External responses remain untrusted data; explicit configuration, confirmation,
+sanitization, and policy gates control what can advance a run.
+
 All integrations sit behind ports in the optional adapter layer. Core packages never import provider SDKs. The implemented path is local filesystem, config, SQLite state, offline fixtures, fake provider, generated skill copies, local approval/evidence lifecycle commands, opt-in Jira Cloud REST intake, opt-in GitHub CLI PR reads/comments, opt-in provider conversations with constrained write modes, and an opt-in `autopilot` orchestration loop. Live services were not called in this session; only local HTTP/TLS and CLI-stub tests were run.
 
 ## Jira Cloud

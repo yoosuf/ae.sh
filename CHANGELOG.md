@@ -11,6 +11,9 @@ without compatibility guarantees.
 
 ### Added
 
+- A curated `assets/docs/` visual layer for installation, getting started,
+  architecture, integrations, evidence, security, roadmap, and profiles
+  documentation, with descriptive alt text and local-only references.
 - Phase 0 documentation and decision records: architecture, getting started,
   installation, integrations, evidence, provider compatibility, threat model,
   and roadmap.

@@ -1,5 +1,10 @@
 # Roadmap
 
+![Roadmap phases from foundation and local workflows toward optional cloud and dashboard capabilities](../assets/docs/roadmap-phases.png)
+
+The timeline distinguishes the implemented local path from later optional or
+planned capabilities; it is a summary, not a release promise.
+
 The local/offline path for Phases 0–2 is implemented, together with local
 subsets of Phases 3–5: real local verification evidence, safe detached
 worktree preparation, structured review evidence and finding resolution,

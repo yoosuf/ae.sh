@@ -1,5 +1,7 @@
 # Agentic Engineering (AE)
 
+![ae.sh — safe, evidence-driven autonomous development](assets/ae-sh-github-cover.png)
+
 AE is a **portable, versioned catalogue of agent skills** plus an **optional local Go CLI** for taking engineering work from Jira issue to production with evidence at every step.
 
 It is local-first and provider-neutral:

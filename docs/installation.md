@@ -7,6 +7,11 @@ must be available under the AE checkout used as `--root`. It does not yet
 install a standalone binary plus a globally discoverable asset bundle for
 arbitrary project directories.
 
+![Local-first installation flow from checkout through build, initialization, and validation](../assets/docs/installation-local-first.png)
+
+The supported setup keeps the framework catalogue and executable CLI together
+in one local checkout; no hosted service is required for the offline path.
+
 ## Prerequisites
 
 - Go 1.27 (to build from source).

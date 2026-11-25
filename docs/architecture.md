@@ -7,6 +7,11 @@
 - Provider-neutral core; no mandatory cloud service, dashboard, or model.
 - Fail-closed policy and immutable evidence for every state transition.
 
+![Local core and optional provider or service adapters, separated by clear boundaries](../assets/docs/architecture-boundaries.png)
+
+The architecture keeps workflow, policy, state, and evidence local while
+adapters translate optional external systems into provider-neutral interfaces.
+
 ## System shape
 
 A modular monolith with ports/adapters. Core packages (config, catalogue, policy, workflow engine, evidence, state) have no provider SDK imports. Adapters implement narrow interfaces for issue trackers, git hosts, agent providers, and (planned) cloud services.

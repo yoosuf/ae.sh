@@ -22,6 +22,11 @@ directory. Use `--root /path/to/ae.sh` when invoking a binary from another
 directory. Standalone installation with a separately packaged asset bundle is
 planned, not implemented.
 
+![First-run lifecycle from issue intake through approval, verification, and evidence](../assets/docs/getting-started-lifecycle.png)
+
+The visual summarizes the local workflow; the detailed commands below remain
+the source of truth for the exact state transitions and gates.
+
 ## 1. Build
 
 ```sh

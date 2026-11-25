@@ -1,5 +1,10 @@
 # Evidence
 
+![Content-addressed plan, check, review, approval, and digest records forming an evidence chain](../assets/docs/evidence-chain.png)
+
+Each step contributes a record to the chain; a missing or invalid required
+record blocks the relevant gate instead of being treated as success.
+
 Evidence is the audit trail that turns a run into a reviewable engineering
 record. Local capture, `ae verify`, local verification commands, and
 JSON/Markdown export are implemented. Live CI/deploy evidence, signed bundles,
