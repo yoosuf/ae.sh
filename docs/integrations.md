@@ -63,9 +63,15 @@ Unresolved findings block merge, release, and security-signoff gates; resolution
 does not turn a hypothesis into an independently verified finding. Approvals
 bound to a review-evidence digest are invalidated when later review or
 resolution evidence changes the digest (`review-findings-change`). High-risk
-policies still require the `independent-review` gate, which local pattern
-scanning cannot satisfy, so high-risk merges remain blocked until an
-independently verified review path exists.
+policies require the `independent-review` gate. A local pattern scan or a
+simulated fake-provider review cannot satisfy it. The opt-in command
+`ae review --diff <path> --provider claude|codex --skill code-review|security-review|architecture-review|test-review --candidate-sha <sha> --base-sha <sha> --run <id> --workspace <managed-worktree> --confirm-live`
+runs the canonical skill through the fixed `independent-review` route, records
+`provider`, `routingProfile`, `requestedModel`, `model`, and `reviewMode`, and
+writes chained `kind: review` evidence that can satisfy the gate. Provider
+findings remain hypotheses until a human resolves them; no live provider review
+was invoked in this tree. `--provider fake` is an offline no-op that returns no
+findings and cannot satisfy the `independent-review` gate.
 
 ## Claude Code
 
@@ -140,8 +146,9 @@ worktree, scans the workspace diff, and stops at every approval or policy gate:
 - GitHub PR comments require `--github-pr`, `--comment`, and `--confirm-mutate`.
   That is the only mutating GitHub action in AE.
 - The command never pushes, creates a PR, merges, deploys, or invents a check or
-  review result. High-risk work still blocks at `independent-review`; unresolved
-  pattern-scan findings must be resolved with `ae review resolve`.
+  review result. High-risk work still blocks at `independent-review` until a
+  non-simulated provider review is recorded; unresolved findings, including
+  pattern-scan findings, must be resolved with `ae review resolve`.
 
 ## Git worktrees
 
@@ -153,7 +160,7 @@ deployments are rejected. `ae run --workspace <path>` accepts only those
 managed worktrees and records the resolved path in run state and evidence. This
 is exercised by `scripts/e2e-worktree.sh` in a throwaway git repository. SQLite
 `BindWorkspace` attaches a workspace once and refuses to re-point a run already
-bound to a different directory. `git-worktree-management` is also one of the 12
+bound to a different directory. `git-worktree-management` is also one of the 15
 Phase 1 instruction contracts. Live provider code changes inside the worktree
 are implemented only behind explicit opt-in flags and were **not exercised
 live**; live CI/deploy hooks do not exist.

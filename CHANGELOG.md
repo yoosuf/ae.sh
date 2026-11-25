@@ -11,6 +11,21 @@ without compatibility guarantees.
 
 ### Added
 
+- Strongest-route review contracts: expanded `code-review` plus `security-review`,
+  `architecture-review`, and `test-review` skills, matching independent
+  reviewers, evaluation fixtures, and canonical checklists. All declare
+  `ae.model-class: independent-review` and never contain provider model IDs.
+- Opt-in `ae review --provider ...`: runs a canonical review skill through a
+  Claude/Codex adapter (offline fake provider included), resolves the fixed
+  `independent-review` route from local config, strictly parses findings as
+  hypotheses, records requested/actual model evidence, and fails closed on
+  stale SHAs, missing mappings, malformed output, or unconfirmed live calls.
+  The offline fake provider returns a simulated no-op review. No live provider
+  review was invoked.
+- Specialist review tasks in the full `feature-development` lifecycle and
+  risk-specific security, migration, and release workflows. Only an observed,
+  non-simulated, model-selected provider review can satisfy the high-risk
+  `independent-review` gate; local scans and fake output cannot.
 - A curated `assets/docs/` visual layer for installation, getting started,
   architecture, integrations, evidence, security, roadmap, and profiles
   documentation, with descriptive alt text and local-only references.
@@ -28,7 +43,7 @@ without compatibility guarantees.
 - Governance files: proposed Apache-2.0 license, NOTICE, contributing guide,
   security policy, code of conduct, and repository agent instructions.
 - GitHub issue/PR templates, CODEOWNERS placeholder, and CI workflow skeleton.
-- 12 canonical skills with evaluation fixtures, 10 workflow DAGs, two
+- 15 canonical skills with evaluation fixtures, 10 workflow DAGs, two
   risk-scoped policies, profiles, agents, and templates.
 - Local Go CLI (`cmd/ae`) with `init`, `doctor`, `validate`, `skills
   list/install/uninstall/export`, `plan`, `run`, `status`, `resume`, `cancel`,
@@ -136,8 +151,9 @@ without compatibility guarantees.
   flags.
 - Approval records bind to a deterministic review-evidence digest. A later
   review finding or resolution invalidates approvals whose policy declares
-  `review-findings-change`; local pattern scans still cannot satisfy the
-  high-risk `independent-review` gate.
+  `review-findings-change`; local pattern scans and simulated provider output
+  still cannot satisfy the high-risk `independent-review` gate. An observed
+  provider review records the gate explicitly.
 - Live Jira issue intake now requires `--confirm-live`; `plan` and `--dry-run`
   remain fixture-only and never fetch from a configured Jira Cloud site.
 - Live provider runs require both `--confirm-live` and a managed AE worktree.

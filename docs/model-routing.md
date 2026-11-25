@@ -32,7 +32,7 @@ Profiles are defined in `framework/routing/profiles.yaml` and validated against
 
 Rationale from official guidance:
 
-- Claude Code documents `haiku` for simple tasks, `sonnet` for daily coding, `opus` for complex reasoning, and `fable` for the hardest and longest-running work. It accepts `claude --model <alias|name>` and reads the actual model from `modelUsage` in JSON output.
+- Claude Code documents `haiku` for simple tasks, `sonnet` for daily coding, `opus` for complex reasoning, and `fable` for the hardest and longest-running work. It accepts `claude --model <alias|name>` and reads the actual model from `modelUsage` in JSON output. Since Claude Code v2.1.321 the `best` alias resolves to `opus`, not Fable, so it is not a substitute for `independent-review`; Fable also has to be selected explicitly because it is not the default for any account.
 - Codex documents `gpt-6-luna` for focused high-volume work, `gpt-6.2-sol` for everyday work, and `gpt-6.2-astra` for demanding end-to-end work. It accepts `codex -m`/`--model` and `codex exec -m`; older IDs are retired on a published schedule.
 - Gemini documentation describes `gemini-3.5-flash-lite` as fastest/lowest cost, `gemini-4-hydrogen` as fast and cost-efficient for everyday coding, `gemini-4-neon` for complex interactive engineering, and `gemini-4-carbon` for long-horizon deep verification/security audits. **AE has no Gemini adapter yet**; these mappings are forward-compatible examples only.
 
@@ -72,6 +72,12 @@ provider credentials in the provider's own environment only.
   task. Claude and Codex adapters pass the requested model with `--model`.
 - `ae chat --route <profile>` selects one profile for the conversation and
   fails closed if that provider has no mapping.
+- `ae review --diff <path> --provider ...` always uses the canonical
+  `independent-review` profile declared by the selected review skill. There is
+  no route flag; untrusted diff/PR/provider text cannot weaken the route, and
+  a missing model mapping blocks the review. The strongest documented defaults
+  below are `fable`, `gpt-6.2-astra`, and `gemini-4-carbon`; Gemini is a
+  forward-compatible mapping only because no adapter exists.
 - Provider task evidence records `routingProfile`, `requestedModel` (from local
   config), and `model` (actual model when the adapter can observe it). Chat
   evidence adds the same fields to each turn.

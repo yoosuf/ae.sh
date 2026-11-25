@@ -73,7 +73,7 @@ SHA-256 checksums. Materialized provider copies are generated, not hand-edited.
 Skills are instruction contracts: inputs, outputs, preconditions, failure
 behavior — not agent roles.
 
-Phase 1 ships 12 skills. Full domain catalogue is planned for Phase 5.
+Phase 1 ships 15 skills, including four strongest-route review contracts. Full domain catalogue is planned for Phase 5.
 
 ### Local state
 

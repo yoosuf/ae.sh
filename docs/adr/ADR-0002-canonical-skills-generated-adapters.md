@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Phase 0 architecture decision). Phase 1 ships 12 canonical skills and manifests; provider materialization is implemented in Phase 2.
+Accepted (Phase 0 architecture decision). Phase 1 ships 15 canonical skills and manifests; provider materialization is implemented in Phase 2.
 
 ## Context
 

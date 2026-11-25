@@ -43,7 +43,7 @@ and cloud artifact storage are **planned / not implemented**.
 | `timestamp` | UTC creation time. |
 | `kind` | `input`, `plan`, `risk`, `approval`, `provider`, `test`, `review`, `remediation`, `gate`, `artifact`, `transition`, `merge`, `deployment`, or `note`. |
 | `subject` | Human-readable subject, often the task ID or gate name. |
-| `data` | Sanitized, task-specific object. Verification records include `gate`, `command`, `passed`, `simulated`, and `output`; provider records include `skill`, `agent`, `provider`, `routingProfile`, `requestedModel`, `model`, `workspace`, `output`, and `simulated`. Chat records add `turn`, `prompt`, `response`, and `sessionId`; `requestedModel` comes from local config while `model` is the actual model reported by the adapter, when available. Review records contain `diffDigest`, `findings`, `checksWithoutFindings`, and `verified: false`; remediation records contain `findingId`, `status`, `reason`, and the originating review evidence ID. |
+| `data` | Sanitized, task-specific object. Verification records include `gate`, `command`, `passed`, `simulated`, and `output`; provider records include `skill`, `agent`, `provider`, `routingProfile`, `requestedModel`, `model`, `workspace`, `output`, and `simulated`. Chat records add `turn`, `prompt`, `response`, and `sessionId`; `requestedModel` comes from local config while `model` is the actual model reported by the adapter, when available. Review records contain `diffDigest`, `findings`, `checksWithoutFindings`, and `verified: false`; provider-backed reviews add `provider`, `skill`, `routingProfile`, `requestedModel`, `model`, `reviewMode`, `mode`, and `independentReview`. Remediation records contain `findingId`, `status`, `reason`, and the originating review evidence ID. Local scans and simulated output set `independentReview: false`; only an observed provider review can satisfy the high-risk `independent-review` gate. |
 | `dataDigest` | `sha256:` digest of canonical `data`. |
 | `previousDigest` | Optional link to the preceding record's data digest. |
 | `actor` | Local actor or `ae verify` / `ae worktree`. |
@@ -114,4 +114,4 @@ behavior.
   artifact storage (planned Phase 6).
 - Federated approver identity and PR-linked authorization; local identity/role
   capture is implemented.
-- Live CI/deploy references and independently verified review findings. Local review findings are hypotheses; `review resolve` records human decisions without claiming independent verification.
+- Live CI/deploy references and independently verified review findings. All review findings are hypotheses until corroborated; `review resolve` records human decisions without claiming independent verification. The provider-backed review command is locally tested with stubs but was not exercised against a live model.

@@ -29,10 +29,11 @@ Exit criteria:
 
 ## Phase 1 — Skills and local CLI basics (implemented locally)
 
-Deliverables: 12 canonical skills (`jira-intake`, `requirement-analysis`,
+Deliverables: 15 canonical skills (`jira-intake`, `requirement-analysis`,
 `acceptance-criteria`, `technical-planning`, `risk-assessment`,
 `solution-architecture`, `backend-development`, `git-worktree-management`,
-`unit-testing`, `code-review`, `agent-handoff`, `pull-request-management`),
+`unit-testing`, `code-review`, `security-review`, `architecture-review`,
+`test-review`, `agent-handoff`, `pull-request-management`),
 generated provider manifests + SHA-256 checksums, pinned version, CLI commands `init`, `doctor`,
 `validate`, `skills list`, `skills install`, `skills uninstall`, and
 `skills export`.
@@ -85,16 +86,20 @@ evidence; unresolved findings block merge/release/security-signoff gates,
 approval records are invalidated on `review-findings-change`, and
 `Workflow.remediation.maxAttempts` now bounds failed remediation retries. A
 local `gh`-CLI adapter reads PR state/checks/diffs and can post a separately
-authorized comment as evidence. Live GitHub calls were not exercised. GitHub
-App/service identity, PR creation/merge/push, independently verified findings,
-and merge signal automation are **planned / not implemented**; high-risk merges
-therefore remain blocked at `independent-review` because local pattern scans
-cannot satisfy that gate. Exit criteria: review findings must be addressed or
+authorized comment as evidence. Opt-in `ae review --provider ...` runs the
+canonical strongest-route review skills through Claude/Codex adapters, fixes
+the route to `independent-review`, records requested/actual model evidence, and
+lets an observed, non-simulated provider review satisfy the high-risk gate;
+provider findings still need human resolution. No live provider review was
+exercised. GitHub App/service identity, PR creation/merge/push, independently
+verified findings, and merge signal automation are **planned / not
+implemented**; local scans and fake output remain blocked at
+`independent-review`. Exit criteria: review findings must be addressed or
 explicitly accepted before merge signal.
 
 ## Phase 5 — Full catalogue and evaluation (structural checks implemented; remainder planned / not implemented)
 
-The 12 authored skills remain the catalogue; the full set across Product,
+The 15 authored skills remain the catalogue; the full set across Product,
 Architecture, Cloud, Development, Quality, Security, DevOps, and Agentic domains
 is planned. `ae eval --suite ... --execute` runs deterministic structural
 checks over fixtures and rubrics and reports `modelBehaviorExecuted: false`.

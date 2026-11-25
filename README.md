@@ -126,8 +126,13 @@ ISSUE=examples/offline-workflow/issue-PROJ-101.json
 # Verify fixture structure without invoking a model.
 ./ae eval --suite all --execute
 
-# Scan a diff, resolve the recorded finding, then export evidence.
+# Scan a diff locally, or run an opt-in strongest-model provider review.
 ./ae review --diff candidate.diff --run <run-id>
+./ae review --diff candidate.diff --provider claude --skill security-review \
+  --candidate-sha <sha> --base-sha <sha> --run <run-id> --dry-run
+./ae review --diff candidate.diff --provider claude --skill security-review \
+  --candidate-sha <sha> --base-sha <sha> --run <run-id> \
+  --workspace .ae/worktrees/<run-id> --confirm-live
 ./ae review resolve --run <run-id> --finding rev-... \
   --status fixed --reason "fixed after local verification" --actor reviewer-1
 ./ae evidence export <run-id> --format both
@@ -140,7 +145,7 @@ ISSUE=examples/offline-workflow/issue-PROJ-101.json
 ./ae autopilot --issue "$ISSUE" --dry-run
 ```
 
-The shorthand `PROJ-101` resolves to the fixture above. The fake provider returns outputs marked `simulated: true`; it does not run shell commands, call models, or create branches, commits, pushes, or deployments. A run that relies only on fake-provider output is **blocked with missing evidence** at the merge gate. `ae verify <run-id>` executes checked-in profile commands locally, records the command, sanitized output, and real exit status as evidence, and can satisfy those gates. Structured review findings must be explicitly resolved before merge; see [integrations](docs/integrations.md) for opt-in Jira and live chat setup and [evidence](docs/evidence.md) for the record format.
+The shorthand `PROJ-101` resolves to the fixture above. The fake provider returns outputs marked `simulated: true`; it does not run shell commands, call models, or create branches, commits, pushes, or deployments. A run that relies only on fake-provider output is **blocked with missing evidence** at the merge gate. `ae verify <run-id>` executes checked-in profile commands locally, records the command, sanitized output, and real exit status as evidence, and can satisfy those gates. Structured review findings must be explicitly resolved before merge. The full `feature-development` lifecycle includes independent code, security, architecture, and test reviews; provider-backed reviews use the strongest `independent-review` route from local config and never let untrusted text change it. See [integrations](docs/integrations.md) for opt-in Jira and live chat setup and [evidence](docs/evidence.md) for the record format.
 
 Live Jira calls, GitHub CLI reads/comments, and live Claude/Codex conversations require explicit opt-in configuration/flags and environment credentials. The adapters and local tests exist, but no live service call was made in this session. `autopilot` executes only within recorded policy: it stops at approval gates, runs real local checks, never creates a branch/PR, never pushes/merges/deploys, and high-risk work remains blocked at independent review. GitHub App/service identity, PR creation/merge, cloud deployment, and federated identity are **planned / not implemented**.
 
@@ -205,6 +210,7 @@ Status labels describe the current tree, not phase targets.
 | `ae cancel <run-id>` | Implemented, local only | Atomic cancellation with a recorded reason. |
 | `ae approve <run-id> --gate ... --approver ... [--role ...]` | Implemented, local only | Records identity, role, candidate SHA, plan digest, and review-evidence digest; checks distinct roles and invalidates on configured review-findings changes. |
 | `ae review --diff <path> [--run id]` | Implemented, local only | Deterministic pattern-scan hypotheses; `verified: false`. With `--run`, persists chained review evidence. Live `--pr` GitHub review is not implemented. |
+| `ae review --diff <path> --provider claude\|codex\|fake [--skill ...] [--run id] [--dry-run] [--confirm-live --workspace DIR]` | Implemented locally, not exercised live | Opt-in canonical-skill review through a provider adapter; fixed `independent-review` route, requested/actual model evidence, strictly parsed hypotheses, and chained review evidence. The fake provider returns a simulated no-op that cannot satisfy the gate; only a non-simulated, model-selected provider review can. |
 | `ae review resolve --run id --finding rev-... --status fixed\|accepted\|false-positive --reason text` | Implemented, local only | Records a human decision as chained remediation evidence; unresolved findings block merge/release/security-signoff gates. |
 | `ae chat --provider fake --message text [--route PROFILE]` | Implemented, local only | Multi-turn fake conversation; preserves session IDs and writes chained evidence with `--run`. |
 | `ae chat --provider claude\|codex --confirm-live --workspace DIR [--route PROFILE] ...` | Implemented locally, not exercised live | Explicit opt-in, env-based auth, managed AE worktree, bounded turns, route-to-model resolution, and sanitized evidence. |
@@ -222,7 +228,7 @@ Status labels describe the current tree, not phase targets.
 
 ## Skills shipped
 
-`jira-intake`, `requirement-analysis`, `acceptance-criteria`, `technical-planning`, `risk-assessment`, `solution-architecture`, `backend-development`, `git-worktree-management`, `unit-testing`, `code-review`, `agent-handoff`, `pull-request-management`.
+`jira-intake`, `requirement-analysis`, `acceptance-criteria`, `technical-planning`, `risk-assessment`, `solution-architecture`, `backend-development`, `git-worktree-management`, `unit-testing`, `code-review`, `security-review`, `architecture-review`, `test-review`, `agent-handoff`, `pull-request-management`.
 
 The full catalogue across Product, Architecture, Cloud, Development, Quality, Security, DevOps, and Agentic domains is **planned**.
 
@@ -239,12 +245,12 @@ The full catalogue across Product, Architecture, Cloud, Development, Quality, Se
 ## Limitations
 
 - Pre-1.0, no stable compatibility guarantees.
-- Only the 12 Phase 1 skills exist; broader catalogue is planned.
+- Fifteen Phase 1 skills exist, including four strongest-route review contracts; a broader catalogue is planned.
 - The fake provider is the only exercised end-to-end provider path. Its outputs are simulated and do not satisfy build/lint/test evidence gates until `ae verify` records real local results. The Claude and Codex adapters have local stub tests for command construction, session continuity, and constrained write modes, but no live model conversation or live file edit was run.
 - `eval --execute` checks fixture structure only; no behavioral model evaluation or pass rate exists.
 - The Java, Python, Laravel, TypeScript, and aggregate `all` profiles are checked in and validated, but their external toolchains were not exercised here; see [profiles](docs/profiles.md).
 - Jira Cloud REST intake, GitHub CLI read/comment, provider chat, and constrained provider writes are opt-in local implementations, not live-exercised integrations. `autopilot` was exercised only with the fake provider in a throwaway git repository; it stops at real gates and cannot push, create a PR, merge, or deploy. GitHub App/service identity, independently verified review, cloud, and dashboard work is planned / not implemented. Worktree commands were exercised only in a throwaway git repository with a synthetic commit.
-- `ae review --diff` is a local pattern scan with `verified: false`; resolution evidence records human decisions but does not make hypotheses independently verified.
+- `ae review --diff` is a local pattern scan with `verified: false`; resolution evidence records human decisions but does not make hypotheses independently verified. The opt-in provider-backed review path is implemented and locally tested with stubs; no live Claude/Codex review was invoked, so independent review is still not externally verified in this tree.
 - All work is committed locally; no push, release, published module, branch creation, merge, deployment, or cloud resource was created by the agent for this work. A read-only `ls-remote` after final verification showed GitHub `main` at the local HEAD; the remote-tracking reflog attributes that update to a push outside this session's commands.
 - Provider paths and model IDs/aliases were checked against official docs on 2026-11-25 but must be rechecked before use; no live model was invoked. Gemini mappings are forward-compatible examples because no Gemini adapter exists.
 - No security audit or penetration test has been performed; no known vulnerabilities are published.
@@ -254,10 +260,10 @@ The full catalogue across Product, Architecture, Cloud, Development, Quality, Se
 | Phase | Summary | Status |
 | --- | --- | --- |
 | 0 | Foundation: docs, ADRs, licence, CI skeleton | Implemented locally |
-| 1 | 12 canonical skills, manifests, local CLI basics | Implemented locally |
+| 1 | 15 canonical skills, manifests, local CLI basics | Implemented locally |
 | 2 | Offline plan/run, SQLite state, policy, evidence capture | Implemented locally with fake provider |
 | 3 | Local lifecycle, approvals, verification evidence, safe worktree preparation, traceability, evidence export, opt-in Jira/provider chat and autopilot loop | Local subset and opt-in adapters implemented; live calls and live writes not exercised; CI hooks planned |
-| 4 | Structured review evidence, finding resolution, bounded remediation, merge gates, GitHub CLI PR evidence/comments | Local subset implemented; live GitHub calls, PR creation/merge, and independent review planned |
+| 4 | Structured review evidence, finding resolution, bounded remediation, merge gates, GitHub CLI PR evidence/comments | Local subset and opt-in provider-backed independent review implemented; live GitHub calls and live model review not exercised; PR creation/merge planned |
 | 5 | Full skill catalogue and executed behavioral evaluation suites | Structural fixture checks implemented; behavioral suites planned / not implemented |
 | 6 | Optional AWS adapters and Terraform reference architecture | Planned / not implemented |
 | 7 | Optional dashboard, multi-user features, stable 1.0 | Planned / not implemented |

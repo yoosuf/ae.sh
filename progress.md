@@ -15,15 +15,19 @@ what was actually run in this tree. It is not a release report.
 | `go test ./...` | Passed. Packages with tests: `internal/adapters/claude`, `internal/adapters/codex`, `internal/adapters/github`, `internal/adapters/jira`, `internal/adapters/sqlite`, `internal/catalog`, `internal/cli`, `internal/config`, `internal/execution`, `internal/framework`, `internal/policy`, `internal/routing`, `internal/schema`, `internal/util`, `internal/workflow`. Other packages have no test files. |
 | `go test -race ./...` | Passed with the same package coverage. |
 | `gofmt -w internal/execution internal/adapters/sqlite` and targeted `go test ./internal/execution ./internal/adapters/sqlite ./internal/cli` | Passed while adding review-evidence approval invalidation. |
-| `scripts/check-schemas.sh` | Passed; `validate` reported `status: valid`, 12 skills, 10 workflows, 2 policies, 12 agents, 12 profiles (`go`, `java`, `python`, `dotnet`, `nodejs`, `typescript`, `react`, `vue`, `astro`, `laravel`, `aws`, `all`), and `evaluations: authored; no behavioral/model evaluation executed`. |
+| `scripts/check-schemas.sh` | Passed; `validate` reported `status: valid`, 15 skills, 10 workflows, 2 policies, 15 agents, 12 profiles (`go`, `java`, `python`, `dotnet`, `nodejs`, `typescript`, `react`, `vue`, `astro`, `laravel`, `aws`, `all`), 5 routing profiles, and `evaluations: authored; no behavioral/model evaluation executed`. |
+| `go test ./internal/catalog ./internal/cli ./internal/schema` and `go build ./...` | Passed after adding the strengthened review contracts, specialist reviewers, and evaluation fixtures. |
+| `go test ./internal/cli ./internal/schema` and `go test ./internal/execution ./internal/workflow ./internal/cli` | Passed after adding provider-backed review parsing/evidence and the specialist-review gate changes. |
 | `scripts/e2e-offline.sh` | Passed. |
 | `scripts/e2e-worktree.sh` | Passed. |
 | `make check` | Passed (build, vet, unit tests, race tests, schema validation, offline E2E, worktree E2E). |
 | `gofmt -w` on reorganized Go files, `go build ./...`, targeted package tests, then `make check` | Passed after moving canonical assets under `framework/` and adding `internal/framework/paths.go`. |
 | `go build ./...`, `go test ./...`, then `make check` | Passed after renaming the module, CLI, config, state, env, schema, metadata, and label identifiers to `ae`. |
 | `gofmt -w` on routing code, targeted `go test` for `internal/config`, `internal/workflow`, `internal/execution`, `internal/cli`, `internal/routing`, and both live adapters, then `make check` | Passed after adding model routing. `make check` covered the offline and worktree E2E scripts as well. |
-| `ae eval --suite all --execute --json` in a throwaway checkout | Passed: 9 security cases, 12 skill fixtures, `modelBehaviorExecuted: false`, `status: passed`. Only structural fixture checks ran; no provider was invoked. |
-| `ae skills install --provider all --scope project` in a throwaway checkout | Passed: two provider manifests with 12 skills each and zero SHA-256 checksum mismatches. No generated file was hand-edited in the source tree. |
+| `ae eval --suite all --execute --json` in a throwaway checkout | Passed: 9 security cases, 15 skill fixtures, `modelBehaviorExecuted: false`, `status: passed`. Only structural fixture checks ran; no provider was invoked. |
+| `ae skills install --provider all --scope project` in a throwaway checkout | Passed: Claude and Codex provider manifests with 15 skills each and zero SHA-256 checksum mismatches. No generated file was hand-edited in the source tree. |
+| `make check` after the review upgrades | Passed: build, vet, unit tests, race tests, schema validation, offline E2E, and worktree E2E. |
+| Throwaway-checkout `ae review --diff ... --provider fake --skill test-review --candidate-sha ... --base-sha ... --json` | Passed after the fake-adapter fix: one simulated no-op result with zero findings, `verified: false`, and `simulated: true`. |
 | `go run ./cmd/ae --help` | Passed; `autopilot` and the live/write flags on `run` and `resume` are exposed, along with `chat --route`. |
 | `bash -n scripts/uninstall.sh` and a throwaway-manifest safety check | Passed; documented Claude/Codex roots are accepted and `.codex/skills` is rejected. |
 
@@ -40,7 +44,9 @@ Routing intent is provider-neutral: canonical skills carry `ae.model-class`,
 agents and workflow tasks carry `routingProfile`, and the catalogue of five
 profiles lives in `framework/routing/profiles.yaml`. Only local
 `provider.routes` maps a profile to a Claude/Codex model alias or ID; no vendor
-model name appears in canonical assets.
+model name appears in canonical assets. The 15 skills include four
+strongest-route review contracts (`code-review`, `security-review`,
+`architecture-review`, `test-review`) with matching independent reviewers.
 
 ### Offline end-to-end behavior observed
 
@@ -153,8 +159,9 @@ made in the source repository.
   review-finding reconstruction after restart, stale-review rejection,
   unresolved-finding blocking, approval invalidation on review evidence change,
   bounded remediation attempts, fail-closed route precedence (task override,
-  skill class, agent role, then `balanced`), and requested/actual model
-  evidence on provider task records.
+  skill class, agent role, then `balanced`), requested/actual model evidence on
+  provider task records, `*-review` evidence classification, and gate evidence
+  that only accepts observed, non-simulated, model-selected provider reviews.
 - `internal/config`: canonical profile loading, requested stack registration,
   `all` aggregation without duplicate checks, include-cycle rejection,
   fail-closed validation of Jira Cloud HTTPS origins, GitHub local-cli modes,
@@ -191,7 +198,13 @@ made in the source repository.
   self-approval denial, fake-provider completion with delegated approval,
   unsafe `run` flag combinations, `chat --route` rejection of unknown profiles,
   and per-turn route/model evidence. `validate` reports routing profile and
-  local model-route counts.
+  local model-route counts. Provider-backed review tests cover canonical skill
+  and route resolution, dry-run with no provider call, live confirmation and
+  managed-workspace denial, strict JSON normalization, stable hypothesis IDs,
+  rejected verification claims, requested/actual model evidence, and chained
+  `kind: review` evidence with reconstructable findings, plus an end-to-end
+  fake-provider review that returns a simulated no-op. `validate` reports
+  15 skills, 15 agents, 10 workflows, and 5 routing profiles.
 
 ## Implemented but not exercised live
 
@@ -209,6 +222,10 @@ made in the source repository.
 - Live model selection through `--model`; routing resolves to local aliases or
   IDs and is passed to the Claude/Codex adapters, but no live provider call was
   made and no requested model was confirmed against an installed CLI.
+- Opt-in provider-backed `ae review --provider claude|codex` with a canonical
+  strongest-route skill. The command, fixed route, strict parser, and evidence
+  chain are locally tested with stubs; no live Claude/Codex review was invoked,
+  so provider findings were not observed outside this repository.
 - Behavioral model evaluation; `eval --execute` runs deterministic structure
   checks only. The added model-route injection cases are authored fixtures,
   not executed model behavior.
@@ -218,7 +235,8 @@ made in the source repository.
   executed in the offline E2E; missing tools in other profiles remain explicit
   failures under `ae verify`.
 - `review --diff` is a local pattern scan with `verified: false`, not an
-  independent code review.
+  independent code review. The provider-backed review path is implemented and
+  locally stub-tested, but no live review result was observed.
 - Federated approver identity; local identity and role capture are implemented.
 
 The opt-in adapters above were implemented and locally tested with HTTP or
@@ -230,8 +248,10 @@ path and all local review-resolution behavior were exercised offline.
 
 - Remaining Phase 3 work: authorized live issue/provider calls, real code
   changes, federated approver identity, and real CI/deploy integration.
-- Phase 4: GitHub PR creation/merge/push, independently verified review
-  findings that can satisfy `independent-review`, and merge signal.
+- Phase 4: an authorized live provider-backed review, independently verified
+  findings, GitHub PR creation/merge/push, and merge signal. The local provider
+  review path can record the `independent-review` gate only when an observed,
+  non-simulated, model-selected provider result exists.
 - Phase 5: full skill catalogue and executed behavioral evaluation suites.
 - Phase 6: optional AWS adapters and Terraform reference architecture.
 - Phase 7: optional dashboard, multi-user features, stable 1.0 release.
@@ -243,14 +263,17 @@ path and all local review-resolution behavior were exercised offline.
 
 - The directory is a git repository on `main` tracking `origin/main`. The
   earlier framework, rename, and repository-link work is committed in 11
-  logical commits; model routing is recorded in four small commits. No push,
-  publish, deploy, or cloud resource creation was executed, requested, or
-  approved by the agent. A read-only `git ls-remote` after the final commit
-  showed GitHub `main` at the local HEAD, and the remote-tracking reflog
-  records `update by push` at 2026-11-25 21:21 IST; that push was external to
-  the commands run here.
+  logical commits; model routing is recorded in four small commits; the review
+  upgrades are recorded in `31e48bf` (contracts/reviewers), `07d18d5`
+  (provider-backed review), `7113f1d` (lifecycle gates), `68fefe0` (live
+  workspace denial test), and `2f0ddf2` (fake-provider no-op review). No push,
+  publish,
+  deploy, or cloud resource creation was executed, requested, or approved by
+  the agent. The remote-tracking ref advanced externally to `31e48bf` after the
+  first review commit; its reflog records `update by push`, and the later local
+  review commits were not pushed by this session.
 - Visual-layer files (`assets/`, `docs/superpowers/`, and image links in several
-  docs) are unrelated to routing and were kept out of routing commits.
+  docs) were kept out of the routing and review code commits.
 - No credentials were used, stored in CLI flags/config/prompts/fixtures, or
   committed. No production data was accessed.
 - Module publication via `go install ...@latest` is unavailable until a release
@@ -276,6 +299,16 @@ path and all local review-resolution behavior were exercised offline.
 - Routing review found that the offline fake provider advertised
   `ModelSelection: true` although it never selects a model; the capability is
   now `false`, while its simulated output still echoes route fields for tests.
+- Review-upgrade self-review found two gate defects before final verification:
+  `test-review` was classified as test evidence because `test` matched before
+  the `-review` suffix, and the high-risk `independent-review` gate only
+  accepted `kind: test` records so no review evidence could satisfy it. The
+  suffix now wins, and gate evidence accepts only an observed, non-simulated,
+  model-selected provider review. Provider claims of `verified: true` are
+  rejected, findings stay hypotheses with stable IDs, and the fake provider is
+  explicitly excluded from gate satisfaction. A CLI smoke test then exposed
+  that the generic fake response was not valid review JSON; the fake adapter
+  now emits a strict simulated no-op payload for review tasks.
 - Review of the new gate logic also found that `review-findings-change` was
   declared by high-risk policy but not enforced. Approvals now bind to a
   deterministic review-evidence digest, with SQLite migration support and
@@ -294,8 +327,8 @@ path and all local review-resolution behavior were exercised offline.
 1. Obtain explicit human authorization before any push, publish, deployment,
    cloud resource creation, or live provider/Jira/GitHub call. Local commits
    are made in small reviewable batches.
-2. Add independent review and behavioral evaluation paths with an authorized
-   provider.
+2. Exercise the provider-backed independent review path with an authorized
+   provider, then add executed behavioral evaluation.
 3. Exercise live Claude/Codex/Jira/GitHub adapters only after authorization and
    credential setup, recording exact commands and sanitized outcomes.
 4. Pin CI actions to verified commit SHAs and produce a signed release before
