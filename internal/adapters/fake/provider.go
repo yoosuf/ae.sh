@@ -6,9 +6,14 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/yoosuf/ae.sh/internal/integration"
 )
+
+// simulatedReviewJSON is a deterministic no-op review. The fake provider never
+// analyzes a diff, so it reports no findings and cannot satisfy a review gate.
+const simulatedReviewJSON = `{"findings":[],"checksWithoutFindings":["simulated-no-op"],"ignoredInstructions":[],"note":"Simulated review produced no findings; it is not an independent review."}`
 
 // Provider is a deterministic fake agent provider.
 type Provider struct{}
@@ -26,6 +31,10 @@ func (p *Provider) Run(_ context.Context, request integration.RunRequest) (integ
 		return integration.RunResult{}, fmt.Errorf("fake provider requires taskId and skill")
 	}
 	exit := 0
+	result := fmt.Sprintf("Simulated response to %q", request.Prompt)
+	if strings.HasPrefix(request.TaskID, "review-") {
+		result = simulatedReviewJSON
+	}
 	sessionID := request.SessionID
 	if sessionID == "" && request.Persistent {
 		sessionID = "fake-session-" + request.RunID
@@ -41,7 +50,7 @@ func (p *Provider) Run(_ context.Context, request integration.RunRequest) (integ
 			"agent":          request.Agent,
 			"routingProfile": request.RoutingProfile,
 			"requestedModel": request.RequestedModel,
-			"result":         fmt.Sprintf("Simulated response to %q", request.Prompt),
+			"result":         result,
 			"summary":        fmt.Sprintf("Simulated %s task completed by fake provider", request.Skill),
 			"artifacts":      sortedArtifacts(request.Skill),
 		},

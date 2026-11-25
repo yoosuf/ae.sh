@@ -71,6 +71,32 @@ const providerReviewJSON = `{
   "note": "middleware was checked"
 }`
 
+func TestProviderReviewFakeProviderIsSimulatedNoOp(t *testing.T) {
+	root := t.TempDir()
+	initReviewRepo(t, root)
+	diffPath := filepath.Join(root, "change.diff")
+	if err := os.WriteFile(diffPath, []byte(reviewDiff), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	app := App{Stdout: &stdout, Stderr: &stderr, Root: root, JSON: true,
+		Args: []string{"review", "--diff", diffPath, "--provider", "fake",
+			"--skill", "test-review", "--candidate-sha", "candidate123", "--base-sha", "base123"}}
+	if code := app.Run(context.Background()); code != ExitOK {
+		t.Fatalf("fake review exited %d: %s %s", code, stdout.String(), stderr.String())
+	}
+	var result ReviewResult
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Provider != "fake" || result.Mode != "provider-backed-review" || !result.Simulated {
+		t.Fatalf("fake review did not mark simulated output: %+v", result)
+	}
+	if len(result.Findings) != 0 || result.RequestedModel != "" || strings.Contains(result.Note, "independently verified") {
+		t.Fatalf("fake review invented findings or verification: %+v", result)
+	}
+}
+
 func TestProviderReviewNormalizesUntrustedOutput(t *testing.T) {
 	binding := reviewBinding{
 		Provider: "claude", Skill: "security-review", RoutingProfile: "independent-review",
