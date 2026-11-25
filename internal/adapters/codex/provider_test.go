@@ -1,0 +1,88 @@
+package codex
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/aef-framework/aef/internal/integration"
+)
+
+func TestResumeUsesCodexExecResumeSubcommand(t *testing.T) {
+	dir := t.TempDir()
+	firstArgs := filepath.Join(dir, "first-args.txt")
+	secondArgs := filepath.Join(dir, "second-args.txt")
+	script := filepath.Join(dir, "codex-stub")
+	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AEF_TEST_ARGS\"\nprintf '%s\\n' '{\"type\":\"thread.started\",\"thread_id\":\"sess-codex\"}'\nprintf '%s\\n' '{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"ok\"}}'\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	provider := New()
+	provider.Binary = script
+	workspace := t.TempDir()
+	t.Setenv("AEF_TEST_ARGS", firstArgs)
+	first, err := provider.Run(context.Background(), integration.RunRequest{
+		TaskID: "chat-1", Skill: "provider-chat", Prompt: "first", Workspace: workspace,
+		Timeout: time.Second, Persistent: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.SessionID != "sess-codex" {
+		t.Fatalf("unexpected first session id %q", first.SessionID)
+	}
+	t.Setenv("AEF_TEST_ARGS", secondArgs)
+	if _, err := provider.Run(context.Background(), integration.RunRequest{
+		TaskID: "chat-2", Skill: "provider-chat", Prompt: "follow up", Workspace: workspace,
+		Timeout: time.Second, SessionID: first.SessionID, Persistent: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	firstRaw, err := os.ReadFile(firstArgs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondRaw, err := os.ReadFile(secondArgs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(firstRaw), "--ephemeral") || !strings.Contains(string(firstRaw), "exec") {
+		t.Errorf("persistent first turn used wrong arguments: %q", firstRaw)
+	}
+	for _, want := range []string{"exec", "resume", "sess-codex", "follow up"} {
+		if !strings.Contains(string(secondRaw), want) {
+			t.Errorf("codex arguments missing %q: %q", want, secondRaw)
+		}
+	}
+	if !strings.Contains(string(firstRaw), "read-only") {
+		t.Errorf("persistent first turn was not read-only: %q", firstRaw)
+	}
+}
+
+func TestWriteUsesWorkspaceWriteSandbox(t *testing.T) {
+	argsPath := filepath.Join(t.TempDir(), "args.txt")
+	script := filepath.Join(t.TempDir(), "codex-stub")
+	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AEF_TEST_ARGS\"\nprintf '%s\\n' '{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"ok\"}}'\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("AEF_TEST_ARGS", argsPath)
+	provider := New()
+	provider.Binary = script
+	if _, err := provider.Run(context.Background(), integration.RunRequest{
+		TaskID: "implement", Skill: "backend-development", Prompt: "edit files", Workspace: t.TempDir(),
+		Timeout: time.Second, Write: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(argsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), "workspace-write") {
+		t.Fatalf("codex write invocation did not use workspace-write: %q", raw)
+	}
+}
