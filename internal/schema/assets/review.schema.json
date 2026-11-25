@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aef.dev/schemas/review.schema.json",
+  "title": "AEF structured local review scan result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "verified",
+    "source",
+    "diffDigest",
+    "findings",
+    "checksWithoutFindings",
+    "note"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "mode": { "const": "local-pattern-scan" },
+    "verified": { "const": false },
+    "pr": { "type": "integer", "minimum": 0 },
+    "source": { "type": "string", "minLength": 1 },
+    "diffDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "candidateSHA": { "type": "string" },
+    "baseSHA": { "type": "string" },
+    "evidenceRecordID": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "ruleId",
+          "severity",
+          "status",
+          "file",
+          "line",
+          "evidence",
+          "impact",
+          "remediation",
+          "verified"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^rev-[0-9a-f]{16}$" },
+          "ruleId": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "severity": { "enum": ["critical", "high", "medium", "low"] },
+          "status": { "const": "hypothesis" },
+          "file": { "type": "string" },
+          "line": { "type": "integer", "minimum": 1 },
+          "evidence": { "type": "string" },
+          "impact": { "type": "string", "minLength": 1 },
+          "remediation": { "type": "string", "minLength": 1 },
+          "verified": { "const": false }
+        }
+      }
+    },
+    "checksWithoutFindings": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+    },
+    "note": { "type": "string", "minLength": 1 }
+  }
+}

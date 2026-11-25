@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aef.dev/schemas/skill.schema.json",
+  "title": "AEF canonical skill",
+  "description": "Normalized representation of framework/skills/<slug>/SKILL.md used for validation and provider materialization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "slug",
+    "name",
+    "description",
+    "license",
+    "metadata",
+    "body",
+    "sections",
+    "path"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "name": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "description": { "type": "string", "minLength": 40, "maxLength": 1024 },
+    "license": { "type": "string", "minLength": 1 },
+    "compatibility": { "type": "string", "maxLength": 500 },
+    "allowedTools": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "metadata": {
+      "type": "object",
+      "required": ["aef.version", "aef.domain", "aef.skill-id"],
+      "additionalProperties": { "type": "string" },
+      "properties": {
+        "aef.version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
+        },
+        "aef.domain": {
+          "enum": [
+            "Product",
+            "Architecture",
+            "Cloud",
+            "Development",
+            "Quality",
+            "Security",
+            "DevOps",
+            "Agentic"
+          ]
+        },
+        "aef.skill-id": { "type": "string", "minLength": 1 },
+        "aef.eval-fixture": { "type": "string", "minLength": 1 }
+      }
+    },
+    "body": { "type": "string", "minLength": 200 },
+    "sections": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "Triggers",
+          "Objective",
+          "Inputs",
+          "Preconditions",
+          "Procedure",
+          "Constraints",
+          "Outputs",
+          "Completion criteria",
+          "Failure handling",
+          "Progressive disclosure"
+        ]
+      },
+      "allOf": [
+        { "contains": { "const": "Triggers" } },
+        { "contains": { "const": "Objective" } },
+        { "contains": { "const": "Inputs" } },
+        { "contains": { "const": "Preconditions" } },
+        { "contains": { "const": "Procedure" } },
+        { "contains": { "const": "Constraints" } },
+        { "contains": { "const": "Outputs" } },
+        { "contains": { "const": "Completion criteria" } },
+        { "contains": { "const": "Failure handling" } }
+      ]
+    },
+    "references": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "path": { "type": "string", "minLength": 1 }
+  }
+}
