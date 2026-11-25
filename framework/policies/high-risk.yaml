@@ -1,0 +1,61 @@
+schemaVersion: "1.0"
+id: high-risk
+version: "1.0.0"
+precedence: [runtime-safety, organization, repository, workflow, agent, task]
+appliesTo: [high, critical]
+riskRules:
+  - id: secrets-critical
+    risk: critical
+    paths: ["**/*secret*", "**/*credential*", "**/.env*", "**/keystore/**"]
+    semantics: [secrets, credentials]
+  - id: iam-and-tenancy
+    risk: critical
+    paths: ["**/auth/**", "**/iam/**", "**/tenant/**"]
+    semantics: [authentication, authorization, tenant-isolation]
+  - id: infrastructure-critical
+    risk: critical
+    paths: ["infra/**", "*.tf", ".github/workflows/**"]
+    semantics: [infrastructure, public-api, deployment]
+  - id: migration-critical
+    risk: critical
+    paths: ["migrations/**", "db/schema/**", "db/**"]
+    semantics: [migration, data-retention, backfill]
+escalations:
+  - id: secrets
+    triggers: [secrets, credentials, iam, tenant-isolation, infrastructure, migration, data-retention, public-api]
+    require: human-approval
+  - id: separate-duties
+    triggers: [self-approval, producer-approval, reviewer-is-author, independence-violation]
+    require: human-approval
+  - id: recovery-required
+    triggers: [dry-run-missing, rollback-unverified, recovery-evidence-missing]
+    require: human-approval
+gates:
+  required: [format, lint, build, unit-tests, secret-scan, dependency-audit, dry-run, recovery-evidence, independent-review]
+  neverMarkMissingAsPassed: true
+approvalRules:
+  - gate: architecture
+    minApprovers: 2
+    rejectSelfApproval: true
+    requireDistinctRoles: true
+    invalidateOn: [candidate-sha-change, plan-digest-change]
+  - gate: migration-safety
+    minApprovers: 2
+    rejectSelfApproval: true
+    requireDistinctRoles: true
+    invalidateOn: [candidate-sha-change, migration-plan-digest-change]
+  - gate: infrastructure
+    minApprovers: 2
+    rejectSelfApproval: true
+    requireDistinctRoles: true
+    invalidateOn: [candidate-sha-change, plan-digest-change]
+  - gate: security-signoff
+    minApprovers: 2
+    rejectSelfApproval: true
+    requireDistinctRoles: true
+    invalidateOn: [candidate-sha-change, review-findings-change]
+  - gate: release
+    minApprovers: 2
+    rejectSelfApproval: true
+    requireDistinctRoles: true
+    invalidateOn: [candidate-sha-change, plan-digest-change]

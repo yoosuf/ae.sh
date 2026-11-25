@@ -1,0 +1,52 @@
+schemaVersion: "1.0"
+id: default
+version: "1.0.0"
+precedence: [runtime-safety, organization, repository, workflow, agent, task]
+riskRules:
+  - id: auth-path
+    risk: high
+    paths: ["**/auth/**", "**/iam/**"]
+    semantics: [authentication, authorization]
+  - id: secrets-material
+    risk: critical
+    paths: ["**/*secret*", "**/*credential*", "**/.env*"]
+    semantics: [secrets, credentials]
+  - id: data-migration
+    risk: high
+    paths: ["migrations/**", "db/schema/**", "db/**"]
+    semantics: [migration, data-retention]
+  - id: infrastructure
+    risk: high
+    paths: ["infra/**", "*.tf", ".github/workflows/**"]
+    semantics: [infrastructure, deployment, public-api]
+  - id: public-api
+    risk: medium
+    paths: ["api/**", "**/routes/**", "**/handlers/**"]
+    semantics: [public-api, tenant-isolation]
+  - id: ordinary-source
+    risk: low
+    paths: ["**/*.go", "**/*.ts", "**/*.tsx", "**/*.cs", "**/*.js"]
+    semantics: [business-logic, presentation]
+escalations:
+  - id: secrets
+    triggers: [secrets, credentials, iam, tenant-isolation, infrastructure, migration, data-retention, public-api]
+    require: human-approval
+  - id: high-risk-change
+    triggers: [critical-risk, destructive-migration, authorization-bypass, self-approval]
+    require: human-approval
+gates:
+  required: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+  neverMarkMissingAsPassed: true
+approvalRules:
+  - gate: architecture
+    minApprovers: 1
+    rejectSelfApproval: true
+    invalidateOn: [candidate-sha-change, plan-digest-change]
+  - gate: merge
+    minApprovers: 1
+    rejectSelfApproval: true
+    invalidateOn: [candidate-sha-change, evidence-mismatch]
+  - gate: release
+    minApprovers: 1
+    rejectSelfApproval: true
+    invalidateOn: [candidate-sha-change, plan-digest-change]

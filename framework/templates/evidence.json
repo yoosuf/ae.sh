@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "verification",
+  "issueKey": "PROJ-101",
+  "workflowId": "feature-development",
+  "taskId": "verify-final",
+  "candidateSha": "unknown",
+  "status": "pending-execution",
+  "checks": [
+    {
+      "name": "format",
+      "command": "gofmt -l .",
+      "status": "not-run",
+      "exitCode": null,
+      "observedOutput": ""
+    },
+    {
+      "name": "vet",
+      "command": "go vet ./...",
+      "status": "not-run",
+      "exitCode": null,
+      "observedOutput": ""
+    },
+    {
+      "name": "unit-tests",
+      "command": "go test ./...",
+      "status": "not-run",
+      "exitCode": null,
+      "observedOutput": ""
+    }
+  ],
+  "artifacts": ["issue-brief.json", "plan.json", "review-findings.json"],
+  "approvals": [],
+  "notes": "Replace not-run entries with observed output only after executing commands in the current environment."
+}

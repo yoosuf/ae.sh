@@ -1,0 +1,30 @@
+schemaVersion: "1.0"
+id: dotnet
+version: "1.0.0"
+language: C#
+toolchain:
+  minVersion: "8.0"
+  packageManager: dotnet
+conventions:
+  projects: "SDK-style projects; one test project per production project"
+  nullability: "nullable reference types enabled; no suppression without justification"
+  async: "async APIs end in Async and accept CancellationToken"
+  testing: "deterministic tests with no external services; fixtures are local"
+  dependencies: "central package versions; credentials only via environment or secret store"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "dotnet format --verify-no-changes"
+  - gate: lint
+    command: "dotnet build --no-restore -warnaserror"
+  - gate: build
+    command: "dotnet build --no-restore"
+  - gate: unit-tests
+    command: "dotnet test --no-build"
+  - gate: dependency-audit
+    command: "dotnet list package --deprecated"
+evidenceCommands:
+  - "dotnet format --verify-no-changes"
+  - "dotnet build --no-restore"
+  - "dotnet test --no-build --logger console"
+  - "git diff --check"

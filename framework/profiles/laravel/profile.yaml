@@ -1,0 +1,32 @@
+schemaVersion: "1.0"
+id: laravel
+version: "1.0.0"
+language: PHP / Laravel
+toolchain:
+  minVersion: "8.2"
+  packageManager: composer
+conventions:
+  dependencies: "composer.lock is committed; credentials only via environment variables or a secret store"
+  testing: "feature and unit tests use local fixtures; no production data or live services"
+  assets: "the build gate expects npm scripts for frontend assets; API-only projects need a dedicated profile"
+  routing: "controllers are thin; authorization and validation live in dedicated classes"
+  secrets: ".env files and generated caches are never committed"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "./vendor/bin/pint --test"
+  - gate: lint
+    command: "composer validate --strict"
+  - gate: build
+    command: "npm run build"
+  - gate: unit-tests
+    command: "php artisan test"
+  - gate: dependency-audit
+    command: "composer audit --locked"
+evidenceCommands:
+  - "php --version"
+  - "composer --version"
+  - "./vendor/bin/pint --test"
+  - "php artisan test"
+  - "npm run build"
+  - "composer audit --locked"

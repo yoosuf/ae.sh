@@ -1,0 +1,120 @@
+schemaVersion: "1.0"
+id: incident-investigation
+version: "1.0.0"
+name: Incident investigation
+description: >-
+  Evidence-first incident triage. Reproduction and findings are recorded from
+  observed state; a proposed fix still follows its own implementation workflow.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Incident intake
+    skill: jira-intake
+    agent: sre
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: scope
+    name: Impact and timeline analysis
+    skill: requirement-analysis
+    agent: sre
+    dependsOn: [intake]
+    timeout: 15m
+    outputs: []
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Incident risk classification
+    skill: risk-assessment
+    agent: security-engineer
+    dependsOn: [scope]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: investigation-plan
+    name: Investigation plan
+    skill: technical-planning
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 15m
+    outputs: [plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: reproduce
+    name: Reproduction and evidence capture
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [investigation-plan]
+    timeout: 25m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent findings review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [reproduce]
+    timeout: 15m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: incident-approval
+    name: Incident review approval
+    type: approval
+    gate: incident-review
+    dependsOn: [review]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: handoff
+    name: Findings handoff
+    skill: agent-handoff
+    agent: orchestrator
+    dependsOn: [incident-approval]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: completed
+    onFailure:
+      action: block
+policies:
+  - framework/policies/default.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: plan.json
+    type: json
+    producer: investigation-plan
+  - name: evidence.json
+    type: json
+    producer: reproduce
+  - name: review-findings.json
+    type: json
+    producer: review
+  - name: evidence.md
+    type: markdown
+    producer: handoff

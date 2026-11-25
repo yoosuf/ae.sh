@@ -1,0 +1,31 @@
+schemaVersion: "1.0"
+id: vue
+version: "1.0.0"
+language: TypeScript / Vue 3
+toolchain:
+  minVersion: "3.5.0"
+  packageManager: npm
+conventions:
+  components: "single-file components with typed props and emits; logic in composables"
+  styling: "semantic custom classes backed by design tokens; scoped styles only for component internals"
+  designTokens: "colors, spacing, typography, and radii come from the token layer; no hard-coded values in components"
+  tailwind: "avoid Tailwind utility classes in application components"
+  accessibility: "semantic markup, labelled form controls, and keyboard-operable interactions"
+  testing: "component tests use local fixture data only"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "npm run format:check"
+  - gate: lint
+    command: "npm run lint"
+  - gate: build
+    command: "npm run build"
+  - gate: unit-tests
+    command: "npm test"
+  - gate: dependency-audit
+    command: "npm ls --all"
+evidenceCommands:
+  - "npm run lint"
+  - "npx vue-tsc --noEmit"
+  - "npm test"
+  - "npm run build"

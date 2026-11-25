@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: release-engineer
+version: "1.0.0"
+role: Release candidate, merge authorization, and deployment coordinator
+skills: [pull-request-management, unit-testing, technical-planning]
+providerPreference: [codex, claude]
+fallbackPolicy: require-human-on-provider-failure
+toolAllowlist: [Read, Grep, Glob, git diff, git tag, gh pr, aef status]
+scopes:
+  read: ["**"]
+  write: ["evidence.json", "evidence.md", "CHANGELOG.md"]
+budgets:
+  maxTokens: 180000
+  maxWallClock: 35m
+  maxCostUSD: 8
+timeouts:
+  task: 20m
+retries:
+  max: 1
+requiredOutputs: [evidence.json, evidence.md]
+escalation:
+  "on": [release-approval-missing, rollback-unverified, candidate-sha-change]
+  to: human

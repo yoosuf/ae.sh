@@ -1,0 +1,184 @@
+schemaVersion: "1.0"
+id: security-fix
+version: "1.0.0"
+name: Security fix
+description: >-
+  Security defect path with independent review, separation of duties, dry-run
+  evidence, and explicit sign-off; escalation is fail-closed.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Jira intake
+    skill: jira-intake
+    agent: product-owner
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Security risk classification
+    skill: risk-assessment
+    agent: security-engineer
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: plan
+    name: Remediation plan
+    skill: technical-planning
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 20m
+    outputs: [plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: scope-approval
+    name: Security scope approval
+    type: approval
+    gate: security-signoff
+    dependsOn: [plan]
+    requiredApprovers: 1
+    bindToArtifact: plan.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: isolate-worktree
+    name: Isolated fix worktree
+    skill: git-worktree-management
+    agent: backend-engineer
+    dependsOn: [scope-approval]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: implement
+    name: Implement security fix
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [isolate-worktree]
+    timeout: 40m
+    condition: "risk != unknown"
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: tests
+    name: Exploit regression tests
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [implement]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent security review
+    skill: code-review
+    agent: security-engineer
+    dependsOn: [tests]
+    timeout: 25m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: remediate
+    name: Bounded security remediation
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [review]
+    timeout: 30m
+    condition: "review.findings > 0"
+    outputs: []
+    "on":
+      state: remediating
+    boundedRetries:
+      max: 2
+    onFailure:
+      action: retry
+  - id: verify-final
+    name: Final candidate verification
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [remediate]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: fail
+  - id: signoff
+    name: Independent sign-off
+    type: approval
+    gate: security-signoff
+    dependsOn: [verify-final]
+    requiredApprovers: 1
+    bindToArtifact: review-findings.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: pull-request
+    name: Pull request
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [signoff]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: merge-authorization
+    name: Authorized merge
+    type: approval
+    gate: merge
+    dependsOn: [pull-request]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 2
+  onStates: [verifying, reviewing]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+  - framework/policies/high-risk.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: plan.json
+    type: json
+    producer: plan
+  - name: review-findings.json
+    type: json
+    producer: review
+  - name: evidence.json
+    type: json
+    producer: verify-final
+  - name: evidence.md
+    type: markdown
+    producer: pull-request

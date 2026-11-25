@@ -1,0 +1,183 @@
+schemaVersion: "1.0"
+id: dependency-upgrade
+version: "1.0.0"
+name: Dependency upgrade
+description: >-
+  Dependency and toolchain update path with audit evidence, independent review,
+  and bounded remediation when compatibility findings are raised.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Jira intake
+    skill: jira-intake
+    agent: product-owner
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Dependency risk classification
+    skill: risk-assessment
+    agent: security-engineer
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: plan
+    name: Upgrade plan
+    skill: technical-planning
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 15m
+    outputs: [plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: policy-approval
+    name: Dependency policy approval
+    type: approval
+    gate: architecture
+    dependsOn: [plan]
+    requiredApprovers: 1
+    bindToArtifact: plan.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: isolate-worktree
+    name: Isolated upgrade worktree
+    skill: git-worktree-management
+    agent: backend-engineer
+    dependsOn: [policy-approval]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: upgrade
+    name: Apply dependency upgrade
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [isolate-worktree]
+    timeout: 40m
+    condition: "risk != critical"
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: tests
+    name: Build and unit tests
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [upgrade]
+    timeout: 25m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: audit
+    name: Dependency audit evidence
+    skill: unit-testing
+    agent: security-engineer
+    dependsOn: [tests]
+    timeout: 15m
+    outputs: [evidence.json, evidence.md]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [audit]
+    timeout: 20m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: remediate
+    name: Bounded remediation
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [review]
+    timeout: 30m
+    condition: "review.findings > 0"
+    outputs: []
+    "on":
+      state: remediating
+    boundedRetries:
+      max: 2
+    onFailure:
+      action: retry
+  - id: verify-final
+    name: Final candidate verification
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [remediate]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: fail
+  - id: pull-request
+    name: Pull request
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [verify-final]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: merge-authorization
+    name: Authorized merge
+    type: approval
+    gate: merge
+    dependsOn: [pull-request]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 2
+  onStates: [verifying, reviewing]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: plan.json
+    type: json
+    producer: plan
+  - name: evidence.json
+    type: json
+    producer: verify-final
+  - name: evidence.md
+    type: markdown
+    producer: pull-request
+  - name: review-findings.json
+    type: json
+    producer: review

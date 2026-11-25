@@ -1,0 +1,250 @@
+schemaVersion: "1.0"
+id: feature-development
+version: "1.0.0"
+name: Feature development
+description: >-
+  Full feature delivery from Jira intake through closure. deploymentScope is
+  optional: if deployment is out of scope, the run finishes at the configured
+  PR/merge terminal state and no production evidence is invented; deployment
+  and production verification tasks are skipped.
+deploymentScope: optional
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Jira intake
+    skill: jira-intake
+    agent: product-owner
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: acceptance
+    name: Acceptance criteria
+    skill: acceptance-criteria
+    agent: product-owner
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: [acceptance-criteria.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Deterministic risk classification
+    skill: risk-assessment
+    agent: principal-architect
+    dependsOn: [acceptance]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: plan
+    name: Technical planning
+    skill: technical-planning
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 20m
+    outputs: [plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: architecture-approval
+    name: Architecture approval
+    type: approval
+    gate: architecture
+    dependsOn: [plan]
+    timeout: 60m
+    requiredApprovers: 1
+    bindToArtifact: plan.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: isolate-worktree
+    name: Isolated implementation worktree
+    skill: git-worktree-management
+    agent: backend-engineer
+    dependsOn: [architecture-approval]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: implement
+    name: Bounded implementation
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [isolate-worktree]
+    timeout: 45m
+    condition: "risk != critical"
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: unit-tests
+    name: Unit tests
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [implement]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent code review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [unit-tests]
+    timeout: 20m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: remediate
+    name: Bounded remediation
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [review]
+    timeout: 30m
+    condition: "review.findings > 0"
+    outputs: []
+    "on":
+      state: remediating
+    boundedRetries:
+      max: 2
+    onFailure:
+      action: retry
+  - id: verify-final
+    name: Final candidate verification
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [remediate]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: fail
+  - id: pull-request
+    name: Pull request
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [verify-final]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: merge-authorization
+    name: Authorized merge
+    type: approval
+    gate: merge
+    dependsOn: [pull-request]
+    timeout: 120m
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: staging-checks
+    name: Staging smoke checks
+    skill: unit-testing
+    agent: release-engineer
+    dependsOn: [merge-authorization]
+    timeout: 15m
+    condition: "deploymentScope == required"
+    outputs: []
+    "on":
+      state: staging
+    onFailure:
+      action: block
+  - id: release-approval
+    name: Release approval
+    type: approval
+    gate: release
+    dependsOn: [staging-checks]
+    timeout: 120m
+    requiredApprovers: 1
+    bindToArtifact: evidence.md
+    "on":
+      state: awaiting_release
+    onFailure:
+      action: block
+  - id: deploy
+    name: Deployment through CI
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [release-approval]
+    timeout: 30m
+    condition: "deploymentScope == required"
+    outputs: [evidence.json]
+    "on":
+      state: staging
+    onFailure:
+      action: block
+  - id: production-checks
+    name: Production checks
+    skill: unit-testing
+    agent: sre
+    dependsOn: [deploy]
+    timeout: 20m
+    condition: "deploymentScope == required"
+    outputs: [evidence.json]
+    "on":
+      state: production_verification
+    onFailure:
+      action: fail
+  - id: jira-closure
+    name: Jira closure
+    skill: jira-intake
+    agent: product-owner
+    dependsOn: [merge-authorization, production-checks]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: completed
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 2
+  onStates: [verifying, reviewing]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: acceptance-criteria.json
+    type: json
+    producer: acceptance
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: plan.json
+    type: json
+    producer: plan
+  - name: review-findings.json
+    type: json
+    producer: review
+  - name: evidence.json
+    type: json
+    producer: verify-final
+  - name: evidence.md
+    type: markdown
+    producer: pull-request

@@ -1,0 +1,31 @@
+schemaVersion: "1.0"
+id: react
+version: "1.0.0"
+language: TypeScript / React
+toolchain:
+  minVersion: "20.0.0"
+  packageManager: npm
+conventions:
+  components: "small function components with typed props; hooks follow the rules of hooks"
+  styling: "semantic custom classes backed by design tokens"
+  designTokens: "colors, spacing, typography, and radii come from the token layer; no hard-coded values in components"
+  tailwind: "avoid Tailwind utility classes in application components"
+  accessibility: "semantic HTML, labelled controls, and keyboard-operable interactions"
+  testing: "component tests use local fixture data only"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "npm run format:check"
+  - gate: lint
+    command: "npm run lint"
+  - gate: build
+    command: "npm run build"
+  - gate: unit-tests
+    command: "npm test"
+  - gate: dependency-audit
+    command: "npm ls --all"
+evidenceCommands:
+  - "npm run lint"
+  - "npm run typecheck"
+  - "npm test"
+  - "npm run build"

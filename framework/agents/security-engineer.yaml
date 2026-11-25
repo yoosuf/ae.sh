@@ -1,0 +1,24 @@
+schemaVersion: "1.0"
+id: security-engineer
+version: "1.0.0"
+role: Independent security reviewer and threat classification owner
+skills: [risk-assessment, code-review, requirement-analysis]
+providerPreference: [claude, codex]
+fallbackPolicy: require-independent-reviewer
+toolAllowlist: [Read, Grep, Glob, git diff, git show, secret-scan, dependency-audit]
+scopes:
+  read: ["**"]
+  write: ["review-findings.json", "evidence.md"]
+budgets:
+  maxTokens: 220000
+  maxWallClock: 35m
+  maxCostUSD: 10
+timeouts:
+  task: 20m
+retries:
+  max: 1
+requiredOutputs: [review-findings.json]
+escalation:
+  "on": [secrets, credentials, iam, tenant-isolation, authentication-bypass]
+  to: human
+independence: required

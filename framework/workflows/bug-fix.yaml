@@ -1,0 +1,181 @@
+schemaVersion: "1.0"
+id: bug-fix
+version: "1.0.0"
+name: Bug fix
+description: Reproduce, classify, fix, verify, and merge a defect with bounded remediation.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Jira intake
+    skill: jira-intake
+    agent: product-owner
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: triage
+    name: Defect triage
+    skill: requirement-analysis
+    agent: product-owner
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Risk classification
+    skill: risk-assessment
+    agent: principal-architect
+    dependsOn: [triage]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: plan
+    name: Fix plan
+    skill: technical-planning
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 15m
+    outputs: [plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: fix-approval
+    name: Fix plan approval
+    type: approval
+    gate: architecture
+    dependsOn: [plan]
+    requiredApprovers: 1
+    bindToArtifact: plan.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: isolate-worktree
+    name: Isolated fix worktree
+    skill: git-worktree-management
+    agent: backend-engineer
+    dependsOn: [fix-approval]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: implement
+    name: Implement fix
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [isolate-worktree]
+    timeout: 30m
+    condition: "risk != critical"
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: tests
+    name: Regression tests
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [implement]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [tests]
+    timeout: 15m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: remediate
+    name: Bounded remediation
+    skill: backend-development
+    agent: backend-engineer
+    dependsOn: [review]
+    timeout: 30m
+    condition: "review.findings > 0"
+    outputs: []
+    "on":
+      state: remediating
+    boundedRetries:
+      max: 2
+    onFailure:
+      action: retry
+  - id: verify-final
+    name: Final verification
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [remediate]
+    timeout: 15m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: fail
+  - id: pull-request
+    name: Pull request
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [verify-final]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: merge-authorization
+    name: Authorized merge
+    type: approval
+    gate: merge
+    dependsOn: [pull-request]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 2
+  onStates: [verifying, reviewing]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: plan.json
+    type: json
+    producer: plan
+  - name: review-findings.json
+    type: json
+    producer: review
+  - name: evidence.json
+    type: json
+    producer: verify-final
+  - name: evidence.md
+    type: markdown
+    producer: pull-request

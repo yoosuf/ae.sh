@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aef.dev/schemas/manifest.schema.json",
+  "title": "AEF provider installation manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "frameworkVersion",
+    "provider",
+    "scope",
+    "targetDir",
+    "generatedAt",
+    "skills"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "frameworkVersion": { "type": "string", "minLength": 1 },
+    "provider": { "enum": ["claude", "codex", "all"] },
+    "scope": { "enum": ["user", "project"] },
+    "targetDir": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slug", "path", "sha256", "version"],
+        "properties": {
+          "slug": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "version": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

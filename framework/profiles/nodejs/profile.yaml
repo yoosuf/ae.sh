@@ -1,0 +1,31 @@
+schemaVersion: "1.0"
+id: nodejs
+version: "1.0.0"
+language: JavaScript / TypeScript
+toolchain:
+  minVersion: "20.0.0"
+  packageManager: npm
+conventions:
+  modules: "ES modules; no CommonJS in new application code"
+  types: "TypeScript strict mode; no implicit any"
+  testing: "unit tests are offline and do not hit real APIs"
+  dependencies: "lockfile committed; no credentials in .npmrc or source"
+  scripts: "lint, typecheck, build, and test scripts are defined in package.json"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "npm run format:check"
+  - gate: lint
+    command: "npm run lint"
+  - gate: build
+    command: "npm run build"
+  - gate: unit-tests
+    command: "npm test"
+  - gate: dependency-audit
+    command: "npm ls --all"
+evidenceCommands:
+  - "npm run lint"
+  - "npm run typecheck"
+  - "npm test"
+  - "npm run build"
+  - "npm audit --audit-level=high"

@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: orchestrator
+version: "1.0.0"
+role: Workflow orchestrator and handoff coordinator
+skills: [agent-handoff, technical-planning, risk-assessment]
+providerPreference: [claude, codex]
+fallbackPolicy: require-human-on-provider-failure
+toolAllowlist: [Read, Grep, Glob, git status, aef status, aef resume]
+scopes:
+  read: ["**"]
+  write: []
+budgets:
+  maxTokens: 300000
+  maxWallClock: 60m
+  maxCostUSD: 20
+timeouts:
+  task: 30m
+retries:
+  max: 1
+requiredOutputs: [evidence.md]
+escalation:
+  "on": [deadlock, policy-conflict, approval-timeout, budget-exhaustion]
+  to: human

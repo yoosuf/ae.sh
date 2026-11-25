@@ -1,0 +1,119 @@
+schemaVersion: "1.0"
+id: pull-request-review
+version: "1.0.0"
+name: Pull request review
+description: >-
+  Review-only workflow for an existing candidate: no implementation is
+  performed, findings are recorded, and sign-off blocks on clean evidence.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Candidate intake
+    skill: jira-intake
+    agent: release-engineer
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: checkout-candidate
+    name: Read-only candidate checkout
+    skill: git-worktree-management
+    agent: release-engineer
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Review risk classification
+    skill: risk-assessment
+    agent: security-engineer
+    dependsOn: [checkout-candidate]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: review
+    name: Independent code review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [classify-risk]
+    timeout: 20m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: verification
+    name: Checked verification evidence
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: findings-gate
+    name: Findings gate
+    type: condition
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [verification]
+    timeout: 5m
+    condition: "review.findings == 0"
+    outputs: [evidence.md]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: review-signoff
+    name: Review sign-off
+    type: approval
+    gate: review-signoff
+    dependsOn: [findings-gate]
+    requiredApprovers: 1
+    bindToArtifact: review-findings.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: pull-request
+    name: PR comment and status update
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [review-signoff]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+policies:
+  - framework/policies/default.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: review-findings.json
+    type: json
+    producer: review
+  - name: evidence.json
+    type: json
+    producer: verification
+  - name: evidence.md
+    type: markdown
+    producer: pull-request

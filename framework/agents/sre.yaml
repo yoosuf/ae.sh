@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: sre
+version: "1.0.0"
+role: Production verification, incident triage, and runbook owner
+skills: [unit-testing, risk-assessment, agent-handoff]
+providerPreference: [codex, claude]
+fallbackPolicy: prefer-secondary-provider
+toolAllowlist: [Read, Grep, Glob, Bash, curl, kubectl, aef status]
+scopes:
+  read: ["**"]
+  write: ["evidence.json", "evidence.md", "runbooks/**"]
+budgets:
+  maxTokens: 160000
+  maxWallClock: 30m
+  maxCostUSD: 6
+timeouts:
+  task: 15m
+retries:
+  max: 1
+requiredOutputs: [evidence.json]
+escalation:
+  "on": [production-impact, incident-severity-1, health-check-failure]
+  to: human

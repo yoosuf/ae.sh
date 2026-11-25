@@ -1,0 +1,186 @@
+schemaVersion: "1.0"
+id: legacy-refactoring
+version: "1.0.0"
+name: Legacy refactoring
+description: >-
+  Incremental modernization of legacy code with recorded architecture decision,
+  semantic-UI conventions, and bounded remediation after independent review.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Jira intake
+    skill: jira-intake
+    agent: product-owner
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: requirements
+    name: Behavior preservation analysis
+    skill: requirement-analysis
+    agent: product-owner
+    dependsOn: [intake]
+    timeout: 15m
+    outputs: []
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Legacy risk classification
+    skill: risk-assessment
+    agent: principal-architect
+    dependsOn: [requirements]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: design
+    name: Architecture decision and plan
+    skill: solution-architecture
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 30m
+    outputs: [adr.md, plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: architecture-approval
+    name: Architecture approval
+    type: approval
+    gate: architecture
+    dependsOn: [design]
+    requiredApprovers: 1
+    bindToArtifact: adr.md
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: isolate-worktree
+    name: Isolated refactoring worktree
+    skill: git-worktree-management
+    agent: frontend-engineer
+    dependsOn: [architecture-approval]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: refactor
+    name: Incremental refactor
+    skill: backend-development
+    agent: frontend-engineer
+    dependsOn: [isolate-worktree]
+    timeout: 60m
+    condition: "risk != critical"
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: tests
+    name: Characterization tests
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [refactor]
+    timeout: 30m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [tests]
+    timeout: 25m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: remediate
+    name: Bounded remediation
+    skill: backend-development
+    agent: frontend-engineer
+    dependsOn: [review]
+    timeout: 30m
+    condition: "review.findings > 0"
+    outputs: []
+    "on":
+      state: remediating
+    boundedRetries:
+      max: 2
+    onFailure:
+      action: retry
+  - id: verify-final
+    name: Final candidate verification
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [remediate]
+    timeout: 20m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: fail
+  - id: pull-request
+    name: Pull request
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [verify-final]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: merge-authorization
+    name: Authorized merge
+    type: approval
+    gate: merge
+    dependsOn: [pull-request]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 2
+  onStates: [verifying, reviewing]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: adr.md
+    type: markdown
+    producer: design
+  - name: plan.json
+    type: json
+    producer: design
+  - name: evidence.json
+    type: json
+    producer: verify-final
+  - name: review-findings.json
+    type: json
+    producer: review
+  - name: evidence.md
+    type: markdown
+    producer: pull-request

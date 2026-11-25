@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "issueKey": "PROJ-101",
+  "title": "Deterministic risk classification before planning",
+  "approach": "Resolve changed paths against policy riskRules first, then write a plan that references the recorded classification. Downstream gates bind to plan.json and re-invalidate when its digest changes.",
+  "classification": {
+    "source": "risk-assessment.json",
+    "level": "high",
+    "ruleIds": ["auth-path"]
+  },
+  "steps": [
+    {
+      "id": "S1",
+      "description": "Write the classifier and table-driven tests in an isolated worktree.",
+      "skill": "backend-development",
+      "agent": "backend-engineer"
+    },
+    {
+      "id": "S2",
+      "description": "Capture format, vet, and test output as evidence.",
+      "skill": "unit-testing",
+      "agent": "qa-engineer"
+    },
+    {
+      "id": "S3",
+      "description": "Review the candidate independently and record review-findings.json.",
+      "skill": "code-review",
+      "agent": "code-reviewer"
+    }
+  ],
+  "artifacts": [
+    "issue-brief.json",
+    "risk-assessment.json",
+    "review-findings.json",
+    "evidence.json",
+    "evidence.md"
+  ],
+  "testStrategy": "Offline table-driven tests only; no network calls and no real credentials.",
+  "rollback": {
+    "plan": "Revert the isolated commit and discard the worktree; no data changes are involved.",
+    "verified": false
+  },
+  "approvalGates": ["architecture", "merge"],
+  "candidateSha": "unknown",
+  "status": "draft"
+}

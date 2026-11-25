@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: backend-engineer
+version: "1.0.0"
+role: Isolated backend implementation and unit test author
+skills: [git-worktree-management, backend-development, unit-testing, agent-handoff]
+providerPreference: [codex, claude]
+fallbackPolicy: prefer-secondary-provider
+toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, git diff, git worktree, go test]
+scopes:
+  read: ["**"]
+  write: ["src/**", "internal/**", "test/**", "tests/**", "evidence.json"]
+budgets:
+  maxTokens: 300000
+  maxWallClock: 60m
+  maxCostUSD: 15
+timeouts:
+  task: 30m
+retries:
+  max: 2
+requiredOutputs: [evidence.json]
+escalation:
+  "on": [schema-change, authorization-bypass, worktree-conflict]
+  to: human

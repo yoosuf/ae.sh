@@ -1,0 +1,31 @@
+schemaVersion: "1.0"
+id: astro
+version: "1.0.0"
+language: TypeScript / Astro
+toolchain:
+  minVersion: "5.0.0"
+  packageManager: npm
+conventions:
+  islands: "keep interactive islands small; default to static server-rendered content"
+  styling: "semantic custom classes backed by design tokens"
+  designTokens: "colors, spacing, typography, and radii come from the token layer; no hard-coded values in components"
+  tailwind: "avoid Tailwind utility classes in application components"
+  accessibility: "semantic landmarks, descriptive alt text, and keyboard-operable navigation"
+  data: "content collections validated at build time; no secrets in frontmatter or fixtures"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "npm run format:check"
+  - gate: lint
+    command: "npm run lint"
+  - gate: build
+    command: "npm run build"
+  - gate: unit-tests
+    command: "npm test"
+  - gate: dependency-audit
+    command: "npm ls --all"
+evidenceCommands:
+  - "npm run lint"
+  - "npm run typecheck"
+  - "npm test"
+  - "npm run build"

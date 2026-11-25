@@ -1,0 +1,176 @@
+schemaVersion: "1.0"
+id: database-migration
+version: "1.0.0"
+name: Database migration
+description: >-
+  Schema change path with migration-safety approval, dry-run evidence, rollback
+  evidence, and independent review before merge; no migration is applied here.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Jira intake
+    skill: jira-intake
+    agent: database-engineer
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Data risk classification
+    skill: risk-assessment
+    agent: database-engineer
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: plan
+    name: Migration plan
+    skill: technical-planning
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 25m
+    outputs: [plan.json, adr.md]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: migration-approval
+    name: Migration safety approval
+    type: approval
+    gate: migration-safety
+    dependsOn: [plan]
+    requiredApprovers: 1
+    bindToArtifact: plan.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: isolate-worktree
+    name: Isolated migration worktree
+    skill: git-worktree-management
+    agent: database-engineer
+    dependsOn: [migration-approval]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: implement
+    name: Write forward and rollback migrations
+    skill: backend-development
+    agent: database-engineer
+    dependsOn: [isolate-worktree]
+    timeout: 45m
+    condition: "risk != unknown"
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: migration-tests
+    name: Migration tests on disposable data
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [implement]
+    timeout: 30m
+    outputs: [evidence.json, evidence.md]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent migration review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [migration-tests]
+    timeout: 20m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: remediate
+    name: Bounded remediation
+    skill: backend-development
+    agent: database-engineer
+    dependsOn: [review]
+    timeout: 30m
+    condition: "review.findings > 0"
+    outputs: []
+    "on":
+      state: remediating
+    boundedRetries:
+      max: 2
+    onFailure:
+      action: retry
+  - id: recovery-approval
+    name: Dry-run and recovery evidence approval
+    type: approval
+    gate: recovery-evidence
+    dependsOn: [remediate]
+    requiredApprovers: 1
+    bindToArtifact: evidence.md
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: pull-request
+    name: Pull request
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [recovery-approval]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: merge-authorization
+    name: Authorized merge
+    type: approval
+    gate: merge
+    dependsOn: [pull-request]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 2
+  onStates: [verifying, reviewing]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+  - framework/policies/high-risk.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: plan.json
+    type: json
+    producer: plan
+  - name: adr.md
+    type: markdown
+    producer: plan
+  - name: evidence.json
+    type: json
+    producer: migration-tests
+  - name: evidence.md
+    type: markdown
+    producer: pull-request
+  - name: review-findings.json
+    type: json
+    producer: review

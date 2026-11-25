@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: principal-architect
+version: "1.0.0"
+role: Architecture, deterministic risk classification, and plan owner
+skills: [requirement-analysis, risk-assessment, solution-architecture, technical-planning]
+providerPreference: [claude, codex]
+fallbackPolicy: prefer-secondary-provider
+toolAllowlist: [Read, Grep, Glob, git diff, git show]
+scopes:
+  read: ["**"]
+  write: ["plan.json", "adr.md", "risk-assessment.json"]
+budgets:
+  maxTokens: 250000
+  maxWallClock: 45m
+  maxCostUSD: 12
+timeouts:
+  task: 20m
+retries:
+  max: 1
+requiredOutputs: [plan.json, risk-assessment.json, adr.md]
+escalation:
+  "on": [critical-risk, architecture-conflict, missing-rollback-plan]
+  to: human

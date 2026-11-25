@@ -1,0 +1,30 @@
+schemaVersion: "1.0"
+id: java
+version: "1.0.0"
+language: Java
+toolchain:
+  minVersion: "17"
+  packageManager: maven-or-gradle
+conventions:
+  wrappers: "verification uses committed ./mvnw or ./gradlew; missing wrappers fail closed"
+  layout: "standard Maven/Gradle source sets with one test source set per module"
+  nullability: "prefer explicit nullability annotations; no unchecked suppression without justification"
+  testing: "deterministic JVM tests with local fixtures and no external services"
+  dependencies: "pinned wrapper versions and dependency versions; credentials only via environment or secret store"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: 'if [ -x ./mvnw ]; then ./mvnw -q spotless:check; elif [ -x ./gradlew ]; then ./gradlew --no-daemon spotlessCheck; else echo "requires executable ./mvnw or ./gradlew" >&2; exit 127; fi'
+  - gate: lint
+    command: 'if [ -x ./mvnw ]; then ./mvnw -q -DskipTests verify; elif [ -x ./gradlew ]; then ./gradlew --no-daemon check -x test; else echo "requires executable ./mvnw or ./gradlew" >&2; exit 127; fi'
+  - gate: build
+    command: 'if [ -x ./mvnw ]; then ./mvnw -q -DskipTests package; elif [ -x ./gradlew ]; then ./gradlew --no-daemon assemble; else echo "requires executable ./mvnw or ./gradlew" >&2; exit 127; fi'
+  - gate: unit-tests
+    command: 'if [ -x ./mvnw ]; then ./mvnw -q test; elif [ -x ./gradlew ]; then ./gradlew --no-daemon test; else echo "requires executable ./mvnw or ./gradlew" >&2; exit 127; fi'
+  - gate: dependency-audit
+    command: 'if [ -x ./mvnw ]; then ./mvnw -q dependency:tree; elif [ -x ./gradlew ]; then ./gradlew --no-daemon dependencies; else echo "requires executable ./mvnw or ./gradlew" >&2; exit 127; fi'
+evidenceCommands:
+  - 'if [ -x ./mvnw ]; then ./mvnw --version; else ./gradlew --no-daemon --version; fi'
+  - 'if [ -x ./mvnw ]; then ./mvnw -q -DskipTests package; else ./gradlew --no-daemon assemble; fi'
+  - 'if [ -x ./mvnw ]; then ./mvnw -q test; else ./gradlew --no-daemon test; fi'
+  - "git diff --check"

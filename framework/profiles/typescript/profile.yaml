@@ -1,0 +1,31 @@
+schemaVersion: "1.0"
+id: typescript
+version: "1.0.0"
+language: TypeScript
+toolchain:
+  minVersion: "20.0.0"
+  packageManager: npm
+conventions:
+  types: "tsconfig.json enables strict mode; no implicit any or unchecked escape hatches without justification"
+  modules: "ES modules; no CommonJS in new application code"
+  scripts: "format:check, lint, typecheck, build, and test scripts are defined in package.json"
+  testing: "unit tests use local fixtures and never call real APIs"
+  dependencies: "lockfile committed; no credentials in .npmrc or source"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "npm run format:check"
+  - gate: lint
+    command: "npm run lint"
+  - gate: build
+    command: "npm run typecheck && npm run build"
+  - gate: unit-tests
+    command: "npm test"
+  - gate: dependency-audit
+    command: "npm audit --audit-level=high"
+evidenceCommands:
+  - "npx tsc --noEmit"
+  - "npm run lint"
+  - "npm test"
+  - "npm run build"
+  - "npm audit --audit-level=high"

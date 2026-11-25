@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: qa-engineer
+version: "1.0.0"
+role: Test execution and verification evidence owner
+skills: [unit-testing, requirement-analysis, agent-handoff]
+providerPreference: [codex, claude]
+fallbackPolicy: prefer-secondary-provider
+toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, go test, npm test, dotnet test]
+scopes:
+  read: ["**"]
+  write: ["tests/**", "test/**", "evidence.json", "evidence.md"]
+budgets:
+  maxTokens: 180000
+  maxWallClock: 40m
+  maxCostUSD: 8
+timeouts:
+  task: 20m
+retries:
+  max: 1
+requiredOutputs: [evidence.json]
+escalation:
+  "on": [flaky-test, missing-evidence, failed-gate]
+  to: human

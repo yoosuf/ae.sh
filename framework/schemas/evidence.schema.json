@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aef.dev/schemas/evidence.schema.json",
+  "title": "AEF evidence record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "recordID",
+    "runID",
+    "sequence",
+    "timestamp",
+    "kind",
+    "subject",
+    "data",
+    "dataDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "recordID": { "type": "string", "minLength": 8 },
+    "runID": { "type": "string", "minLength": 8 },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "kind": {
+      "enum": [
+        "input",
+        "plan",
+        "risk",
+        "approval",
+        "provider",
+        "test",
+        "review",
+        "remediation",
+        "gate",
+        "artifact",
+        "transition",
+        "merge",
+        "deployment",
+        "note"
+      ]
+    },
+    "subject": { "type": "string", "minLength": 1 },
+    "data": { "type": "object" },
+    "dataDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "previousDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "actor": { "type": "string" },
+    "exitStatus": { "type": ["integer", "null"] },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["known"],
+      "properties": {
+        "known": { "type": "boolean" },
+        "inputTokens": { "type": ["integer", "null"] },
+        "outputTokens": { "type": ["integer", "null"] },
+        "costUSD": { "type": ["number", "null"] }
+      }
+    }
+  }
+}

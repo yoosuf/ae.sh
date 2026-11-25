@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aef.dev/schemas/agent.schema.json",
+  "title": "AEF agent definition (AEF-internal, not a native provider format)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "role",
+    "skills",
+    "providerPreference",
+    "toolAllowlist",
+    "scopes",
+    "budgets",
+    "timeouts",
+    "retries",
+    "requiredOutputs",
+    "escalation"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+" },
+    "role": { "type": "string", "minLength": 2 },
+    "skills": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "providerPreference": { "type": "array", "minItems": 1, "items": { "enum": ["claude", "codex", "fake"] } },
+    "fallbackPolicy": { "type": "string" },
+    "independence": { "enum": ["required", "not-required"] },
+    "toolAllowlist": { "type": "array", "items": { "type": "string" } },
+    "scopes": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["read", "write"],
+      "properties": {
+        "read": { "type": "array", "items": { "type": "string" } },
+        "write": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["maxTokens", "maxWallClock", "maxCostUSD"],
+      "properties": {
+        "maxTokens": { "type": "integer", "minimum": 1 },
+        "maxWallClock": { "type": "string", "minLength": 2 },
+        "maxCostUSD": { "type": "number", "minimum": 0 }
+      }
+    },
+    "timeouts": { "type": "object", "additionalProperties": true },
+    "retries": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": { "max": { "type": "integer", "minimum": 0, "maximum": 5 } }
+    },
+    "requiredOutputs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "escalation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["on", "to"],
+      "properties": {
+        "on": { "type": "array", "items": { "type": "string" } },
+        "to": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+schemaVersion: "1.0"
+id: python
+version: "1.0.0"
+language: Python
+toolchain:
+  minVersion: "3.11"
+  packageManager: pip
+conventions:
+  typing: "annotate public interfaces; no broad Any without justification"
+  layout: "src/ for packages, tests/ for tests, and a lockfile or constraints file committed"
+  testing: "pytest fixtures are local and deterministic; no network calls in unit tests"
+  dependencies: "dependencies pinned for reproducible builds; credentials only via environment or secret store"
+  formatting: "black and ruff configuration checked in; generated files excluded from hand edits"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "python3 -m black --check ."
+  - gate: lint
+    command: "python3 -m ruff check ."
+  - gate: build
+    command: "python3 -m build"
+  - gate: unit-tests
+    command: "python3 -m pytest"
+  - gate: dependency-audit
+    command: "python3 -m pip check"
+evidenceCommands:
+  - "python3 --version"
+  - "python3 -m pip check"
+  - "python3 -m ruff check ."
+  - "python3 -m pytest"
+  - "python3 -m build"
+  - "git diff --check"

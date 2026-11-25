@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: product-owner
+version: "1.0.0"
+role: Requirements, scope, and acceptance criteria owner
+skills: [jira-intake, requirement-analysis, acceptance-criteria]
+providerPreference: [claude, codex]
+fallbackPolicy: prefer-secondary-provider
+toolAllowlist: [Read, Grep, Glob, jira]
+scopes:
+  read: ["**"]
+  write: ["issue-brief.json", "acceptance-criteria.json"]
+budgets:
+  maxTokens: 120000
+  maxWallClock: 20m
+  maxCostUSD: 3
+timeouts:
+  task: 10m
+retries:
+  max: 1
+requiredOutputs: [issue-brief.json, acceptance-criteria.json]
+escalation:
+  "on": [ambiguous-requirement, conflicting-acceptance-criteria, missing-links]
+  to: human

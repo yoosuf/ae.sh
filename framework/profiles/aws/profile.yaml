@@ -1,0 +1,32 @@
+schemaVersion: "1.0"
+id: aws
+version: "1.0.0"
+language: HCL / TypeScript
+toolchain:
+  minVersion: "1.6.0"
+  packageManager: terraform
+conventions:
+  modules: "reusable modules with pinned provider versions; no hand-edited generated files"
+  state: "remote state with locking; state never committed to the repository"
+  leastPrivilege: "IAM policies grant only observed required actions"
+  secrets: "credentials come from environment variables or an external secret store, never config or CLI flags"
+  tagging: "owner, environment, and cost-center tags on every taggable resource"
+  verification: "record plan output as evidence; never apply from this profile"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "terraform fmt -check -recursive"
+  - gate: lint
+    command: "terraform validate"
+  - gate: build
+    command: "terraform plan -input=false -out=.aef/terraform.tfplan"
+  - gate: unit-tests
+    command: "terraform test"
+  - gate: dependency-audit
+    command: "terraform providers"
+evidenceCommands:
+  - "terraform fmt -check -recursive"
+  - "terraform init -backend=false"
+  - "terraform validate"
+  - "terraform plan -input=false -out=tfplan"
+  - "terraform show -no-color tfplan"

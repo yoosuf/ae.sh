@@ -1,0 +1,150 @@
+schemaVersion: "1.0"
+id: production-release
+version: "1.0.0"
+name: Production release
+description: >-
+  Authorized release path. Deployment runs through CI after explicit release
+  approval; production checks use only observed evidence and never invent it.
+deploymentScope: required
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Release intake
+    skill: jira-intake
+    agent: release-engineer
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Release risk classification
+    skill: risk-assessment
+    agent: sre
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: plan
+    name: Release and rollback plan
+    skill: technical-planning
+    agent: release-engineer
+    dependsOn: [classify-risk]
+    timeout: 20m
+    outputs: [plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: release-approval
+    name: Release approval
+    type: approval
+    gate: release
+    dependsOn: [plan]
+    requiredApprovers: 1
+    bindToArtifact: plan.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: preflight
+    name: Release preflight checks
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [release-approval]
+    timeout: 25m
+    outputs: [evidence.json]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Release checklist review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [preflight]
+    timeout: 15m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: deploy-authorization
+    name: Deployment authorization
+    type: approval
+    gate: release
+    dependsOn: [review]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_release
+    onFailure:
+      action: block
+  - id: deploy
+    name: Deployment through CI
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [deploy-authorization]
+    timeout: 30m
+    condition: "deploymentScope == required"
+    outputs: [evidence.json, evidence.md]
+    "on":
+      state: staging
+    onFailure:
+      action: fail
+  - id: production-checks
+    name: Production health checks
+    skill: unit-testing
+    agent: sre
+    dependsOn: [deploy]
+    timeout: 20m
+    condition: "deploymentScope == required"
+    outputs: [evidence.json]
+    "on":
+      state: production_verification
+    onFailure:
+      action: fail
+  - id: jira-closure
+    name: Release closure
+    skill: jira-intake
+    agent: release-engineer
+    dependsOn: [production-checks]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: completed
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 1
+  onStates: [verifying]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+  - framework/policies/high-risk.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: plan.json
+    type: json
+    producer: plan
+  - name: review-findings.json
+    type: json
+    producer: review
+  - name: evidence.json
+    type: json
+    producer: production-checks
+  - name: evidence.md
+    type: markdown
+    producer: deploy

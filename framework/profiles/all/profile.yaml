@@ -1,0 +1,27 @@
+schemaVersion: "1.0"
+id: all
+version: "1.0.0"
+language: Polyglot
+toolchain:
+  minVersion: "varies by included profile"
+  packageManager: "varies by included profile"
+conventions:
+  aggregate: "composite profile that reuses every canonical profile's checks without duplicating commands"
+  failClosed: "missing tools, missing wrappers, or missing project scripts remain failures; no check is skipped as a pass"
+  mixedRepos: "use for repositories that actually contain all these toolchains, or select specific profiles instead"
+  credentials: "no verification command reads credentials; environment variables or an external secret store are required"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+includes:
+  - go
+  - java
+  - python
+  - dotnet
+  - nodejs
+  - typescript
+  - react
+  - vue
+  - astro
+  - laravel
+  - aws
+checks: []
+evidenceCommands: []

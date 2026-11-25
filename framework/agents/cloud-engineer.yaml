@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: cloud-engineer
+version: "1.0.0"
+role: Infrastructure and delivery pipeline engineer
+skills: [risk-assessment, technical-planning, git-worktree-management, unit-testing]
+providerPreference: [codex, claude]
+fallbackPolicy: require-secondary-provider
+toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, git diff, terraform, aws]
+scopes:
+  read: ["**"]
+  write: ["infra/**", "*.tf", ".github/workflows/**", "evidence.json"]
+budgets:
+  maxTokens: 240000
+  maxWallClock: 50m
+  maxCostUSD: 15
+timeouts:
+  task: 25m
+retries:
+  max: 1
+requiredOutputs: [evidence.json]
+escalation:
+  "on": [public-api, iam-change, infrastructure, cost-threshold-exceeded]
+  to: human

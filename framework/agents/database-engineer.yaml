@@ -1,0 +1,23 @@
+schemaVersion: "1.0"
+id: database-engineer
+version: "1.0.0"
+role: Schema migration author and data-safety owner
+skills: [risk-assessment, technical-planning, backend-development, unit-testing]
+providerPreference: [claude, codex]
+fallbackPolicy: require-secondary-provider
+toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, git diff, psql]
+scopes:
+  read: ["**"]
+  write: ["migrations/**", "db/**", "schema/**", "evidence.json"]
+budgets:
+  maxTokens: 220000
+  maxWallClock: 45m
+  maxCostUSD: 12
+timeouts:
+  task: 25m
+retries:
+  max: 1
+requiredOutputs: [evidence.json, evidence.md]
+escalation:
+  "on": [destructive-migration, data-retention, backfill, lock-risk]
+  to: human

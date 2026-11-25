@@ -1,0 +1,176 @@
+schemaVersion: "1.0"
+id: infrastructure-change
+version: "1.0.0"
+name: Infrastructure change
+description: >-
+  Infrastructure and pipeline changes require architecture approval, a dry-run
+  plan, independent review, and recovery evidence before merge.
+states: [queued, analyzing, planning, awaiting_approval, implementing, verifying, reviewing, remediating, awaiting_merge, staging, awaiting_release, production_verification, completed, blocked, failed, cancelled]
+initial: queued
+terminal: [completed, failed, cancelled]
+tasks:
+  - id: intake
+    name: Jira intake
+    skill: jira-intake
+    agent: cloud-engineer
+    dependsOn: []
+    timeout: 10m
+    outputs: [issue-brief.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: classify-risk
+    name: Infrastructure risk classification
+    skill: risk-assessment
+    agent: cloud-engineer
+    dependsOn: [intake]
+    timeout: 10m
+    outputs: [risk-assessment.json]
+    "on":
+      state: analyzing
+    onFailure:
+      action: block
+  - id: design
+    name: Solution architecture
+    skill: solution-architecture
+    agent: principal-architect
+    dependsOn: [classify-risk]
+    timeout: 25m
+    outputs: [adr.md, plan.json]
+    "on":
+      state: planning
+    onFailure:
+      action: block
+  - id: infra-approval
+    name: Infrastructure approval
+    type: approval
+    gate: infrastructure
+    dependsOn: [design]
+    requiredApprovers: 1
+    bindToArtifact: plan.json
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: isolate-worktree
+    name: Isolated change worktree
+    skill: git-worktree-management
+    agent: cloud-engineer
+    dependsOn: [infra-approval]
+    timeout: 10m
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: implement
+    name: Implement infrastructure change
+    skill: backend-development
+    agent: cloud-engineer
+    dependsOn: [isolate-worktree]
+    timeout: 45m
+    condition: "risk != critical"
+    outputs: []
+    "on":
+      state: implementing
+    onFailure:
+      action: block
+  - id: plan-checks
+    name: Validate and dry-run checks
+    skill: unit-testing
+    agent: qa-engineer
+    dependsOn: [implement]
+    timeout: 25m
+    outputs: [evidence.json, evidence.md]
+    "on":
+      state: verifying
+    onFailure:
+      action: block
+  - id: review
+    name: Independent review
+    skill: code-review
+    agent: code-reviewer
+    dependsOn: [plan-checks]
+    timeout: 20m
+    outputs: [review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: remediate
+    name: Bounded remediation
+    skill: backend-development
+    agent: cloud-engineer
+    dependsOn: [review]
+    timeout: 30m
+    condition: "review.findings > 0"
+    outputs: []
+    "on":
+      state: remediating
+    boundedRetries:
+      max: 2
+    onFailure:
+      action: retry
+  - id: dry-run-approval
+    name: Dry-run evidence approval
+    type: approval
+    gate: dry-run
+    dependsOn: [remediate]
+    requiredApprovers: 1
+    bindToArtifact: evidence.md
+    "on":
+      state: awaiting_approval
+    onFailure:
+      action: block
+  - id: pull-request
+    name: Pull request
+    skill: pull-request-management
+    agent: release-engineer
+    dependsOn: [dry-run-approval]
+    timeout: 10m
+    outputs: [evidence.md]
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+  - id: merge-authorization
+    name: Authorized merge
+    type: approval
+    gate: merge
+    dependsOn: [pull-request]
+    requiredApprovers: 1
+    bindToArtifact: evidence.json
+    "on":
+      state: awaiting_merge
+    onFailure:
+      action: block
+remediation:
+  maxAttempts: 2
+  onStates: [verifying, reviewing]
+  routeTo: implementing
+policies:
+  - framework/policies/default.yaml
+  - framework/policies/high-risk.yaml
+artifacts:
+  - name: issue-brief.json
+    type: json
+    producer: intake
+  - name: risk-assessment.json
+    type: json
+    producer: classify-risk
+  - name: adr.md
+    type: markdown
+    producer: design
+  - name: plan.json
+    type: json
+    producer: design
+  - name: evidence.json
+    type: json
+    producer: plan-checks
+  - name: evidence.md
+    type: markdown
+    producer: pull-request
+  - name: review-findings.json
+    type: json
+    producer: review

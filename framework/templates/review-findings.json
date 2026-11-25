@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "issueKey": "PROJ-101",
+  "reviewerAgent": "code-reviewer",
+  "independence": "required",
+  "candidateSha": "unknown",
+  "verdict": "changes-requested",
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "high",
+      "path": "internal/risk/classifier.go",
+      "line": 42,
+      "message": "The fallback branch returns low risk when semantics are unknown.",
+      "recommendation": "Return unknown risk and let the policy gate fail closed.",
+      "status": "open",
+      "verifiedByEvidence": "policy:default riskRules semantics"
+    },
+    {
+      "id": "F-002",
+      "severity": "low",
+      "path": "internal/risk/classifier_test.go",
+      "line": 17,
+      "message": "The table test does not cover an empty changedPaths list.",
+      "recommendation": "Add a case asserting the workflow blocks on empty paths.",
+      "status": "open",
+      "verifiedByEvidence": "source inspection"
+    }
+  ],
+  "requiredActions": [
+    "Resolve F-001 before requesting approval.",
+    "Re-run verification after any candidate SHA change."
+  ],
+  "evidence": ["evidence.json"],
+  "ignoredInstructions": [],
+  "status": "pending-remediation"
+}

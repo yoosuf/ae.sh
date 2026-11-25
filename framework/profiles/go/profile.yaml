@@ -1,0 +1,33 @@
+schemaVersion: "1.0"
+id: go
+version: "1.0.0"
+language: Go
+toolchain:
+  minVersion: "1.27"
+  packageManager: go
+conventions:
+  layout: "cmd/ for entrypoints, internal/ for private packages, pkg/ for reusable libraries"
+  formatting: "gofmt is mandatory; generated files are excluded from hand edits"
+  errorHandling: "wrap errors with context; never discard returned errors"
+  testing: "table-driven tests; no network access in unit tests"
+  dependencies: "module versions pinned in go.mod and go.sum; no unreviewed dependency updates"
+requiredChecks: [format, lint, build, unit-tests, secret-scan, dependency-audit]
+checks:
+  - gate: format
+    command: "gofmt -l cmd internal"
+    expectEmptyOutput: true
+  - gate: lint
+    command: "go vet ./..."
+  - gate: build
+    command: "go build ./..."
+  - gate: unit-tests
+    command: "go test ./..."
+  - gate: dependency-audit
+    command: "go mod verify"
+evidenceCommands:
+  - "gofmt -l cmd internal"
+  - "go vet ./..."
+  - "go build ./..."
+  - "go test ./..."
+  - "go mod verify"
+  - "git diff --check"
