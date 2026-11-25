@@ -3,10 +3,10 @@ name: acceptance-criteria
 description: Turns requirements into observable Given/When/Then acceptance criteria with negative, boundary, and authorization cases linked to verification methods; use when asked to "write acceptance criteria", "define done for this story", "add Given/When/Then scenarios", "how will we test this requirement", or when a story is being made ready for development.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Product
-  aef.skill-id: acceptance-criteria
-  aef.eval-fixture: evaluations/fixtures/acceptance-criteria/
+  ae.version: "0.1.0"
+  ae.domain: Product
+  ae.skill-id: acceptance-criteria
+  ae.eval-fixture: evaluations/fixtures/acceptance-criteria/
 ---
 
 ## Triggers

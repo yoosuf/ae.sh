@@ -15,9 +15,9 @@ import (
 	"github.com/yoosuf/ae.sh/internal/version"
 )
 
-const manifestName = ".aef-manifest.json"
+const manifestName = ".ae-manifest.json"
 
-// Manifest records exactly what AEF materialized into a provider directory.
+// Manifest records exactly what AE materialized into a provider directory.
 type Manifest struct {
 	SchemaVersion    string          `json:"schemaVersion" yaml:"schemaVersion"`
 	FrameworkVersion string          `json:"frameworkVersion" yaml:"frameworkVersion"`
@@ -187,7 +187,7 @@ func Apply(cat Catalogue, plan InstallPlan, opts InstallOptions) error {
 		if plan.Provider == "codex" {
 			meta := map[string]any{
 				"interface": map[string]any{
-					"display_name":      skill.Metadata["aef.domain"] + ": " + skill.Slug,
+					"display_name":      skill.Metadata["ae.domain"] + ": " + skill.Slug,
 					"short_description": truncate(skill.Description, 120),
 				},
 				"policy": map[string]any{"allow_implicit_invocation": true},

@@ -7,15 +7,15 @@ import (
 )
 
 func TestDigestIsStableAndVersioned(t *testing.T) {
-	first := Digest([]byte("aef"))
-	second := Digest([]byte("aef"))
+	first := Digest([]byte("ae"))
+	second := Digest([]byte("ae"))
 	if first != second {
 		t.Fatalf("digest is not stable: %s != %s", first, second)
 	}
 	if !strings.HasPrefix(first, "sha256:") {
 		t.Fatalf("digest is not sha256-prefixed: %s", first)
 	}
-	if first == Digest([]byte("aef!")) {
+	if first == Digest([]byte("ae!")) {
 		t.Fatal("different input produced the same digest")
 	}
 }

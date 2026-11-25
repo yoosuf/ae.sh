@@ -86,7 +86,7 @@ func ParseIssue(value string, cfg config.Integration) (string, error) {
 }
 
 // Load fetches one issue and normalizes it into the provider-neutral contract.
-// Missing AEF metadata is a failure; no default acceptance criteria are invented.
+// Missing AE metadata is a failure; no default acceptance criteria are invented.
 func (s *Source) Load(ctx context.Context, key string) (integration.Issue, error) {
 	if !keyPattern.MatchString(key) {
 		return integration.Issue{}, fmt.Errorf("invalid Jira issue key %q", util.Sanitize(key))
@@ -148,7 +148,7 @@ func (s *Source) Load(ctx context.Context, key string) (integration.Issue, error
 	description := util.Sanitize(strings.TrimSpace(flattenText(payload.Fields.Description)))
 	meta := parseMetadata(description, labels)
 	if len(meta.acceptance) == 0 || len(meta.paths) == 0 {
-		return integration.Issue{}, fmt.Errorf("Jira issue %s is missing AEF metadata: add aef-acceptance: and aef-path: labels or description sections", key)
+		return integration.Issue{}, fmt.Errorf("Jira issue %s is missing AE metadata: add ae-acceptance: and ae-path: labels or description sections", key)
 	}
 	issue := integration.Issue{
 		SchemaVersion:      "1.0",
@@ -195,7 +195,7 @@ func parseMetadata(description string, labels []string) issueMetadata {
 			section = lower
 			continue
 		}
-		if strings.HasPrefix(trimmed, "aef-") || trimmed == "" {
+		if strings.HasPrefix(trimmed, "ae-") || trimmed == "" {
 			section = ""
 		}
 		switch section {
@@ -212,16 +212,16 @@ func parseMetadata(description string, labels []string) issueMetadata {
 	for _, label := range labels {
 		lower := strings.ToLower(label)
 		switch {
-		case strings.HasPrefix(lower, "aef-acceptance:"):
-			meta.acceptance = appendUnique(meta.acceptance, strings.TrimSpace(label[len("aef-acceptance:"):]))
-		case strings.HasPrefix(lower, "aef-path:"):
-			meta.paths = appendUnique(meta.paths, strings.TrimSpace(label[len("aef-path:"):]))
-		case strings.HasPrefix(lower, "aef-semantics:"):
-			meta.semantics = appendUnique(meta.semantics, strings.TrimSpace(label[len("aef-semantics:"):]))
-		case strings.HasPrefix(lower, "aef-dependency:"):
-			meta.dependencies = appendUnique(meta.dependencies, strings.TrimSpace(label[len("aef-dependency:"):]))
-		case strings.HasPrefix(lower, "aef-base-sha:"):
-			value := strings.TrimSpace(label[len("aef-base-sha:"):])
+		case strings.HasPrefix(lower, "ae-acceptance:"):
+			meta.acceptance = appendUnique(meta.acceptance, strings.TrimSpace(label[len("ae-acceptance:"):]))
+		case strings.HasPrefix(lower, "ae-path:"):
+			meta.paths = appendUnique(meta.paths, strings.TrimSpace(label[len("ae-path:"):]))
+		case strings.HasPrefix(lower, "ae-semantics:"):
+			meta.semantics = appendUnique(meta.semantics, strings.TrimSpace(label[len("ae-semantics:"):]))
+		case strings.HasPrefix(lower, "ae-dependency:"):
+			meta.dependencies = appendUnique(meta.dependencies, strings.TrimSpace(label[len("ae-dependency:"):]))
+		case strings.HasPrefix(lower, "ae-base-sha:"):
+			value := strings.TrimSpace(label[len("ae-base-sha:"):])
 			if shaPattern.MatchString(value) {
 				meta.baseSHA = value
 			}

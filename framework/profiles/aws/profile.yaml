@@ -19,7 +19,7 @@ checks:
   - gate: lint
     command: "terraform validate"
   - gate: build
-    command: "terraform plan -input=false -out=.aef/terraform.tfplan"
+    command: "terraform plan -input=false -out=.ae/terraform.tfplan"
   - gate: unit-tests
     command: "terraform test"
   - gate: dependency-audit

@@ -1,4 +1,4 @@
-// Package config loads the repository-local AEF configuration. Configuration
+// Package config loads the repository-local AE configuration. Configuration
 // never contains credentials; environment variable *names* only.
 package config
 
@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	FileName        = "aef.yaml"
-	DefaultState    = ".aef/state.db"
-	DefaultEvidence = ".aef/evidence"
-	DefaultObjects  = ".aef/objects"
+	FileName        = "ae.yaml"
+	DefaultState    = ".ae/state.db"
+	DefaultEvidence = ".ae/evidence"
+	DefaultObjects  = ".ae/objects"
 )
 
 // Config is the on-disk configuration.
@@ -74,7 +74,7 @@ type Check struct {
 	ExpectEmptyOutput bool   `yaml:"expectEmptyOutput,omitempty" json:"expectEmptyOutput,omitempty"`
 }
 
-// Profile is the canonical local profile definition used by `aef verify`.
+// Profile is the canonical local profile definition used by `ae verify`.
 // Includes allow composite profiles such as `all` to reuse canonical checks
 // without duplicating executable commands in multiple files.
 type Profile struct {
@@ -91,8 +91,8 @@ func KnownProfiles() []string {
 	return append([]string(nil), profileNames...)
 }
 
-// IsKnownProfile reports whether name can be selected by `aef init` or
-// `aef verify`. The file must still load successfully before use.
+// IsKnownProfile reports whether name can be selected by `ae init` or
+// `ae verify`. The file must still load successfully before use.
 func IsKnownProfile(name string) bool {
 	for _, known := range profileNames {
 		if name == known {
@@ -117,13 +117,13 @@ func Default() Config {
 		Provider:      Provider{Default: "fake"},
 		Deployment:    Deployment{Scope: "local"},
 		Integrations: Integrations{
-			Jira:   Integration{Mode: "fixture", TokenEnv: "AEF_JIRA_TOKEN", WebhookSecretEnv: "AEF_JIRA_WEBHOOK_SECRET"},
-			GitHub: Integration{Mode: "local-cli", TokenEnv: "AEF_GITHUB_TOKEN", WebhookSecretEnv: "AEF_GITHUB_WEBHOOK_SECRET"},
+			Jira:   Integration{Mode: "fixture", TokenEnv: "AE_JIRA_TOKEN", WebhookSecretEnv: "AE_JIRA_WEBHOOK_SECRET"},
+			GitHub: Integration{Mode: "local-cli", TokenEnv: "AE_GITHUB_TOKEN", WebhookSecretEnv: "AE_GITHUB_WEBHOOK_SECRET"},
 		},
 	}
 }
 
-// Find walks upward from dir looking for aef.yaml.
+// Find walks upward from dir looking for ae.yaml.
 func Find(dir string) (string, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
@@ -136,7 +136,7 @@ func Find(dir string) (string, error) {
 		}
 		parent := filepath.Dir(abs)
 		if parent == abs {
-			return "", fmt.Errorf("%s not found (run `aef init` first)", FileName)
+			return "", fmt.Errorf("%s not found (run `ae init` first)", FileName)
 		}
 		abs = parent
 	}
@@ -230,7 +230,7 @@ var profileIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 var envNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 
 // IsEnvName reports whether name is a safe environment variable name. Config
-// stores env names only; secrets must never be written into aef.yaml.
+// stores env names only; secrets must never be written into ae.yaml.
 func IsEnvName(name string) bool { return envNamePattern.MatchString(name) }
 
 // LoadProfile reads a checked-in profile definition. Verification commands

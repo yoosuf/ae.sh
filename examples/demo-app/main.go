@@ -1,4 +1,4 @@
-// Command demo-app is a dependency-free hello application used by AEF examples.
+// Command demo-app is a dependency-free hello application used by AE examples.
 package main
 
 import (

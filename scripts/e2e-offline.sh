@@ -5,9 +5,9 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/aef-e2e.XXXXXX")"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ae-e2e.XXXXXX")"
 trap 'rm -rf "$WORK_DIR"' EXIT
-BIN="$WORK_DIR/aef"
+BIN="$WORK_DIR/ae"
 REPO_COPY="$WORK_DIR/repo"
 
 # Keep the end-to-end run independent of the user's shared Go build cache.
@@ -15,9 +15,9 @@ REPO_COPY="$WORK_DIR/repo"
 # where the default cache may be absent or unwritable.
 export GOCACHE="$WORK_DIR/go-cache"
 
-(cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/aef)
+(cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/ae)
 mkdir -p "$REPO_COPY"
-tar --exclude='./.git' --exclude='./.aef' --exclude='./aef.yaml' --exclude='./dist' \
+tar --exclude='./.git' --exclude='./.ae' --exclude='./ae.yaml' --exclude='./dist' \
   -cf - -C "$REPO_ROOT" . | tar -xf - -C "$REPO_COPY"
 
 "$BIN" --root "$REPO_COPY" init --profile go >/dev/null

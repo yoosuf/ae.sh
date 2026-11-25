@@ -17,14 +17,14 @@ func testRun(id string) execution.Run {
 		ID: id, WorkflowID: "test-workflow", WorkflowVersion: "1.0.0",
 		IssueKey: "TEST-1", IssuePath: "fixture", State: "queued", Status: "running",
 		Risk: "low", Provider: "fake", BaseSHA: "base", CandidateSHA: "candidate",
-		PlanDigest: "sha256:plan", Workspace: ".aef/worktrees/run-1", CurrentTask: 0, Profiles: []string{"go"},
+		PlanDigest: "sha256:plan", Workspace: ".ae/worktrees/run-1", CurrentTask: 0, Profiles: []string{"go"},
 		Actor: "tester", CreatedAt: "2026-01-01T00:00:00Z", UpdatedAt: "2026-01-01T00:00:00Z", Version: 1,
 	}
 }
 
 func TestStorePersistsAcrossReopen(t *testing.T) {
 	ctx := context.Background()
-	path := filepath.Join(t.TempDir(), "aef.db")
+	path := filepath.Join(t.TempDir(), "ae.db")
 	store, err := Open(path)
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +64,7 @@ func TestStorePersistsAcrossReopen(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if loaded.Version != 1 || loaded.State != "queued" || len(loaded.Profiles) != 1 || loaded.Workspace != ".aef/worktrees/run-1" {
+	if loaded.Version != 1 || loaded.State != "queued" || len(loaded.Profiles) != 1 || loaded.Workspace != ".ae/worktrees/run-1" {
 		t.Fatalf("run did not survive restart: %+v", loaded)
 	}
 	if transitions, err := reopened.Transitions(ctx, run.ID); err != nil || len(transitions) != 1 || transitions[0].To != "analyzing" {
@@ -89,7 +89,7 @@ func TestStorePersistsAcrossReopen(t *testing.T) {
 
 func TestUpdateRunEnforcesOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
-	store, err := Open(filepath.Join(t.TempDir(), "aef.db"))
+	store, err := Open(filepath.Join(t.TempDir(), "ae.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func TestUpdateRunEnforcesOptimisticConcurrency(t *testing.T) {
 
 func TestBindWorkspaceDoesNotRepointRun(t *testing.T) {
 	ctx := context.Background()
-	store, err := Open(filepath.Join(t.TempDir(), "aef.db"))
+	store, err := Open(filepath.Join(t.TempDir(), "ae.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestBindWorkspaceDoesNotRepointRun(t *testing.T) {
 	if err := store.CreateRun(ctx, run); err != nil {
 		t.Fatal(err)
 	}
-	workspace := ".aef/worktrees/run-bind"
+	workspace := ".ae/worktrees/run-bind"
 	if err := store.BindWorkspace(ctx, run.ID, workspace); err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func TestBindWorkspaceDoesNotRepointRun(t *testing.T) {
 	if err != nil || loaded.Workspace != workspace || loaded.Version != 2 {
 		t.Fatalf("workspace was not bound: %+v, %v", loaded, err)
 	}
-	if err := store.BindWorkspace(ctx, run.ID, ".aef/worktrees/other"); err == nil {
+	if err := store.BindWorkspace(ctx, run.ID, ".ae/worktrees/other"); err == nil {
 		t.Fatal("run workspace was silently re-pointed")
 	} else {
 		var conflict execution.ErrConflict
@@ -228,7 +228,7 @@ func TestLegacyRunsGainWorkspaceColumn(t *testing.T) {
 	}
 	defer store.Close()
 	run := testRun("run-workspace-migration")
-	run.Workspace = ".aef/worktrees/run-workspace-migration"
+	run.Workspace = ".ae/worktrees/run-workspace-migration"
 	if err := store.CreateRun(context.Background(), run); err != nil {
 		t.Fatalf("create run after migration: %v", err)
 	}

@@ -1,11 +1,11 @@
-# AEF agent definitions
+# AE agent definitions
 
-The YAML files in this directory are **AEF-internal role definitions**. They are
+The YAML files in this directory are **AE-internal role definitions**. They are
 not native Claude (`CLAUDE.md` / `.claude/agents/*.md`) or Codex
 (`~/.codex/agents/*.toml`) agent formats, and must not be copied into a provider
 agent directory as-is.
 
-At runtime, AEF's provider materialization step converts a definition here into
+At runtime, AE's provider materialization step converts a definition here into
 the target provider's native form:
 
 - `role` becomes the provider system prompt role description.

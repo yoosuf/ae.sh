@@ -10,7 +10,7 @@ import (
 	"github.com/yoosuf/ae.sh/internal/config"
 )
 
-const tokenEnv = "AEF_TEST_JIRA_TOKEN"
+const tokenEnv = "AE_TEST_JIRA_TOKEN"
 
 type roundTripperFunc func(*http.Request) (*http.Response, error)
 
@@ -64,11 +64,11 @@ func TestLoadNormalizesJiraIssueAndUsesEnvironmentToken(t *testing.T) {
 				"summary":"Add Jira link support",
 				"description":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Untrusted issue text"}]}]},
 				"labels":[
-					"aef-acceptance:acceptance one",
-					"aef-path:internal/adapters/jira/source.go",
-					"aef-semantics:integration",
-					"aef-dependency:schema",
-					"aef-base-sha:abc1234"
+					"ae-acceptance:acceptance one",
+					"ae-path:internal/adapters/jira/source.go",
+					"ae-semantics:integration",
+					"ae-dependency:schema",
+					"ae-base-sha:abc1234"
 				]
 			}
 		}`)),
@@ -91,7 +91,7 @@ func TestLoadNormalizesJiraIssueAndUsesEnvironmentToken(t *testing.T) {
 		t.Fatalf("unexpected normalized issue: %+v", issue)
 	}
 	if len(issue.AcceptanceCriteria) != 1 || len(issue.ChangedPaths) != 1 || issue.BaseSHA != "abc1234" {
-		t.Fatalf("AEF metadata was not normalized: %+v", issue)
+		t.Fatalf("AE metadata was not normalized: %+v", issue)
 	}
 	if len(issue.Links) != 1 || !strings.HasPrefix(issue.Links[0], cfg.BaseURL+"/browse/TEST-1") {
 		t.Errorf("Jira link was not recorded: %v", issue.Links)
@@ -110,7 +110,7 @@ func TestLoadFailsClosedOnMissingMetadata(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader(`{"key":"TEST-2","fields":{"summary":"Missing metadata","labels":[]}}`)),
 		}, nil
 	})}
-	if _, err := source.Load(context.Background(), "TEST-2"); err == nil || !strings.Contains(err.Error(), "missing AEF metadata") {
+	if _, err := source.Load(context.Background(), "TEST-2"); err == nil || !strings.Contains(err.Error(), "missing AE metadata") {
 		t.Fatalf("missing metadata was accepted: %v", err)
 	}
 }

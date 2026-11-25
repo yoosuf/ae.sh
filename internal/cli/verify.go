@@ -60,7 +60,7 @@ func (a *App) cmdVerify(ctx context.Context, args []string) error {
 }
 
 // verifyRun executes real local checks and writes their evidence. When
-// workspace is set, checks run against that validated AEF worktree instead of
+// workspace is set, checks run against that validated AE worktree instead of
 // the repository root. It returns an error on any failed gate so callers such
 // as autopilot cannot treat a partial result as a pass.
 func (a *App) verifyRun(ctx context.Context, repo repoContext, runID, profileOverride, workspace string) ([]string, []verificationResult, error) {
@@ -166,7 +166,7 @@ func (a *App) runProfileCheck(ctx context.Context, root string, manager *evidenc
 
 func (a *App) runSecretScan(ctx context.Context, root string, manager *evidence.Manager, store *sqliteadapter.Store, runID string) (verificationResult, error) {
 	const gate = "secret-scan"
-	const command = "aef builtin secret-scan"
+	const command = "ae builtin secret-scan"
 	filesScanned := 0
 	findings := 0
 	paths := []string{}
@@ -176,7 +176,7 @@ func (a *App) runSecretScan(ctx context.Context, root string, manager *evidence.
 		}
 		if entry.IsDir() {
 			switch entry.Name() {
-			case ".git", ".aef", "dist", "node_modules", "vendor":
+			case ".git", ".ae", "dist", "node_modules", "vendor":
 				return filepath.SkipDir
 			}
 			return nil
@@ -213,7 +213,7 @@ func (a *App) runSecretScan(ctx context.Context, root string, manager *evidence.
 		"passed": passed, "simulated": false,
 		"filesScanned": filesScanned, "findings": findings, "paths": paths,
 	}
-	if err := appendVerificationRecord(ctx, manager, store, runID, gate, "Verify "+gate, "aef verify", data, &exit); err != nil {
+	if err := appendVerificationRecord(ctx, manager, store, runID, gate, "Verify "+gate, "ae verify", data, &exit); err != nil {
 		return verificationResult{}, err
 	}
 	return verificationResult{
@@ -227,7 +227,7 @@ func writeVerificationEvidence(ctx context.Context, manager *evidence.Manager, s
 		"gate": gate, "command": command, "workspace": filepath.ToSlash(root), "output": output,
 		"passed": passed, "simulated": false, "profile": profileID,
 	}
-	return appendVerificationRecord(ctx, manager, store, runID, gate, "Verify "+gate, "aef verify", data, exit)
+	return appendVerificationRecord(ctx, manager, store, runID, gate, "Verify "+gate, "ae verify", data, exit)
 }
 
 func appendVerificationRecord(ctx context.Context, manager *evidence.Manager, store *sqliteadapter.Store, runID, gate, subject, actor string, data map[string]any, exit *int) error {

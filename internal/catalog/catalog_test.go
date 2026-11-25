@@ -29,10 +29,10 @@ func validSkillMarkdown(name string, includeFailure bool, extra string) string {
 		"description: A deterministic test skill used to check canonical skill validation rules.\n" +
 		"license: Apache-2.0\n" +
 		"metadata:\n" +
-		"  aef.version: \"0.1.0\"\n" +
-		"  aef.domain: Development\n" +
-		"  aef.skill-id: " + name + "\n" +
-		"  aef.eval-fixture: evaluations/fixtures/" + name + "/\n" +
+		"  ae.version: \"0.1.0\"\n" +
+		"  ae.domain: Development\n" +
+		"  ae.skill-id: " + name + "\n" +
+		"  ae.eval-fixture: evaluations/fixtures/" + name + "/\n" +
 		"---\n\n" + strings.Join(sections, "\n\n") + "\n"
 }
 

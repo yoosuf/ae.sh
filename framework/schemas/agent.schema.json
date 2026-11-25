@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aef.dev/schemas/agent.schema.json",
-  "title": "AEF agent definition (AEF-internal, not a native provider format)",
+  "$id": "https://ae.sh/schemas/agent.schema.json",
+  "title": "AE agent definition (AE-internal, not a native provider format)",
   "type": "object",
   "additionalProperties": true,
   "required": [

@@ -1,6 +1,6 @@
-# Canonical AEF skill catalogue
+# Canonical AE skill catalogue
 
-This directory is the **source of truth** for Phase 1 Agentic Engineering Framework skills. It is provider-neutral: instructions here describe behavior, evidence, and stopping conditions, not the CLI flags or UI of any particular agent product.
+This directory is the **source of truth** for Phase 1 Agentic Engineering skills. It is provider-neutral: instructions here describe behavior, evidence, and stopping conditions, not the CLI flags or UI of any particular agent product.
 
 ## How materialization works
 
@@ -21,17 +21,17 @@ name: <slug>
 description: <one sentence, <=1024 chars, what it does + explicit trigger phrases>
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: <Product|Architecture|Development|Quality|DevOps|Agentic>
-  aef.skill-id: <slug>
-  aef.eval-fixture: evaluations/fixtures/<slug>/
+  ae.version: "0.1.0"
+  ae.domain: <Product|Architecture|Development|Quality|DevOps|Agentic>
+  ae.skill-id: <slug>
+  ae.eval-fixture: evaluations/fixtures/<slug>/
 ---
 ```
 
 - `name` equals the directory name, lowercase with hyphens (Agent Skills specification).
 - `description` is one sentence, front-loaded with the action, followed by explicit phrases an agent can recognize for implicit invocation. It is the primary triggering mechanism, so it names real user requests rather than abstract categories.
 - `license` is `Apache-2.0` for all Phase 1 skills.
-- `metadata.aef.version` is a quoted string. `aef.domain` is one of the six allowed values. `aef.skill-id` repeats the slug. `aef.eval-fixture` points to the fixture directory for that slug.
+- `metadata.ae.version` is a quoted string. `ae.domain` is one of the six allowed values. `ae.skill-id` repeats the slug. `ae.eval-fixture` points to the fixture directory for that slug.
 
 ## Body contract
 
@@ -46,4 +46,4 @@ Each body has these H2 sections in this order: `Triggers`, `Objective`, `Inputs`
 
 ## Evaluations
 
-Fixtures and rubrics live in `../evaluations/`. Every catalogue entry has `status: pending-execution` because no model/behavioral evaluation has been executed and no pass rate is claimed. `aef eval --execute` can run deterministic structural checks over these authored fixtures; it does not invoke a model or measure behavior.
+Fixtures and rubrics live in `../evaluations/`. Every catalogue entry has `status: pending-execution` because no model/behavioral evaluation has been executed and no pass rate is claimed. `ae eval --execute` can run deterministic structural checks over these authored fixtures; it does not invoke a model or measure behavior.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aef.dev/schemas/issue.schema.json",
+  "$id": "https://ae.sh/schemas/issue.schema.json",
   "title": "Offline issue fixture",
   "type": "object",
   "additionalProperties": true,

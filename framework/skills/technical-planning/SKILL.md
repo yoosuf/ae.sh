@@ -3,10 +3,10 @@ name: technical-planning
 description: Produces a sequenced implementation plan with task ownership, verification gates, and explicit decisions from requirements and a pinned base SHA; use when asked to "write a technical plan", "make an implementation plan", "break this work into steps", "estimate the work", or "plan the rollout" before coding starts.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Architecture
-  aef.skill-id: technical-planning
-  aef.eval-fixture: evaluations/fixtures/technical-planning/
+  ae.version: "0.1.0"
+  ae.domain: Architecture
+  ae.skill-id: technical-planning
+  ae.eval-fixture: evaluations/fixtures/technical-planning/
 ---
 
 ## Triggers

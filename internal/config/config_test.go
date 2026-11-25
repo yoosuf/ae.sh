@@ -89,9 +89,9 @@ func TestLoadRejectsUnsafeJiraCloudConfig(t *testing.T) {
 		baseURL string
 		token   string
 	}{
-		{"http", "http://example.atlassian.net", "AEF_JIRA_TOKEN"},
-		{"credentials-in-url", "https://user@example.atlassian.net", "AEF_JIRA_TOKEN"},
-		{"path-in-url", "https://example.atlassian.net/jira", "AEF_JIRA_TOKEN"},
+		{"http", "http://example.atlassian.net", "AE_JIRA_TOKEN"},
+		{"credentials-in-url", "https://user@example.atlassian.net", "AE_JIRA_TOKEN"},
+		{"path-in-url", "https://example.atlassian.net/jira", "AE_JIRA_TOKEN"},
 		{"lowercase-env-name", "https://example.atlassian.net", "token"},
 		{"missing-env-name", "https://example.atlassian.net", ""},
 	}
@@ -122,7 +122,7 @@ integrations:
   jira:
     mode: jira-cloud
     baseURL: "https://example.atlassian.net"
-    tokenEnv: AEF_JIRA_TOKEN
+    tokenEnv: AE_JIRA_TOKEN
 `, version.SchemaVersion)
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
@@ -131,7 +131,7 @@ integrations:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Integrations.Jira.Mode != "jira-cloud" || cfg.Integrations.Jira.TokenEnv != "AEF_JIRA_TOKEN" {
+	if cfg.Integrations.Jira.Mode != "jira-cloud" || cfg.Integrations.Jira.TokenEnv != "AE_JIRA_TOKEN" {
 		t.Fatalf("Jira config was not preserved: %+v", cfg.Integrations.Jira)
 	}
 }
@@ -144,9 +144,9 @@ func TestLoadValidatesGitHubLocalCLIMode(t *testing.T) {
 		token   string
 		wantErr bool
 	}{
-		{name: "default", mode: "local-cli", token: "AEF_GITHUB_TOKEN"},
+		{name: "default", mode: "local-cli", token: "AE_GITHUB_TOKEN"},
 		{name: "disabled", mode: "disabled"},
-		{name: "http-base-url", mode: "local-cli", baseURL: "http://github.example.com", token: "AEF_GITHUB_TOKEN", wantErr: true},
+		{name: "http-base-url", mode: "local-cli", baseURL: "http://github.example.com", token: "AE_GITHUB_TOKEN", wantErr: true},
 		{name: "token-value", mode: "local-cli", token: "FAKE-github-token", wantErr: true},
 		{name: "unknown-mode", mode: "app", wantErr: true},
 	}
@@ -186,7 +186,7 @@ func TestLoadRejectsCredentialValuesInEnvNameFields(t *testing.T) {
 		integrations string
 	}{
 		{name: "jira-fixture-webhook", integrations: "  jira:\n    mode: fixture\n    webhookSecretEnv: FAKE-webhook-secret\n"},
-		{name: "jira-cloud-webhook", integrations: "  jira:\n    mode: jira-cloud\n    baseURL: https://example.atlassian.net\n    tokenEnv: AEF_JIRA_TOKEN\n    webhookSecretEnv: FAKE-webhook-secret\n"},
+		{name: "jira-cloud-webhook", integrations: "  jira:\n    mode: jira-cloud\n    baseURL: https://example.atlassian.net\n    tokenEnv: AE_JIRA_TOKEN\n    webhookSecretEnv: FAKE-webhook-secret\n"},
 		{name: "github-disabled-token", integrations: "  github:\n    mode: disabled\n    tokenEnv: FAKE-github-token\n"},
 	}
 	for _, tc := range cases {

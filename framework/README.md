@@ -1,6 +1,6 @@
 # Canonical framework assets
 
-This directory groups the checked-in assets that define AEF behavior. They are
+This directory groups the checked-in assets that define AE behavior. They are
 source files, not generated provider copies.
 
 ```text

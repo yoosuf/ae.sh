@@ -1,5 +1,5 @@
 // Package sqlite implements the execution Store with pure-Go SQLite.
-// It is the authoritative local state model for AEF.
+// It is the authoritative local state model for AE.
 package sqlite
 
 import (
@@ -279,7 +279,7 @@ WHERE id=? AND version=?`,
 	return nil
 }
 
-// BindWorkspace attaches a validated AEF-managed worktree to a run. A run that
+// BindWorkspace attaches a validated AE-managed worktree to a run. A run that
 // already has a workspace is never silently re-pointed at another directory.
 func (s *Store) BindWorkspace(ctx context.Context, runID, workspace string) error {
 	run, err := s.GetRun(ctx, runID)

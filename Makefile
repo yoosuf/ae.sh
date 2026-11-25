@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-BIN := aef
+BIN := ae
 
 .PHONY: help check fmt fmt-check build build-bin vet test test-race validate e2e e2e-worktree clean
 
@@ -8,11 +8,11 @@ BIN := aef
 
 help:
 	@printf '%s\n' \
-	  'AEF local verification targets:' \
+	  'AE local verification targets:' \
 	  '  make fmt        format Go sources in cmd/ and internal/' \
 	  '  make fmt-check  fail if Go sources are not formatted' \
 	  '  make build      compile all packages' \
-	  '  make build-bin  build ./aef' \
+	  '  make build-bin  build ./ae' \
 	  '  make vet        run go vet ./...' \
 	  '  make test       run go test ./...' \
 	  '  make test-race  run go test -race ./...' \
@@ -37,7 +37,7 @@ build:
 	go build ./...
 
 build-bin:
-	go build -o $(BIN) ./cmd/aef
+	go build -o $(BIN) ./cmd/ae
 
 vet:
 	go vet ./...

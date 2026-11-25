@@ -14,11 +14,11 @@ import (
 func TestResumeUsesClaudeResumeFlag(t *testing.T) {
 	argsPath := filepath.Join(t.TempDir(), "args.txt")
 	script := filepath.Join(t.TempDir(), "claude-stub")
-	body := "#!/bin/sh\ncase \"$1\" in\n--version) printf '%s\\n' '2.1.314' ;;\n*) printf '%s\\n' \"$@\" > \"$AEF_TEST_ARGS\"; printf '%s\\n' '{\"result\":\"ok\",\"session_id\":\"sess-1\"}' ;;\nesac\n"
+	body := "#!/bin/sh\ncase \"$1\" in\n--version) printf '%s\\n' '2.1.314' ;;\n*) printf '%s\\n' \"$@\" > \"$AE_TEST_ARGS\"; printf '%s\\n' '{\"result\":\"ok\",\"session_id\":\"sess-1\"}' ;;\nesac\n"
 	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("AEF_TEST_ARGS", argsPath)
+	t.Setenv("AE_TEST_ARGS", argsPath)
 	provider := New()
 	provider.Binary = script
 	workspace := t.TempDir()
@@ -53,12 +53,12 @@ func TestWriteUsesFileToolsWithoutShell(t *testing.T) {
 	argsPath := filepath.Join(t.TempDir(), "args.txt")
 	settingsCopy := filepath.Join(t.TempDir(), "settings.json")
 	script := filepath.Join(t.TempDir(), "claude-stub")
-	body := "#!/bin/sh\ncase \"$1\" in\n--version) printf '%s\\n' '2.1.314' ;;\n*) prev=\"\"; for arg in \"$@\"; do if [ \"$prev\" = \"--settings\" ]; then cp \"$arg\" \"$AEF_TEST_SETTINGS\"; fi; prev=\"$arg\"; done; printf '%s\\n' \"$@\" > \"$AEF_TEST_ARGS\"; printf '%s\\n' '{\"result\":\"ok\",\"session_id\":\"sess-2\"}' ;;\nesac\n"
+	body := "#!/bin/sh\ncase \"$1\" in\n--version) printf '%s\\n' '2.1.314' ;;\n*) prev=\"\"; for arg in \"$@\"; do if [ \"$prev\" = \"--settings\" ]; then cp \"$arg\" \"$AE_TEST_SETTINGS\"; fi; prev=\"$arg\"; done; printf '%s\\n' \"$@\" > \"$AE_TEST_ARGS\"; printf '%s\\n' '{\"result\":\"ok\",\"session_id\":\"sess-2\"}' ;;\nesac\n"
 	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("AEF_TEST_ARGS", argsPath)
-	t.Setenv("AEF_TEST_SETTINGS", settingsCopy)
+	t.Setenv("AE_TEST_ARGS", argsPath)
+	t.Setenv("AE_TEST_SETTINGS", settingsCopy)
 	provider := New()
 	provider.Binary = script
 	if _, err := provider.Run(context.Background(), integration.RunRequest{

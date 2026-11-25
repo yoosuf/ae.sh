@@ -3,10 +3,10 @@ name: unit-testing
 description: Adds deterministic behavior-focused unit tests for contracts, boundaries, errors, and authorization cases with honest recorded results; use when asked to "add unit tests", "write tests for this function", "cover edge cases", "increase coverage", or when a change needs verification evidence before review.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Quality
-  aef.skill-id: unit-testing
-  aef.eval-fixture: evaluations/fixtures/unit-testing/
+  ae.version: "0.1.0"
+  ae.domain: Quality
+  ae.skill-id: unit-testing
+  ae.eval-fixture: evaluations/fixtures/unit-testing/
 ---
 
 ## Triggers

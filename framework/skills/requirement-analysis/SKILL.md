@@ -3,10 +3,10 @@ name: requirement-analysis
 description: Breaks raw requests into atomic, testable, source-linked requirements with explicit assumptions and open questions; use when asked to "analyze requirements", "break down this ticket into requirements", "find ambiguities in the spec", "map stakeholder needs to requirements", or before writing acceptance criteria or a technical plan.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Product
-  aef.skill-id: requirement-analysis
-  aef.eval-fixture: evaluations/fixtures/requirement-analysis/
+  ae.version: "0.1.0"
+  ae.domain: Product
+  ae.skill-id: requirement-analysis
+  ae.eval-fixture: evaluations/fixtures/requirement-analysis/
 ---
 
 ## Triggers

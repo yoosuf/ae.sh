@@ -1,4 +1,4 @@
-// Package framework defines the canonical on-disk locations for AEF assets.
+// Package framework defines the canonical on-disk locations for AE assets.
 // Keeping these paths in one place prevents the catalogue, workflow engine,
 // policy loader, and verification code from drifting apart.
 package framework

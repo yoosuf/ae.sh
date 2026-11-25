@@ -1,6 +1,6 @@
-// Package schema validates AEF YAML and JSON documents against the canonical
+// Package schema validates AE YAML and JSON documents against the canonical
 // JSON Schemas shipped with the framework. Schemas are embedded so that an
-// installed aef binary works without the source checkout.
+// installed ae binary works without the source checkout.
 package schema
 
 import (
@@ -41,10 +41,10 @@ func Validate(name string, instance any) error {
 	if err != nil {
 		return fmt.Errorf("parse schema %q: %w", name, err)
 	}
-	if err := compiler.AddResource("https://aef.dev/schemas/"+name+".schema.json", resource); err != nil {
+	if err := compiler.AddResource("https://ae.sh/schemas/"+name+".schema.json", resource); err != nil {
 		return fmt.Errorf("register schema %q: %w", name, err)
 	}
-	compiled, err := compiler.Compile("https://aef.dev/schemas/" + name + ".schema.json")
+	compiled, err := compiler.Compile("https://ae.sh/schemas/" + name + ".schema.json")
 	if err != nil {
 		return fmt.Errorf("compile schema %q: %w", name, err)
 	}

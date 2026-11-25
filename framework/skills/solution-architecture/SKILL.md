@@ -3,10 +3,10 @@ name: solution-architecture
 description: Records a provider-neutral system design decision with context, viable options, tradeoffs, consequences, and approval needs; use when asked to "design the architecture", "choose an approach", "write an ADR", "compare design options", or "do a system design for this feature" before implementation.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Architecture
-  aef.skill-id: solution-architecture
-  aef.eval-fixture: evaluations/fixtures/solution-architecture/
+  ae.version: "0.1.0"
+  ae.domain: Architecture
+  ae.skill-id: solution-architecture
+  ae.eval-fixture: evaluations/fixtures/solution-architecture/
 ---
 
 ## Triggers

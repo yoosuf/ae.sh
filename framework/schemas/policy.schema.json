@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aef.dev/schemas/policy.schema.json",
-  "title": "AEF policy",
+  "$id": "https://ae.sh/schemas/policy.schema.json",
+  "title": "AE policy",
   "type": "object",
   "additionalProperties": true,
   "required": ["schemaVersion", "id", "version", "precedence", "riskRules", "escalations", "gates", "approvalRules"],

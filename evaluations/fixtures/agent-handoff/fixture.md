@@ -11,7 +11,7 @@ Synthetic input. Paths, SHAs, and digests are fictional.
 ```text
 base_sha: 7c1f4a9e0b1d2c3f4a5b6c7d8e9f0a1b2c3d4e5
 candidate_sha: 91ac3f0d2e4b5a6978c0d1e2f3a4b5c6d7e8f9a0
-worktree: /worktrees/aef-task-01, branch task/01-invoice-export
+worktree: /worktrees/ae-task-01, branch task/01-invoice-export
 artifacts claimed:
   - decisions/ADR-0007.md  (sha256 claimed: deadbeefdeadbeef)
   - logs/unit-tests.txt    (sha256 missing)

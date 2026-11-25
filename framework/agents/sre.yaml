@@ -5,7 +5,7 @@ role: Production verification, incident triage, and runbook owner
 skills: [unit-testing, risk-assessment, agent-handoff]
 providerPreference: [codex, claude]
 fallbackPolicy: prefer-secondary-provider
-toolAllowlist: [Read, Grep, Glob, Bash, curl, kubectl, aef status]
+toolAllowlist: [Read, Grep, Glob, Bash, curl, kubectl, ae status]
 scopes:
   read: ["**"]
   write: ["evidence.json", "evidence.md", "runbooks/**"]

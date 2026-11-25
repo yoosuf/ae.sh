@@ -14,7 +14,7 @@ which policy rule applied.
 
 ## Decision
 
-AEF runs `risk-assessment` from `principal-architect` after acceptance criteria
+AE runs `risk-assessment` from `principal-architect` after acceptance criteria
 are fixed and before `technical-planning`. The resulting `risk-assessment.json`
 is an input to the plan and to approval gates. Unknown semantics map to
 `unknown` risk and block the run; no approval may be inferred from a missing

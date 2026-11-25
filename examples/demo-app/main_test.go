@@ -10,7 +10,7 @@ func TestGreet(t *testing.T) {
 	}{
 		{name: "empty input", input: "", want: "hello, world"},
 		{name: "whitespace input", input: "   ", want: "hello, world"},
-		{name: "explicit name", input: "AEF", want: "hello, AEF"},
+		{name: "explicit name", input: "AE", want: "hello, AE"},
 		{name: "trims surrounding space", input: "  Ada  ", want: "hello, Ada"},
 	}
 

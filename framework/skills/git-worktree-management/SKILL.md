@@ -3,10 +3,10 @@ name: git-worktree-management
 description: Creates, isolates, and deterministically integrates parallel worktrees from an immutable base SHA with file ownership, conflict stops, and final SHA verification; use when asked to "create a worktree", "work on branches in parallel", "integrate worktrees", "merge these branches", or "clean up worktrees" safely.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: DevOps
-  aef.skill-id: git-worktree-management
-  aef.eval-fixture: evaluations/fixtures/git-worktree-management/
+  ae.version: "0.1.0"
+  ae.domain: DevOps
+  ae.skill-id: git-worktree-management
+  ae.eval-fixture: evaluations/fixtures/git-worktree-management/
 ---
 
 ## Triggers

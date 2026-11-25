@@ -1,4 +1,4 @@
-// Package cli implements the aef command line interface. It is discoverable,
+// Package cli implements the ae command line interface. It is discoverable,
 // local-first, and uses consistent exit codes and opt-in JSON output.
 package cli
 
@@ -100,7 +100,7 @@ func (a *App) Run(ctx context.Context) int {
 	case "version":
 		a.emit(map[string]any{"version": version.Version, "schemaVersion": version.SchemaVersion})
 	default:
-		err = fmt.Errorf("unknown command %q (try `aef help`)", command)
+		err = fmt.Errorf("unknown command %q (try `ae help`)", command)
 	}
 	if err == nil {
 		return ExitOK
@@ -197,9 +197,9 @@ func invalid(format string, args ...any) error {
 }
 
 func (a *App) printHelp() {
-	fmt.Fprint(a.Stdout, `aef - Agentic Engineering Framework
+	fmt.Fprint(a.Stdout, `ae - Agentic Engineering
 
-Usage: aef [--root DIR] [--json] <command> [options]
+Usage: ae [--root DIR] [--json] <command> [options]
 
 Commands:
   init --profile go,react [--force]

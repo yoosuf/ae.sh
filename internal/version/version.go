@@ -1,7 +1,7 @@
 // Package version holds the framework version and compatibility pins.
 package version
 
-// Version is the current AEF framework version. Provider materialization
+// Version is the current AE framework version. Provider materialization
 // embeds this value in manifests and skill metadata so upgrades are auditable.
 const Version = "0.1.0"
 

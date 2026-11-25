@@ -1,4 +1,4 @@
-// Command ae is the local-first Agentic Engineering Framework CLI.
+// Command ae is the local-first Agentic Engineering CLI.
 package main
 
 import (

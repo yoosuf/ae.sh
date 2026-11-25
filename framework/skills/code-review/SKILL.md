@@ -3,10 +3,10 @@ name: code-review
 description: Reviews the actual diff from merge base to candidate SHA plus surrounding code for bugs, authorization bypass, tenant isolation, concurrency, and contract regressions, reporting severity, evidence, and remediation; use when asked to "review this PR", "review the diff", "code review candidate SHA", "look for bugs in these changes", or before approving any change.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Quality
-  aef.skill-id: code-review
-  aef.eval-fixture: evaluations/fixtures/code-review/
+  ae.version: "0.1.0"
+  ae.domain: Quality
+  ae.skill-id: code-review
+  ae.eval-fixture: evaluations/fixtures/code-review/
 ---
 
 ## Triggers

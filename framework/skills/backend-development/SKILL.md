@@ -3,10 +3,10 @@ name: backend-development
 description: Implements small, contract-preserving backend changes with tenant-safe authorization, tests, and recorded verification evidence; use when asked to "implement the endpoint", "write the service", "add the migration", "fix the API handler", or "do the backend work for this story".
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Development
-  aef.skill-id: backend-development
-  aef.eval-fixture: evaluations/fixtures/backend-development/
+  ae.version: "0.1.0"
+  ae.domain: Development
+  ae.skill-id: backend-development
+  ae.eval-fixture: evaluations/fixtures/backend-development/
 ---
 
 ## Triggers

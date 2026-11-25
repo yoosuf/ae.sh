@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aef.dev/schemas/workflow.schema.json",
-  "title": "AEF workflow definition",
+  "$id": "https://ae.sh/schemas/workflow.schema.json",
+  "title": "AE workflow definition",
   "type": "object",
   "additionalProperties": true,
   "required": ["schemaVersion", "id", "version", "name", "states", "initial", "terminal", "tasks"],

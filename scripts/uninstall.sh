@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-binary_name="aef"
+binary_name="ae"
 default_prefix="/usr/local/bin"
 prefix="$default_prefix"
 manifest=""
@@ -16,18 +16,18 @@ scripts/install.sh). Nothing is deleted by guessing paths, and every removal
 is confirmed unless --yes is passed.
 
 Manifest format (one entry per line, '#' starts a comment):
-  binary=/absolute/path/to/aef
+  binary=/absolute/path/to/ae
   skill=/absolute/path/to/provider/skills/<slug>
 
 Safety checks:
-  - The binary entry must equal <prefix>/aef.
+  - The binary entry must equal <prefix>/ae.
   - A skill entry must be under ~/.claude/skills/, ~/.agents/skills/,
     $PWD/.claude/skills/, or $PWD/.agents/skills/ and its basename must be a
-    canonical AEF skill slug (optionally prefixed with 'aef-').
+    canonical AE skill slug (optionally prefixed with 'ae-').
   - .codex/skills is not a documented provider path and is rejected.
   - Entries outside these rules are rejected and nothing is removed.
 
-Add a skill entry only if you verified that AEF materialization installed it.
+Add a skill entry only if you verified that AE materialization installed it.
 This script never deletes source files, the canonical `framework/skills/` directory, or
 any path not present in the manifest. To uninstall manually: remove the binary
 listed in the manifest and each verified provider-installed skill directory.
@@ -97,7 +97,7 @@ skills_claude="$HOME/.claude/skills/"
 skills_codex="$HOME/.agents/skills/"
 skills_claude_project="$PWD/.claude/skills/"
 skills_codex_project="$PWD/.agents/skills/"
-aef_slug_pattern='^(aef-)?(acceptance-criteria|agent-handoff|backend-development|code-review|git-worktree-management|jira-intake|pull-request-management|requirement-analysis|risk-assessment|solution-architecture|technical-planning|unit-testing)$'
+ae_slug_pattern='^(ae-)?(acceptance-criteria|agent-handoff|backend-development|code-review|git-worktree-management|jira-intake|pull-request-management|requirement-analysis|risk-assessment|solution-architecture|technical-planning|unit-testing)$'
 
 kinds=()
 targets=()
@@ -122,7 +122,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     skill)
       base="${value##*/}"
       parent="$(dirname -- "$value")"
-      [[ "$base" =~ $aef_slug_pattern ]] || fail "skill basename is not a canonical AEF skill: $value"
+      [[ "$base" =~ $ae_slug_pattern ]] || fail "skill basename is not a canonical AE skill: $value"
       case "$value" in
         "$skills_claude"* | "$skills_codex"* | "$skills_claude_project"* | "$skills_codex_project"*)
           case "$parent/" in

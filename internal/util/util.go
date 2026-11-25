@@ -1,4 +1,4 @@
-// Package util contains small, dependency-free helpers shared by AEF packages.
+// Package util contains small, dependency-free helpers shared by AE packages.
 package util
 
 import (
@@ -67,7 +67,7 @@ func SecretShapeCount(text string) int {
 	count := 0
 	for _, pattern := range secretPatterns {
 		for _, match := range pattern.FindAllString(text, -1) {
-			// Canonical AEF fixtures use explicit markers to make synthetic
+			// Canonical AE fixtures use explicit markers to make synthetic
 			// shapes safe. They are redacted by Sanitize but are not findings.
 			if isSyntheticSecretMatch(match) {
 				continue

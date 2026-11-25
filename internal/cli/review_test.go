@@ -88,7 +88,7 @@ func TestReviewEvidencePersistence(t *testing.T) {
 	if code := initApp.Run(ctx); code != ExitOK {
 		t.Fatalf("init exited %d: %s %s", code, initOut.String(), initErr.String())
 	}
-	cfg, err := config.Load(filepath.Join(root, "aef.yaml"))
+	cfg, err := config.Load(filepath.Join(root, "ae.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}

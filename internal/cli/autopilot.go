@@ -317,7 +317,7 @@ func (a *App) cmdAutopilot(ctx context.Context, args []string) error {
 		for _, finding := range review.Findings {
 			ids = append(ids, finding.ID)
 		}
-		return blocked(runID, label+" has unresolved review findings requiring `aef review resolve`: "+strings.Join(ids, ", "))
+		return blocked(runID, label+" has unresolved review findings requiring `ae review resolve`: "+strings.Join(ids, ", "))
 	}
 
 	var prSource *github.Source
@@ -357,7 +357,7 @@ func (a *App) cmdAutopilot(ctx context.Context, args []string) error {
 			"diffDigest": util.Digest(prDiff), "simulated": false,
 			"note": "Read through the local gh CLI; no push, PR creation, merge, or deploy was performed.",
 		}
-		record, err := appendRunEvidence(ctx, repo.Config, store, runID, "github", "GitHub PR state", "aef-autopilot",
+		record, err := appendRunEvidence(ctx, repo.Config, store, runID, "github", "GitHub PR state", "ae-autopilot",
 			util.SanitizeValue(data).(map[string]any), nil, nil)
 		if err != nil {
 			return err
@@ -447,7 +447,7 @@ func (a *App) cmdAutopilot(ctx context.Context, args []string) error {
 		if prSource == nil || prEvidenceID == "" {
 			return invalid("autopilot --comment requires a GitHub PR state record")
 		}
-		body := fmt.Sprintf("AEF run %s: state=%s, checks=%d, review=%s. Evidence record %s. No merge or deployment was performed by AEF.",
+		body := fmt.Sprintf("AE run %s: state=%s, checks=%d, review=%s. Evidence record %s. No merge or deployment was performed by AE.",
 			runID, run.State, len(prChecks), prState.ReviewDecision, prEvidenceID)
 		if err := prSource.Comment(ctx, *githubPRFlag, body); err != nil {
 			return err

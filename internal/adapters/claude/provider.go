@@ -20,7 +20,7 @@ import (
 )
 
 // Claude Code added the settings keys that make file tools refuse paths
-// outside the working directories in v2.1.314. AEF requires that version
+// outside the working directories in v2.1.314. AE requires that version
 // before enabling writes; older binaries fail closed.
 var minConfinementVersion = [3]int{2, 1, 314}
 
@@ -177,7 +177,7 @@ func writeConfinementSettings() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	file, err := os.CreateTemp("", "aef-claude-settings-*.json")
+	file, err := os.CreateTemp("", "ae-claude-settings-*.json")
 	if err != nil {
 		return "", err
 	}

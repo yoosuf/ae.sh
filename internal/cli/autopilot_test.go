@@ -103,7 +103,7 @@ func initAutopilotRepo(t *testing.T, withGit bool) (string, string) {
 	}
 	run("init", "-q", "-b", "main")
 	run("add", "-A")
-	run("-c", "user.name=AEF", "-c", "user.email=aef@example.invalid", "commit", "-qm", "fixture", "--no-gpg-sign")
+	run("-c", "user.name=AE", "-c", "user.email=ae@example.invalid", "commit", "-qm", "fixture", "--no-gpg-sign")
 	return root, fixturePath
 }
 
@@ -122,7 +122,7 @@ func copyCanonicalRepo(t *testing.T, source, root string) {
 		}
 		top := strings.SplitN(rel, string(os.PathSeparator), 2)[0]
 		switch top {
-		case ".git", ".aef", "dist":
+		case ".git", ".ae", "dist":
 			if entry.IsDir() {
 				return filepath.SkipDir
 			}
@@ -178,7 +178,7 @@ func TestAutopilotDryRunWritesNoState(t *testing.T) {
 	if !ok || len(steps) == 0 {
 		t.Fatalf("dry run had no planned steps: %+v", payload)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".aef", "state.db")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, ".ae", "state.db")); !os.IsNotExist(err) {
 		t.Fatalf("dry run wrote state: %v", err)
 	}
 }
@@ -215,7 +215,7 @@ func TestAutopilotStopsAtHumanGate(t *testing.T) {
 	if !ok || runState["workspace"] == "" || runState["workspace"] == nil {
 		t.Fatalf("run was not bound to a managed worktree before provider tasks: %+v", payload)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".aef", "worktrees")); err != nil {
+	if _, err := os.Stat(filepath.Join(root, ".ae", "worktrees")); err != nil {
 		t.Fatalf("managed worktree was not prepared before provider tasks: %v", err)
 	}
 }
@@ -277,7 +277,7 @@ func TestAutopilotLocalFakeFlowWithDelegatedApproval(t *testing.T) {
 	if !ok || len(steps) < 6 {
 		t.Fatalf("autopilot steps were not recorded: %+v", payload)
 	}
-	workspace := filepath.Join(root, ".aef", "worktrees", fmt.Sprint(run["id"]))
+	workspace := filepath.Join(root, ".ae", "worktrees", fmt.Sprint(run["id"]))
 	if _, err := os.Stat(workspace); err != nil {
 		t.Fatalf("managed worktree was not used: %v", err)
 	}

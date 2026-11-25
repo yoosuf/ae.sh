@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aef.dev/schemas/review.schema.json",
-  "title": "AEF structured local review scan result",
+  "$id": "https://ae.sh/schemas/review.schema.json",
+  "title": "AE structured local review scan result",
   "type": "object",
   "additionalProperties": false,
   "required": [

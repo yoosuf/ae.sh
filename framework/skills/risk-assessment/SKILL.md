@@ -3,10 +3,10 @@ name: risk-assessment
 description: Computes a deterministic low/medium/high/critical risk tier from changed paths and diff semantics with matching escalation rules, never from an author's self-rating; use when asked to "assess risk", "what tier is this change", "does this need extra review", "compute escalation for this diff", or before approving, merging, or planning security-sensitive work.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Architecture
-  aef.skill-id: risk-assessment
-  aef.eval-fixture: evaluations/fixtures/risk-assessment/
+  ae.version: "0.1.0"
+  ae.domain: Architecture
+  ae.skill-id: risk-assessment
+  ae.eval-fixture: evaluations/fixtures/risk-assessment/
 ---
 
 ## Triggers

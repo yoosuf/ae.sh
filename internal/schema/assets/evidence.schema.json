@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aef.dev/schemas/evidence.schema.json",
-  "title": "AEF evidence record",
+  "$id": "https://ae.sh/schemas/evidence.schema.json",
+  "title": "AE evidence record",
   "type": "object",
   "additionalProperties": false,
   "required": [

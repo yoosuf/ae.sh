@@ -16,14 +16,14 @@ func TestResumeUsesCodexExecResumeSubcommand(t *testing.T) {
 	firstArgs := filepath.Join(dir, "first-args.txt")
 	secondArgs := filepath.Join(dir, "second-args.txt")
 	script := filepath.Join(dir, "codex-stub")
-	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AEF_TEST_ARGS\"\nprintf '%s\\n' '{\"type\":\"thread.started\",\"thread_id\":\"sess-codex\"}'\nprintf '%s\\n' '{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"ok\"}}'\n"
+	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AE_TEST_ARGS\"\nprintf '%s\\n' '{\"type\":\"thread.started\",\"thread_id\":\"sess-codex\"}'\nprintf '%s\\n' '{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"ok\"}}'\n"
 	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	provider := New()
 	provider.Binary = script
 	workspace := t.TempDir()
-	t.Setenv("AEF_TEST_ARGS", firstArgs)
+	t.Setenv("AE_TEST_ARGS", firstArgs)
 	first, err := provider.Run(context.Background(), integration.RunRequest{
 		TaskID: "chat-1", Skill: "provider-chat", Prompt: "first", Workspace: workspace,
 		Timeout: time.Second, Persistent: true,
@@ -34,7 +34,7 @@ func TestResumeUsesCodexExecResumeSubcommand(t *testing.T) {
 	if first.SessionID != "sess-codex" {
 		t.Fatalf("unexpected first session id %q", first.SessionID)
 	}
-	t.Setenv("AEF_TEST_ARGS", secondArgs)
+	t.Setenv("AE_TEST_ARGS", secondArgs)
 	if _, err := provider.Run(context.Background(), integration.RunRequest{
 		TaskID: "chat-2", Skill: "provider-chat", Prompt: "follow up", Workspace: workspace,
 		Timeout: time.Second, SessionID: first.SessionID, Persistent: true,
@@ -65,11 +65,11 @@ func TestResumeUsesCodexExecResumeSubcommand(t *testing.T) {
 func TestWriteUsesWorkspaceWriteSandbox(t *testing.T) {
 	argsPath := filepath.Join(t.TempDir(), "args.txt")
 	script := filepath.Join(t.TempDir(), "codex-stub")
-	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AEF_TEST_ARGS\"\nprintf '%s\\n' '{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"ok\"}}'\n"
+	body := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AE_TEST_ARGS\"\nprintf '%s\\n' '{\"type\":\"item.completed\",\"item\":{\"type\":\"agent_message\",\"text\":\"ok\"}}'\n"
 	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("AEF_TEST_ARGS", argsPath)
+	t.Setenv("AE_TEST_ARGS", argsPath)
 	provider := New()
 	provider.Binary = script
 	if _, err := provider.Run(context.Background(), integration.RunRequest{

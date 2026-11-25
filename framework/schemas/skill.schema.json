@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aef.dev/schemas/skill.schema.json",
-  "title": "AEF canonical skill",
+  "$id": "https://ae.sh/schemas/skill.schema.json",
+  "title": "AE canonical skill",
   "description": "Normalized representation of framework/skills/<slug>/SKILL.md used for validation and provider materialization.",
   "type": "object",
   "additionalProperties": false,
@@ -31,14 +31,14 @@
     "allowedTools": { "type": "array", "items": { "type": "string", "minLength": 1 } },
     "metadata": {
       "type": "object",
-      "required": ["aef.version", "aef.domain", "aef.skill-id"],
+      "required": ["ae.version", "ae.domain", "ae.skill-id"],
       "additionalProperties": { "type": "string" },
       "properties": {
-        "aef.version": {
+        "ae.version": {
           "type": "string",
           "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
         },
-        "aef.domain": {
+        "ae.domain": {
           "enum": [
             "Product",
             "Architecture",
@@ -50,8 +50,8 @@
             "Agentic"
           ]
         },
-        "aef.skill-id": { "type": "string", "minLength": 1 },
-        "aef.eval-fixture": { "type": "string", "minLength": 1 }
+        "ae.skill-id": { "type": "string", "minLength": 1 },
+        "ae.eval-fixture": { "type": "string", "minLength": 1 }
       }
     },
     "body": { "type": "string", "minLength": 200 },

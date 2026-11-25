@@ -101,14 +101,14 @@ func newEngine(t *testing.T, root, tasks string) *execution.Engine {
 	if err := os.MkdirAll(framework.Dir(root, framework.Workflows), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Join(root, ".aef"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, ".ae"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	path := framework.Dir(root, framework.Workflows, "local-flow.yaml")
 	if err := os.WriteFile(path, []byte(workflowYAML(tasks)), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	store, err := sqliteadapter.Open(filepath.Join(root, ".aef", "state.db"))
+	store, err := sqliteadapter.Open(filepath.Join(root, ".ae", "state.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func newEngine(t *testing.T, root, tasks string) *execution.Engine {
 		Store:    store,
 		Policies: testPolicies(),
 		Provider: fake.New(),
-		Evidence: evidence.New(filepath.Join(root, ".aef", "evidence"), filepath.Join(root, ".aef", "objects")),
+		Evidence: evidence.New(filepath.Join(root, ".ae", "evidence"), filepath.Join(root, ".ae", "objects")),
 		Root:     root,
 	}
 }
@@ -276,7 +276,7 @@ func TestReviewFindingsChangeInvalidatesApproval(t *testing.T) {
 	if err := engine.Approve(ctx, run.ID, "merge", "reviewer-2", "release-manager"); err != nil {
 		t.Fatal(err)
 	}
-	record, err := engine.Evidence.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "aef-review", map[string]any{
+	record, err := engine.Evidence.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "ae-review", map[string]any{
 		"verified": false, "findings": []any{},
 	}, nil, nil, "")
 	if err != nil {
@@ -324,7 +324,7 @@ func TestUnresolvedReviewFindingBlocksMerge(t *testing.T) {
 	if err != nil || run.State != string(execution.AwaitingMerge) {
 		t.Fatalf("expected merge gate: %+v, %v", run, err)
 	}
-	record, err := engine.Evidence.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "aef-review", map[string]any{
+	record, err := engine.Evidence.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "ae-review", map[string]any{
 		"verified": false,
 		"findings": []any{map[string]any{"id": "rev-0123456789abcdef", "ruleId": "credential-literal", "severity": "high"}},
 	}, nil, nil, "")
@@ -440,7 +440,7 @@ tasks:
 	if err := os.WriteFile(framework.Dir(root, framework.Workflows, "local-flow.yaml"), []byte(yaml), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	store, err := sqliteadapter.Open(filepath.Join(root, ".aef", "state.db"))
+	store, err := sqliteadapter.Open(filepath.Join(root, ".ae", "state.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -450,7 +450,7 @@ tasks:
 		Store:    store,
 		Policies: testPolicies(),
 		Provider: failing,
-		Evidence: evidence.New(filepath.Join(root, ".aef", "evidence"), filepath.Join(root, ".aef", "objects")),
+		Evidence: evidence.New(filepath.Join(root, ".ae", "evidence"), filepath.Join(root, ".ae", "objects")),
 		Root:     root,
 	}
 	run, _, err := engine.Start(ctx, execution.StartOptions{

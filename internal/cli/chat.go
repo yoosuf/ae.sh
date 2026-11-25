@@ -54,7 +54,7 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 	script := fs.String("script", "", "JSON file with a messages array")
 	sessionID := fs.String("session", "", "resume an existing provider session")
 	runID := fs.String("run", "", "optional run id for evidence persistence")
-	workspaceFlag := fs.String("workspace", "", "managed AEF worktree for live providers")
+	workspaceFlag := fs.String("workspace", "", "managed AE worktree for live providers")
 	dryRun := fs.Bool("dry-run", false, "preview the conversation without calling a provider")
 	confirmLive := fs.Bool("confirm-live", false, "authorize a live provider call")
 	timeoutRaw := fs.String("timeout", defaultChatTimeout.String(), "per-turn timeout, e.g. 5m")
@@ -95,7 +95,7 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 			return &PolicyError{Message: "live provider chat requires explicit --confirm-live; use --dry-run to preview"}
 		}
 		if *workspaceFlag == "" {
-			return &PolicyError{Message: "live provider chat requires --workspace pointing to a managed AEF worktree"}
+			return &PolicyError{Message: "live provider chat requires --workspace pointing to a managed AE worktree"}
 		}
 	}
 	result := chatResult{
@@ -163,7 +163,7 @@ func (a *App) cmdChat(ctx context.Context, args []string) error {
 			Usage:     response.Usage,
 		}
 		if *runID != "" {
-			record, err := appendRunEvidence(ctx, chatCfg, chatStore, *runID, "provider", fmt.Sprintf("Chat turn %d", turn.Index), "aef-chat", map[string]any{
+			record, err := appendRunEvidence(ctx, chatCfg, chatStore, *runID, "provider", fmt.Sprintf("Chat turn %d", turn.Index), "ae-chat", map[string]any{
 				"turn":      turn.Index,
 				"provider":  provider.Name(),
 				"sessionId": turn.SessionID,

@@ -3,10 +3,10 @@ name: pull-request-management
 description: Prepares, updates, and merges pull requests with SHA-bound evidence and policy checks for rulesets, CODEOWNERS, required checks, and protected environments; use when asked to "open a PR", "update the PR description", "check PR readiness", "merge this PR", or "respond to review comments".
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: DevOps
-  aef.skill-id: pull-request-management
-  aef.eval-fixture: evaluations/fixtures/pull-request-management/
+  ae.version: "0.1.0"
+  ae.domain: DevOps
+  ae.skill-id: pull-request-management
+  ae.eval-fixture: evaluations/fixtures/pull-request-management/
 ---
 
 ## Triggers

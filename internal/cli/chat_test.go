@@ -24,7 +24,7 @@ func initChatRepo(t *testing.T, root string) config.Config {
 	if code := app.Run(context.Background()); code != ExitOK {
 		t.Fatalf("init exited %d: %s %s", code, stdout.String(), stderr.String())
 	}
-	cfg, err := config.Load(filepath.Join(root, "aef.yaml"))
+	cfg, err := config.Load(filepath.Join(root, "ae.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}

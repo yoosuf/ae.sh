@@ -6,7 +6,7 @@ This reference defines the registry and evidence format for `git-worktree-manage
 
 ```yaml
 worktrees:
-  - path: "/worktrees/aef-task-01"
+  - path: "/worktrees/ae-task-01"
     branch: "task-01-invoice-export"
     owner_task: T-01
     origin: agent-created

@@ -8,7 +8,7 @@ schema_version: "1.0"
 base_sha: "7c1f4a9e0b1d2c3f4a5b6c7d8e9f0a1b2c3d4e5"
 candidate_sha: "91ac3f0d2e4b5a6978c0d1e2f3a4b5c6d7e8f9a0"
 worktree:
-  path: "/worktrees/aef-task-01"
+  path: "/worktrees/ae-task-01"
   branch: "task-01-invoice-export"
   uncommitted: []
 artifacts:

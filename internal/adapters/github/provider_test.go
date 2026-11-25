@@ -15,12 +15,12 @@ func githubStub(t *testing.T, body string) (string, string) {
 	dir := t.TempDir()
 	argsPath := filepath.Join(dir, "args.txt")
 	script := filepath.Join(dir, "gh-stub")
-	body = strings.ReplaceAll(body, "$AEF_TEST_ARGS", argsPath)
-	if err := os.WriteFile(script, []byte("#!/bin/sh\nprintf '%s ' \"$@\" > \"$AEF_TEST_ARGS\"\nprintf '%s\\n' \"$AEF_TEST_STUB_OUT\"\nif [ -n \"$GH_TOKEN\" ]; then printf 'token-present\\n' >> \"$AEF_TEST_ARGS\"; fi\n"), 0o700); err != nil {
+	body = strings.ReplaceAll(body, "$AE_TEST_ARGS", argsPath)
+	if err := os.WriteFile(script, []byte("#!/bin/sh\nprintf '%s ' \"$@\" > \"$AE_TEST_ARGS\"\nprintf '%s\\n' \"$AE_TEST_STUB_OUT\"\nif [ -n \"$GH_TOKEN\" ]; then printf 'token-present\\n' >> \"$AE_TEST_ARGS\"; fi\n"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv("AEF_TEST_ARGS", argsPath)
-	t.Setenv("AEF_TEST_STUB_OUT", body)
+	t.Setenv("AE_TEST_ARGS", argsPath)
+	t.Setenv("AE_TEST_STUB_OUT", body)
 	return script, argsPath
 }
 
@@ -64,7 +64,7 @@ func TestChecksAndDiff(t *testing.T) {
 	if !strings.Contains(string(raw), "pr checks main --json") {
 		t.Fatalf("unexpected checks arguments: %q", raw)
 	}
-	t.Setenv("AEF_TEST_STUB_OUT", "diff --git a/x b/x")
+	t.Setenv("AE_TEST_STUB_OUT", "diff --git a/x b/x")
 	diff, err := source.Diff(context.Background(), "main")
 	if err != nil {
 		t.Fatal(err)
@@ -76,8 +76,8 @@ func TestChecksAndDiff(t *testing.T) {
 
 func TestCommentRequiresMutationAndKeepsTokenOutOfArguments(t *testing.T) {
 	script, argsPath := githubStub(t, `{}`)
-	source := &Source{Binary: script, TokenEnv: "AEF_TEST_GH_TOKEN"}
-	t.Setenv("AEF_TEST_GH_TOKEN", "FAKE-gh-token")
+	source := &Source{Binary: script, TokenEnv: "AE_TEST_GH_TOKEN"}
+	t.Setenv("AE_TEST_GH_TOKEN", "FAKE-gh-token")
 	if err := source.Comment(context.Background(), "12", "summary"); err == nil {
 		t.Fatal("comment was accepted without mutation authorization")
 	}
@@ -102,7 +102,7 @@ func TestCommentRequiresMutationAndKeepsTokenOutOfArguments(t *testing.T) {
 }
 
 func TestNewRejectsNonLocalCLIMode(t *testing.T) {
-	integration := config.Integration{Mode: "app", TokenEnv: "AEF_GITHUB_TOKEN"}
+	integration := config.Integration{Mode: "app", TokenEnv: "AE_GITHUB_TOKEN"}
 	if _, err := New(integration); err == nil {
 		t.Fatal("GitHub App mode was accepted by the local CLI adapter")
 	}

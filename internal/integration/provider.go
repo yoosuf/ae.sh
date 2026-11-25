@@ -27,9 +27,9 @@ type RunRequest struct {
 	Workspace  string
 	Timeout    time.Duration
 	SessionID  string // resume an existing provider conversation when supported
-	Persistent bool   // keep the session resumable; used by `aef chat`
+	Persistent bool   // keep the session resumable; used by `ae chat`
 	// Write permits file edits in Workspace. It is false unless the caller
-	// explicitly opts in and the workspace is an AEF-managed worktree.
+	// explicitly opts in and the workspace is an AE-managed worktree.
 	Write bool
 }
 

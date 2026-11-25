@@ -6,25 +6,25 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/aef-worktree-e2e.XXXXXX")"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ae-worktree-e2e.XXXXXX")"
 trap 'rm -rf "$WORK_DIR"' EXIT
-BIN="$WORK_DIR/aef"
+BIN="$WORK_DIR/ae"
 REPO_COPY="$WORK_DIR/repo"
 
 # Keep verification in the throwaway repository independent of the host's
 # shared Go build cache, which may be absent or unwritable in CI/sandboxes.
 export GOCACHE="$WORK_DIR/go-cache"
 
-(cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/aef)
+(cd "$REPO_ROOT" && go build -o "$BIN" ./cmd/ae)
 mkdir -p "$REPO_COPY"
-tar --exclude='./.git' --exclude='./.aef' --exclude='./aef.yaml' --exclude='./dist' \
+tar --exclude='./.git' --exclude='./.ae' --exclude='./ae.yaml' --exclude='./dist' \
   -cf - -C "$REPO_ROOT" . | tar -xf - -C "$REPO_COPY"
 
 # This commit is only in the throwaway copy. It exists so git has a HEAD from
 # which to create a detached worktree; the source tree is never committed.
 git -C "$REPO_COPY" init -q -b main
 git -C "$REPO_COPY" add -A
-git -C "$REPO_COPY" -c user.name=AEF -c user.email=aef@example.invalid \
+git -C "$REPO_COPY" -c user.name=AE -c user.email=ae@example.invalid \
   commit -qm 'synthetic fixture commit' --no-gpg-sign
 
 "$BIN" --root "$REPO_COPY" init --profile go >/dev/null
@@ -34,7 +34,7 @@ start_output="$("$BIN" --root "$REPO_COPY" --json run feature-development \
 run_id="$(printf '%s' "$start_output" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
 "$BIN" --root "$REPO_COPY" --json worktree prepare "$run_id" >/dev/null
 
-worktree="$REPO_COPY/.aef/worktrees/$run_id"
+worktree="$REPO_COPY/.ae/worktrees/$run_id"
 worktree_real="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$worktree")"
 head_main="$(git -C "$REPO_COPY" rev-parse HEAD)"
 head_worktree="$(git -C "$worktree" rev-parse HEAD)"

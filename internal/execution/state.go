@@ -81,6 +81,6 @@ func ParseState(value string) (State, error) {
 	return state, nil
 }
 
-// LocalTerminalState is used when deployment is out of scope. AEF stops at the
+// LocalTerminalState is used when deployment is out of scope. AE stops at the
 // merge-eligible state and records why it did not invent production evidence.
 const LocalTerminalState = AwaitingMerge

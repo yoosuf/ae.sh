@@ -17,8 +17,8 @@ import (
 
 var worktreeRunIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*$`)
 
-// worktreePath returns the only path AEF may use for a run's worktree. The
-// run id is constrained and the result must remain under <root>/.aef/worktrees.
+// worktreePath returns the only path AE may use for a run's worktree. The
+// run id is constrained and the result must remain under <root>/.ae/worktrees.
 func worktreePath(root, runID string) (string, error) {
 	if !worktreeRunIDPattern.MatchString(runID) {
 		return "", invalid("invalid run id %q for worktree use", runID)
@@ -27,25 +27,25 @@ func worktreePath(root, runID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	base := filepath.Join(absRoot, ".aef", "worktrees")
+	base := filepath.Join(absRoot, ".ae", "worktrees")
 	path := filepath.Join(base, runID)
 	rel, err := filepath.Rel(base, path)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", &PolicyError{Message: "worktree path escapes the AEF worktree directory"}
+		return "", &PolicyError{Message: "worktree path escapes the AE worktree directory"}
 	}
 	return path, nil
 }
 
-// validateWorkspace accepts only an existing AEF-managed worktree directory.
+// validateWorkspace accepts only an existing AE-managed worktree directory.
 // Arbitrary paths are rejected so a run cannot be pointed at user-owned work.
 func validateWorkspace(root, value string) (string, error) {
 	absRoot, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
 	}
-	base, err := filepath.EvalSymlinks(filepath.Join(absRoot, ".aef", "worktrees"))
+	base, err := filepath.EvalSymlinks(filepath.Join(absRoot, ".ae", "worktrees"))
 	if err != nil {
-		return "", invalid("AEF worktree directory does not exist: %v", err)
+		return "", invalid("AE worktree directory does not exist: %v", err)
 	}
 	absValue, err := filepath.Abs(value)
 	if err != nil {
@@ -61,14 +61,14 @@ func validateWorkspace(root, value string) (string, error) {
 	}
 	rel, err := filepath.Rel(base, resolved)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", &PolicyError{Message: "workspace must be an AEF-managed worktree under .aef/worktrees"}
+		return "", &PolicyError{Message: "workspace must be an AE-managed worktree under .ae/worktrees"}
 	}
 	return resolved, nil
 }
 
 // validateManagedWorktree adds git-level checks to validateWorkspace: the path
 // must be a registered git worktree whose real path matches the managed path.
-// A plain directory placed under .aef/worktrees is not sufficient. Ownership by
+// A plain directory placed under .ae/worktrees is not sufficient. Ownership by
 // a specific run is checked separately by autopilot, which always allocates a
 // dedicated worktree per run.
 func validateManagedWorktree(ctx context.Context, root, value string) (string, error) {
@@ -103,7 +103,7 @@ func validateManagedWorktree(ctx context.Context, root, value string) (string, e
 	return "", &PolicyError{Message: "workspace is not a git worktree registered with this repository"}
 }
 
-// validateRunWorktree requires the workspace to be the dedicated AEF worktree
+// validateRunWorktree requires the workspace to be the dedicated AE worktree
 // for this run. Autopilot binds one worktree per run and never reuses another
 // run's workspace.
 func validateRunWorktree(ctx context.Context, root, runID, value string) (string, error) {
@@ -165,7 +165,7 @@ func (a *App) cmdWorktree(ctx context.Context, args []string) error {
 	return a.cleanWorktree(ctx, manager, store, run, path, topReal)
 }
 
-// prepareManagedWorktree creates the only worktree path AEF may use for a run.
+// prepareManagedWorktree creates the only worktree path AE may use for a run.
 // It is shared by `worktree prepare` and `autopilot`.
 func (a *App) prepareManagedWorktree(ctx context.Context, repo repoContext, runID string) (string, string, error) {
 	path, err := worktreePath(repo.Config.Root, runID)
@@ -210,7 +210,7 @@ func gitWorktreeRoot(ctx context.Context, root string) (string, string, error) {
 		return "", "", err
 	}
 	if rootReal != topReal {
-		return "", "", &PolicyError{Message: "aef.yaml must be at the git worktree root; refusing to create a worktree from a nested directory"}
+		return "", "", &PolicyError{Message: "ae.yaml must be at the git worktree root; refusing to create a worktree from a nested directory"}
 	}
 	return rootReal, topReal, nil
 }
@@ -233,8 +233,8 @@ func (a *App) createDetachedWorktree(ctx context.Context, manager *evidence.Mana
 	if _, err := runGit(ctx, root, "worktree", "add", "--detach", path, baseSHA); err != nil {
 		return "", &PolicyError{Message: "git refused to create the worktree: " + util.Sanitize(err.Error())}
 	}
-	// Reject a path that resolved outside the AEF worktree directory.
-	base := filepath.Join(root, ".aef", "worktrees")
+	// Reject a path that resolved outside the AE worktree directory.
+	base := filepath.Join(root, ".ae", "worktrees")
 	baseReal, err := filepath.EvalSymlinks(base)
 	if err != nil {
 		return "", &PolicyError{Message: "worktree path could not be verified; the worktree was left for manual inspection"}
@@ -294,7 +294,7 @@ func appendWorktreeEvidence(ctx context.Context, manager *evidence.Manager, stor
 	if err != nil {
 		return err
 	}
-	record, err := manager.Write(ctx, runID, len(records), "artifact", "Worktree "+action, "aef worktree", data, nil, nil, "")
+	record, err := manager.Write(ctx, runID, len(records), "artifact", "Worktree "+action, "ae worktree", data, nil, nil, "")
 	if err != nil {
 		return err
 	}

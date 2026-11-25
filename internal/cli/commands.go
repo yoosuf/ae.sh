@@ -27,7 +27,7 @@ import (
 func (a *App) cmdInit(args []string) error {
 	fs := newFlagSet("init")
 	profileFlag := fs.String("profile", "", "comma-separated profiles ("+strings.Join(config.KnownProfiles(), ",")+")")
-	force := fs.Bool("force", false, "overwrite an existing aef.yaml")
+	force := fs.Bool("force", false, "overwrite an existing ae.yaml")
 	if err := fs.Parse(args); err != nil {
 		return usage("init: %v", err)
 	}
@@ -55,13 +55,13 @@ func (a *App) cmdInit(args []string) error {
 		}
 	}
 	if info, err := os.Stat(framework.Dir(root, framework.Skills)); err != nil || !info.IsDir() {
-		return invalid("canonical framework assets not found under %s; run init from the AEF checkout or pass --root to that checkout", root)
+		return invalid("canonical framework assets not found under %s; run init from the AE checkout or pass --root to that checkout", root)
 	}
 	path := filepath.Join(root, config.FileName)
 	if err := config.Write(path, cfg, *force); err != nil {
 		return invalid("%v", err)
 	}
-	for _, dir := range []string{filepath.Join(root, ".aef"), cfg.EvidenceDir(), cfg.ObjectsDir()} {
+	for _, dir := range []string{filepath.Join(root, ".ae"), cfg.EvidenceDir(), cfg.ObjectsDir()} {
 		if err := util.EnsureDir(dir); err != nil {
 			return err
 		}
@@ -117,9 +117,9 @@ func (a *App) cmdSkills(args []string) error {
 		for _, skill := range ctx.Catalogue.Skills {
 			rows = append(rows, map[string]any{
 				"slug":    skill.Slug,
-				"domain":  skill.Metadata["aef.domain"],
-				"version": skill.Metadata["aef.version"],
-				"fixture": skill.Metadata["aef.eval-fixture"],
+				"domain":  skill.Metadata["ae.domain"],
+				"version": skill.Metadata["ae.version"],
+				"fixture": skill.Metadata["ae.eval-fixture"],
 			})
 		}
 		a.emit(rows)
@@ -178,7 +178,7 @@ func (a *App) cmdSkills(args []string) error {
 		} else {
 			return usage("unsupported provider %q", *provider)
 		}
-		removed, err := catalog.Uninstall(filepath.Join(base, ".aef-manifest.json"), *force)
+		removed, err := catalog.Uninstall(filepath.Join(base, ".ae-manifest.json"), *force)
 		if err != nil {
 			return &PolicyError{Message: err.Error()}
 		}
@@ -306,7 +306,7 @@ func (a *App) cmdRun(ctx context.Context, args []string) error {
 	providerFlag := fs.String("provider", "", "fake, claude, or codex")
 	dryRun := fs.Bool("dry-run", false, "preview without writes")
 	actor := fs.String("actor", "local-user", "approver identity for this run")
-	workspaceFlag := fs.String("workspace", "", "prepared AEF worktree to use (aef worktree prepare <run-id>)")
+	workspaceFlag := fs.String("workspace", "", "prepared AE worktree to use (ae worktree prepare <run-id>)")
 	confirmLive := fs.Bool("confirm-live", false, "authorize live provider calls")
 	allowWrites := fs.Bool("allow-writes", false, "allow provider file edits inside a managed worktree")
 	if err := fs.Parse(args[1:]); err != nil {
@@ -329,7 +329,7 @@ func (a *App) cmdRun(ctx context.Context, args []string) error {
 		providerName = repo.Config.Provider.Default
 	}
 	if providerName != "fake" && !*dryRun && !*confirmLive {
-		return &PolicyError{Message: "live provider runs require --confirm-live and a managed AEF worktree; use --dry-run to preview"}
+		return &PolicyError{Message: "live provider runs require --confirm-live and a managed AE worktree; use --dry-run to preview"}
 	}
 	workspace := ""
 	if *workspaceFlag != "" {
@@ -339,10 +339,10 @@ func (a *App) cmdRun(ctx context.Context, args []string) error {
 		}
 	}
 	if providerName != "fake" && !*dryRun && workspace == "" {
-		return &PolicyError{Message: "live provider runs require --workspace pointing to a managed AEF worktree"}
+		return &PolicyError{Message: "live provider runs require --workspace pointing to a managed AE worktree"}
 	}
 	if *allowWrites && (providerName == "fake" || workspace == "") {
-		return &PolicyError{Message: "--allow-writes requires a live provider and a managed AEF worktree"}
+		return &PolicyError{Message: "--allow-writes requires a live provider and a managed AE worktree"}
 	}
 	engine, store, err := a.buildEngine(repo, providerName)
 	if err != nil {
@@ -463,10 +463,10 @@ func (a *App) cmdResume(ctx context.Context, args []string) error {
 		return &PolicyError{Message: "live provider runs require --confirm-live; use --dry-run on a new run to preview"}
 	}
 	if providerName != "fake" && run.Workspace == "" {
-		return &PolicyError{Message: "live provider runs require a run with a managed AEF worktree"}
+		return &PolicyError{Message: "live provider runs require a run with a managed AE worktree"}
 	}
 	if *allowWrites && (providerName == "fake" || run.Workspace == "") {
-		return &PolicyError{Message: "--allow-writes requires a live provider and a managed AEF worktree"}
+		return &PolicyError{Message: "--allow-writes requires a live provider and a managed AE worktree"}
 	}
 	if run.Workspace != "" {
 		if _, err := validateManagedWorktree(ctx, repo.Config.Root, run.Workspace); err != nil {
@@ -605,7 +605,7 @@ func (a *App) reviewDiff(ctx context.Context, diffPath, runID string, pr int, ca
 		if err != nil {
 			return ReviewResult{}, err
 		}
-		record, err := appendRunEvidence(ctx, cfg, store, runID, "review", "Local diff pattern scan", "aef-review", data.(map[string]any), nil, nil)
+		record, err := appendRunEvidence(ctx, cfg, store, runID, "review", "Local diff pattern scan", "ae-review", data.(map[string]any), nil, nil)
 		if err != nil {
 			return ReviewResult{}, err
 		}
@@ -708,7 +708,7 @@ func (a *App) cmdEvidence(ctx context.Context, args []string) error {
 	}
 	fs := newFlagSet("evidence export")
 	format := fs.String("format", "both", "json, markdown, or both")
-	out := fs.String("out", "", "output directory (default .aef/evidence/export)")
+	out := fs.String("out", "", "output directory (default .ae/evidence/export)")
 	if err := fs.Parse(args[2:]); err != nil {
 		return usage("evidence export: %v", err)
 	}

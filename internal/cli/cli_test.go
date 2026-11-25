@@ -30,7 +30,7 @@ func TestWorktreePathStaysInsideManagedDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(root, ".aef", "worktrees", "run-abc123")
+	want := filepath.Join(root, ".ae", "worktrees", "run-abc123")
 	if path != want {
 		t.Fatalf("unexpected worktree path %q, want %q", path, want)
 	}
@@ -43,7 +43,7 @@ func TestWorktreePathStaysInsideManagedDirectory(t *testing.T) {
 
 func TestValidateWorkspaceRejectsUnmanagedPaths(t *testing.T) {
 	root := t.TempDir()
-	base := filepath.Join(root, ".aef", "worktrees")
+	base := filepath.Join(root, ".ae", "worktrees")
 	inside := filepath.Join(base, "run-1")
 	outside := filepath.Join(root, "user-owned")
 	for _, dir := range []string{inside, outside} {
@@ -69,12 +69,12 @@ func TestValidateManagedWorktreeRejectsPlainDirectory(t *testing.T) {
 	if _, err := runGit(context.Background(), root, "init", "-q"); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(root, ".aef", "worktrees", "run-plain")
+	path := filepath.Join(root, ".ae", "worktrees", "run-plain")
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := validateManagedWorktree(context.Background(), root, path); err == nil {
-		t.Fatal("a plain directory under .aef/worktrees was accepted as a managed worktree")
+		t.Fatal("a plain directory under .ae/worktrees was accepted as a managed worktree")
 	}
 }
 
@@ -213,7 +213,7 @@ func TestInitAcceptsExpandedProfilesAndRejectsUnknown(t *testing.T) {
 	if code := app.Run(context.Background()); code != ExitOK {
 		t.Fatalf("init exited %d: %s %s", code, stdout.String(), stderr.String())
 	}
-	cfg, err := config.Load(filepath.Join(root, "aef.yaml"))
+	cfg, err := config.Load(filepath.Join(root, "ae.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,7 +241,7 @@ func TestInitAcceptsExpandedProfilesAndRejectsUnknown(t *testing.T) {
 	if code := badApp.Run(context.Background()); code != ExitUsage {
 		t.Fatalf("unknown profile exited %d, want %d: %s", code, ExitUsage, badOut.String())
 	}
-	if _, err := os.Stat(filepath.Join(badRoot, "aef.yaml")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(badRoot, "ae.yaml")); !os.IsNotExist(err) {
 		t.Fatalf("config was written after a profile validation error: %v", err)
 	}
 }
@@ -256,7 +256,7 @@ func TestInitRejectsRootsWithoutCanonicalFrameworkAssets(t *testing.T) {
 	if code := app.Run(context.Background()); code != ExitValidation {
 		t.Fatalf("init exited %d for a non-framework root: %s %s", code, stdout.String(), stderr.String())
 	}
-	if _, err := os.Stat(filepath.Join(root, "aef.yaml")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, "ae.yaml")); !os.IsNotExist(err) {
 		t.Fatalf("init wrote configuration for a non-framework root: %v", err)
 	}
 }

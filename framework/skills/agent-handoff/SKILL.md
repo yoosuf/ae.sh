@@ -3,10 +3,10 @@ name: agent-handoff
 description: Produces a typed, structured handoff packet with base SHA, artifact digests, open questions, and explicit escalation so another agent can continue safely; use when asked to "write a handoff", "hand off to the next agent", "pass this to review", "continue in another session", or when work crosses an agent, role, or session boundary.
 license: Apache-2.0
 metadata:
-  aef.version: "0.1.0"
-  aef.domain: Agentic
-  aef.skill-id: agent-handoff
-  aef.eval-fixture: evaluations/fixtures/agent-handoff/
+  ae.version: "0.1.0"
+  ae.domain: Agentic
+  ae.skill-id: agent-handoff
+  ae.eval-fixture: evaluations/fixtures/agent-handoff/
 ---
 
 ## Triggers

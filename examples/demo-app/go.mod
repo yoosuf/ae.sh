@@ -1,3 +1,3 @@
-module example.com/aef-demo
+module example.com/ae-demo
 
 go 1.22

@@ -28,8 +28,8 @@ func TestCollectReviewEvidenceReconstructsResolutionAfterRestart(t *testing.T) {
 	if err := store.CreateRun(ctx, run); err != nil {
 		t.Fatal(err)
 	}
-	manager := evidence.New(filepath.Join(root, ".aef", "evidence"), filepath.Join(root, ".aef", "objects"))
-	reviewRecord, err := manager.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "aef-review", map[string]any{
+	manager := evidence.New(filepath.Join(root, ".ae", "evidence"), filepath.Join(root, ".ae", "objects"))
+	reviewRecord, err := manager.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "ae-review", map[string]any{
 		"candidateSHA": run.CandidateSHA,
 		"findings": []any{map[string]any{
 			"id": "rev-0123456789abcdef", "ruleId": "credential-literal", "severity": "high",
@@ -79,8 +79,8 @@ func TestCollectReviewEvidenceRejectsStaleReview(t *testing.T) {
 	if err := store.CreateRun(ctx, run); err != nil {
 		t.Fatal(err)
 	}
-	manager := evidence.New(filepath.Join(root, ".aef", "evidence"), filepath.Join(root, ".aef", "objects"))
-	record, err := manager.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "aef-review", map[string]any{
+	manager := evidence.New(filepath.Join(root, ".ae", "evidence"), filepath.Join(root, ".ae", "objects"))
+	record, err := manager.Write(ctx, run.ID, 0, "review", "Local diff pattern scan", "ae-review", map[string]any{
 		"candidateSHA": "offline-stale", "findings": []any{},
 	}, nil, nil, "")
 	if err != nil {
