@@ -243,9 +243,12 @@ path and all local review-resolution behavior were exercised offline.
 
 - The directory is a git repository on `main` tracking `origin/main`. The
   earlier framework, rename, and repository-link work is committed in 11
-  logical commits; model routing is recorded in small local commits. No push,
-  publish, deploy, or cloud resource creation was performed in the source
-  repository.
+  logical commits; model routing is recorded in four small commits. No push,
+  publish, deploy, or cloud resource creation was executed, requested, or
+  approved by the agent. A read-only `git ls-remote` after the final commit
+  showed GitHub `main` at the local HEAD, and the remote-tracking reflog
+  records `update by push` at 2026-11-25 21:21 IST; that push was external to
+  the commands run here.
 - Visual-layer files (`assets/`, `docs/superpowers/`, and image links in several
   docs) are unrelated to routing and were kept out of routing commits.
 - No credentials were used, stored in CLI flags/config/prompts/fixtures, or
