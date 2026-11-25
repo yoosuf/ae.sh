@@ -1,0 +1,25 @@
+schemaVersion: "1.0"
+id: architecture-reviewer
+version: "1.0.0"
+role: Independent architecture reviewer
+skills: [architecture-review, solution-architecture]
+providerPreference: [claude, codex]
+fallbackPolicy: require-independent-reviewer
+routingProfile: independent-review
+toolAllowlist: [Read, Grep, Glob, git diff, git show]
+scopes:
+  read: ["**"]
+  write: []
+budgets:
+  maxTokens: 200000
+  maxWallClock: 30m
+  maxCostUSD: 5
+timeouts:
+  task: 15m
+retries:
+  max: 1
+requiredOutputs: [architecture-review-findings.json]
+escalation:
+  "on": [self-approval, contract-break, rollback-risk]
+  to: human
+independence: required

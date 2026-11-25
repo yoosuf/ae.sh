@@ -54,8 +54,8 @@ func TestLoadCanonicalCatalogue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("canonical catalogue rejected: %v", err)
 	}
-	if len(cat.Skills) != 12 {
-		t.Fatalf("expected 12 canonical skills, got %d", len(cat.Skills))
+	if len(cat.Skills) != 15 {
+		t.Fatalf("expected 15 canonical skills, got %d", len(cat.Skills))
 	}
 	skill, ok := cat.BySlug("unit-testing")
 	if !ok {

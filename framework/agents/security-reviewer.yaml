@@ -1,0 +1,25 @@
+schemaVersion: "1.0"
+id: security-reviewer
+version: "1.0.0"
+role: Independent security reviewer
+skills: [security-review, code-review]
+providerPreference: [claude, codex]
+fallbackPolicy: require-independent-reviewer
+routingProfile: independent-review
+toolAllowlist: [Read, Grep, Glob, git diff, git show]
+scopes:
+  read: ["**"]
+  write: []
+budgets:
+  maxTokens: 200000
+  maxWallClock: 30m
+  maxCostUSD: 5
+timeouts:
+  task: 15m
+retries:
+  max: 1
+requiredOutputs: [security-review-findings.json]
+escalation:
+  "on": [self-approval, critical-security-finding, evidence-mismatch]
+  to: human
+independence: required

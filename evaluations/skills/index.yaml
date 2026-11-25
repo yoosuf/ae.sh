@@ -60,6 +60,21 @@ catalogue:
     fixture: evaluations/fixtures/pull-request-management/fixture.md
     expected: evaluations/fixtures/pull-request-management/expected.yaml
     status: pending-execution
+  - id: security-review
+    domain: Quality
+    fixture: evaluations/fixtures/security-review/fixture.md
+    expected: evaluations/fixtures/security-review/expected.yaml
+    status: pending-execution
+  - id: architecture-review
+    domain: Architecture
+    fixture: evaluations/fixtures/architecture-review/fixture.md
+    expected: evaluations/fixtures/architecture-review/expected.yaml
+    status: pending-execution
+  - id: test-review
+    domain: Quality
+    fixture: evaluations/fixtures/test-review/fixture.md
+    expected: evaluations/fixtures/test-review/expected.yaml
+    status: pending-execution
 notes: >-
   Fixtures, rubrics, and this catalogue are authored. No evaluation has been
   executed; pending-execution means no result, score, or pass rate exists.

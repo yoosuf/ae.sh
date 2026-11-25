@@ -1,0 +1,25 @@
+schemaVersion: "1.0"
+id: test-reviewer
+version: "1.0.0"
+role: Independent test and evidence reviewer
+skills: [test-review, unit-testing]
+providerPreference: [claude, codex]
+fallbackPolicy: require-independent-reviewer
+routingProfile: independent-review
+toolAllowlist: [Read, Grep, Glob, git diff, git show]
+scopes:
+  read: ["**"]
+  write: []
+budgets:
+  maxTokens: 200000
+  maxWallClock: 30m
+  maxCostUSD: 5
+timeouts:
+  task: 15m
+retries:
+  max: 1
+requiredOutputs: [test-review-findings.json]
+escalation:
+  "on": [self-approval, fabricated-evidence, gate-readiness-mismatch]
+  to: human
+independence: required
