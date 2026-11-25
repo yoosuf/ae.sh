@@ -50,6 +50,10 @@ type App struct {
 	Args   []string
 	JSON   bool
 	Root   string
+
+	// ProviderFactory is an optional test seam. Production always uses the
+	// explicit fake/claude/codex adapters selected by --provider.
+	ProviderFactory func(string) (integration.Provider, error)
 }
 
 // Run dispatches a command and returns a process exit code.
@@ -220,6 +224,7 @@ Commands:
   cancel <run-id> --reason text
   approve <run-id> --gate architecture --approver name [--role role]
   review --diff path/to.diff [--pr 123] [--run run-id] [--candidate-sha sha] [--base-sha sha]
+  review --diff path/to.diff --provider claude|codex|fake [--skill code-review|security-review|architecture-review|test-review] [--candidate-sha sha --base-sha sha] [--run run-id] [--workspace DIR] [--dry-run] [--confirm-live]
   review resolve --run run-id --finding rev-... --status fixed|accepted|false-positive --reason text [--actor name]
   chat --provider fake|claude|codex --message text|--script file.json [--route fast|balanced|deep-reasoning|independent-review|recovery] [--session id] [--run run-id] [--workspace DIR] [--dry-run] [--confirm-live]
   autopilot --issue key|fixture | --resume run-id [--workflow feature-development] [--provider fake|claude|codex] [--approver name] [--confirm-gates] [--confirm-live] [--allow-writes] [--github-pr ref] [--comment --confirm-mutate] [--dry-run]
@@ -395,6 +400,13 @@ func catBrokenReferences(cat catalog.Catalogue) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+func (a *App) provider(name string) (integration.Provider, error) {
+	if a.ProviderFactory != nil {
+		return a.ProviderFactory(name)
+	}
+	return newProvider(name)
 }
 
 func newProvider(name string) (integration.Provider, error) {

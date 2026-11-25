@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/yoosuf/ae.sh/internal/adapters/jira"
 	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
@@ -560,11 +561,28 @@ func (a *App) cmdReview(ctx context.Context, args []string) error {
 	runID := fs.String("run", "", "optional run id for evidence persistence")
 	candidateSHA := fs.String("candidate-sha", "", "candidate commit SHA (evidence only)")
 	baseSHA := fs.String("base-sha", "", "base commit SHA (evidence only)")
+	providerName := fs.String("provider", "", "opt-in provider-backed review: fake, claude, or codex")
+	skill := fs.String("skill", "code-review", "canonical review skill: code-review, security-review, architecture-review, or test-review")
+	workspaceFlag := fs.String("workspace", "", "managed AE worktree for live providers")
+	dryRun := fs.Bool("dry-run", false, "preview a provider review without calling a provider")
+	confirmLive := fs.Bool("confirm-live", false, "authorize a live provider review")
+	timeoutRaw := fs.String("timeout", defaultReviewTimeout.String(), "per-review timeout, e.g. 15m")
 	if err := fs.Parse(args); err != nil {
 		return usage("review: %v", err)
 	}
+	if *providerName != "" {
+		timeout, err := time.ParseDuration(*timeoutRaw)
+		if err != nil || timeout < 10*time.Second || timeout > maxReviewTimeout {
+			return usage("review --timeout must be between 10s and %s", maxReviewTimeout)
+		}
+		return a.reviewWithProvider(ctx, reviewRequest{
+			Provider: *providerName, Skill: *skill, Diff: *diff, RunID: *runID,
+			CandidateSHA: *candidateSHA, BaseSHA: *baseSHA, PR: *pr,
+			Workspace: *workspaceFlag, Timeout: timeout, DryRun: *dryRun, ConfirmLive: *confirmLive,
+		})
+	}
 	if *diff == "" {
-		return &PolicyError{Message: "live GitHub PR review is not implemented; supply --diff for a local pattern scan"}
+		return &PolicyError{Message: "live GitHub PR review is not implemented; supply --diff for a local pattern scan or --provider for a provider review"}
 	}
 	result, err := a.reviewDiff(ctx, *diff, *runID, *pr, *candidateSHA, *baseSHA)
 	if err != nil {

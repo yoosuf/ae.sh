@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ae.sh/schemas/review.schema.json",
-  "title": "AE structured local review scan result",
+  "title": "AE structured review result",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,7 +16,7 @@
   ],
   "properties": {
     "schemaVersion": { "const": "1.0" },
-    "mode": { "const": "local-pattern-scan" },
+    "mode": { "enum": ["local-pattern-scan", "provider-backed-review"] },
     "verified": { "const": false },
     "pr": { "type": "integer", "minimum": 0 },
     "source": { "type": "string", "minLength": 1 },
@@ -24,8 +24,17 @@
     "candidateSHA": { "type": "string" },
     "baseSHA": { "type": "string" },
     "evidenceRecordID": { "type": "string" },
+    "provider": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "skill": { "enum": ["code-review", "security-review", "architecture-review", "test-review"] },
+    "routingProfile": { "const": "independent-review" },
+    "requestedModel": { "type": "string", "minLength": 1 },
+    "model": { "type": "string" },
+    "reviewMode": { "const": "provider-backed" },
+    "independentReview": { "type": "boolean" },
+    "simulated": { "type": "boolean" },
     "findings": {
       "type": "array",
+      "maxItems": 100,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -46,9 +55,9 @@
           "ruleId": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
           "severity": { "enum": ["critical", "high", "medium", "low"] },
           "status": { "const": "hypothesis" },
-          "file": { "type": "string" },
+          "file": { "type": "string", "minLength": 1 },
           "line": { "type": "integer", "minimum": 1 },
-          "evidence": { "type": "string" },
+          "evidence": { "type": "string", "minLength": 1 },
           "impact": { "type": "string", "minLength": 1 },
           "remediation": { "type": "string", "minLength": 1 },
           "verified": { "const": false }
@@ -58,6 +67,10 @@
     "checksWithoutFindings": {
       "type": "array",
       "items": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+    },
+    "ignoredInstructions": {
+      "type": "array",
+      "items": { "type": "string" }
     },
     "note": { "type": "string", "minLength": 1 }
   }

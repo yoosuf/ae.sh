@@ -29,7 +29,9 @@ type ReviewFinding struct {
 	Verified    bool   `json:"verified"`
 }
 
-// ReviewResult is the canonical structured output of a local review scan.
+// ReviewResult is the canonical structured output of a local scan or an opt-in
+// provider-backed review. Provider output is untrusted: findings stay
+// hypotheses until a human resolves them.
 type ReviewResult struct {
 	SchemaVersion         string          `json:"schemaVersion"`
 	Mode                  string          `json:"mode"`
@@ -40,8 +42,17 @@ type ReviewResult struct {
 	CandidateSHA          string          `json:"candidateSHA,omitempty"`
 	BaseSHA               string          `json:"baseSHA,omitempty"`
 	EvidenceRecordID      string          `json:"evidenceRecordID,omitempty"`
+	Provider              string          `json:"provider,omitempty"`
+	Skill                 string          `json:"skill,omitempty"`
+	RoutingProfile        string          `json:"routingProfile,omitempty"`
+	RequestedModel        string          `json:"requestedModel,omitempty"`
+	Model                 string          `json:"model,omitempty"`
+	ReviewMode            string          `json:"reviewMode,omitempty"`
+	IndependentReview     bool            `json:"independentReview,omitempty"`
+	Simulated             bool            `json:"simulated,omitempty"`
 	Findings              []ReviewFinding `json:"findings"`
 	ChecksWithoutFindings []string        `json:"checksWithoutFindings"`
+	IgnoredInstructions   []string        `json:"ignoredInstructions,omitempty"`
 	Note                  string          `json:"note"`
 }
 
