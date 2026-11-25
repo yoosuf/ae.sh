@@ -1,6 +1,6 @@
-# Contributing to AEF
+# Contributing to AE
 
-Thanks for your interest in the Agentic Engineering Framework. This project is
+Thanks for your interest in the Agentic Engineering. This project is
 early-stage: the catalogue, CLI, and workflow engine are being built in phases.
 Please read this file, `AGENTS.md`, and `docs/roadmap.md` before opening a pull
 request.
@@ -27,7 +27,7 @@ live integrations were exercised.
 3. Make a branch for your change; keep it focused.
 4. For changes to skills, edit the canonical Markdown at
    `framework/skills/<slug>/SKILL.md` and regenerate provider copies with
-   `aef skills install` rather than hand-editing generated files.
+   `ae skills install` rather than hand-editing generated files.
 5. Run `make check` (format, build, vet, unit tests, race tests, validation,
    the offline end-to-end script, and the worktree end-to-end script) before
    proposing a change. If a check cannot run, say so explicitly in the PR.

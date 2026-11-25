@@ -18,7 +18,7 @@ Treat AWS and the dashboard as optional layers behind ports:
 
 ## Consequences
 
-- No account, credentials, or network is needed to use AEF.
+- No account, credentials, or network is needed to use AE.
 - Adapter work can proceed without destabilizing core.
 - Two projections of state (local + cloud) need consistency docs when implemented.
 - Contributors must not imply these components exist in current docs or CLI output.

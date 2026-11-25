@@ -20,7 +20,8 @@ what was actually run in this tree. It is not a release report.
 | `scripts/e2e-worktree.sh` | Passed. |
 | `make check` | Passed (build, vet, unit tests, race tests, schema validation, offline E2E, worktree E2E). |
 | `gofmt -w` on reorganized Go files, `go build ./...`, targeted package tests, then `make check` | Passed after moving canonical assets under `framework/` and adding `internal/framework/paths.go`. |
-| `go run ./cmd/aef --help` | Passed; `autopilot` and the live/write flags on `run` and `resume` are exposed. |
+| `go build ./...`, `go test ./...`, then `make check` | Passed after renaming the module, CLI, config, state, env, schema, metadata, and label identifiers to `ae`. |
+| `go run ./cmd/ae --help` | Passed; `autopilot` and the live/write flags on `run` and `resume` are exposed. |
 | `bash -n scripts/uninstall.sh` and a throwaway-manifest safety check | Passed; documented Claude/Codex roots are accepted and `.codex/skills` is rejected. |
 
 ### Canonical asset layout
@@ -38,38 +39,38 @@ and Codex skill directories were not moved.
 directory, and runs without credentials, network access, branches, commits,
 pushes, or deployments. It verified:
 
-1. `aef init --profile go` and schema/catalogue validation.
-2. `aef plan --issue examples/offline-workflow/issue-PROJ-101.json` orders tasks
+1. `ae init --profile go` and schema/catalogue validation.
+2. `ae plan --issue examples/offline-workflow/issue-PROJ-101.json` orders tasks
    from `intake`.
-3. `aef eval --suite all --execute` reports `executed: true`,
+3. `ae eval --suite all --execute` reports `executed: true`,
    `modelBehaviorExecuted: false`, and `status: passed` for structural fixture
    checks only.
-4. `aef run feature-development --issue ... --provider fake --dry-run` reports
+4. `ae run feature-development --issue ... --provider fake --dry-run` reports
    `dryRun: true` and writes no state.
 5. A real local fake-provider run stops at `awaiting_approval`.
-6. `aef approve <run> --gate architecture --approver reviewer-1` plus
-   `aef resume <run>` reaches `awaiting_merge`.
-7. `aef approve <run> --gate merge --approver reviewer-2 --role release-manager`
+6. `ae approve <run> --gate architecture --approver reviewer-1` plus
+   `ae resume <run>` reaches `awaiting_merge`.
+7. `ae approve <run> --gate merge --approver reviewer-2 --role release-manager`
    followed by `resume` exits with policy code `4` and reports
    `missing required evidence`.
-8. `aef status <run>` shows `status: blocked` with the missing-evidence reason
+8. `ae status <run>` shows `status: blocked` with the missing-evidence reason
    persisted in `terminalReason`.
-9. `aef review --diff candidate.diff --run <run>` records one deterministic
-   finding, and `aef review resolve --run <run> --finding <id> --status fixed
+9. `ae review --diff candidate.diff --run <run>` records one deterministic
+   finding, and `ae review resolve --run <run> --finding <id> --status fixed
    --reason ...` records a human remediation decision as chained evidence.
-10. `aef trace <run>` reports seven lifecycle stages; `feedback` remains
+10. `ae trace <run>` reports seven lifecycle stages; `feedback` remains
     `missing` because no operational evidence exists.
-11. `aef evidence export <run> --format json --out ...` writes a non-empty
+11. `ae evidence export <run> --format json --out ...` writes a non-empty
     `evidence.json`.
-12. A second run passes `aef verify <run>` with real local command exit statuses,
+12. A second run passes `ae verify <run>` with real local command exit statuses,
     then completes after merge approval and resume.
-13. `aef chat --provider fake --message ... --run <run>` preserves a session ID,
+13. `ae chat --provider fake --message ... --run <run>` preserves a session ID,
     and a second turn with `--session <id>` reuses it, remains simulated, and
     writes chained provider evidence.
 
 This confirms the fail-closed boundary: fake-provider output is
 `simulated: true` and does not produce real build/lint/test results, so that
-run is blocked. `aef verify` separately executes checked-in profile commands,
+run is blocked. `ae verify` separately executes checked-in profile commands,
 records sanitized output and real exit status as `test` evidence, and can
 satisfy the merge gate without fabricating a pass.
 
@@ -79,7 +80,7 @@ satisfy the merge gate without fabricating a pass.
 in a copied repository with a low-risk fixture and a fast local profile:
 
 1. `--dry-run` reported planned steps, created no run ID, and wrote no
-   `.aef/state.db`.
+   `.ae/state.db`.
 2. A live provider without `--confirm-live`, and `--github-pr` without
    `--confirm-live`, were denied with exit code 4.
 3. With no explicit approver the run bound a validated detached worktree, ran
@@ -97,22 +98,22 @@ that `--allow-writes` is denied for the fake provider, a live provider without
 `--workspace` is denied. `TestCollectWorkspaceDiffIncludesUntrackedFiles`
 verified that untracked text files enter the review diff and untracked symlinks
 fail closed. `TestValidateManagedWorktreeRejectsPlainDirectory` verified that a
-plain directory under `.aef/worktrees` is not accepted as a managed worktree.
+plain directory under `.ae/worktrees` is not accepted as a managed worktree.
 
 ### Worktree end-to-end behavior observed
 
 `scripts/e2e-worktree.sh` creates a throwaway copy of this repository, makes one
 synthetic local commit in that copy, and verifies:
 
-1. `aef worktree prepare <run-id>` creates a detached worktree under
-   `.aef/worktrees/<run-id>` at the same `HEAD` as the main worktree.
+1. `ae worktree prepare <run-id>` creates a detached worktree under
+   `.ae/worktrees/<run-id>` at the same `HEAD` as the main worktree.
 2. No branch is created and the worktree's `HEAD` is not attached to a ref.
-3. `aef run ... --workspace <unmanaged-path>` is rejected with one JSON error
+3. `ae run ... --workspace <unmanaged-path>` is rejected with one JSON error
    envelope in `--json` mode.
-4. `aef run ... --workspace <managed-worktree>` persists the resolved workspace
+4. `ae run ... --workspace <managed-worktree>` persists the resolved workspace
    path, and that run passes architecture approval, local verification, merge
    approval, and resume to `completed`.
-5. `aef worktree clean <run-id>` removes the worktree without `--force` and
+5. `ae worktree clean <run-id>` removes the worktree without `--force` and
    leaves no worktree registration.
 
 The synthetic commit exists only in the deleted temporary copy. No commit was
@@ -148,7 +149,7 @@ made in the source repository.
   fail-closed validation of Jira Cloud HTTPS origins, GitHub local-cli modes,
   HTTPS `baseURL`, environment variable names, and unknown modes.
 - `internal/adapters/jira`: bare key and configured browse-link parsing, ADF
-  text flattening, AEF metadata extraction, sanitization, env-only bearer
+  text flattening, AE metadata extraction, sanitization, env-only bearer
   headers, and fail-closed missing metadata.
 - `internal/adapters/github`: local `gh` stubs verifying PR JSON parsing, read
   argument shapes, check/diff reads, env-only tokens kept out of arguments,
@@ -189,7 +190,7 @@ made in the source repository.
   aggregate were loaded and validated, but their external toolchains were not
   installed or exercised in this session. Only the `go` profile's checks were
   executed in the offline E2E; missing tools in other profiles remain explicit
-  failures under `aef verify`.
+  failures under `ae verify`.
 - `review --diff` is a local pattern scan with `verified: false`, not an
   independent code review.
 - Federated approver identity; local identity and role capture are implemented.

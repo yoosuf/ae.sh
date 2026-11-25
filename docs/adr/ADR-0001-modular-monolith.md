@@ -6,7 +6,7 @@ Accepted (Phase 0 architecture decision). Implementation is partial: core packag
 
 ## Context
 
-AEF must run on a developer machine without a cluster, daemon, or hosted control plane. It must be extensible to Jira, GitHub, multiple agent providers, and later AWS services without coupling core logic to their SDKs. The team is small and the workflow semantics are still changing.
+AE must run on a developer machine without a cluster, daemon, or hosted control plane. It must be extensible to Jira, GitHub, multiple agent providers, and later AWS services without coupling core logic to their SDKs. The team is small and the workflow semantics are still changing.
 
 ## Decision
 

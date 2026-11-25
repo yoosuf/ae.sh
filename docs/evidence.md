@@ -1,7 +1,7 @@
 # Evidence
 
 Evidence is the audit trail that turns a run into a reviewable engineering
-record. Local capture, `aef verify`, local verification commands, and
+record. Local capture, `ae verify`, local verification commands, and
 JSON/Markdown export are implemented. Live CI/deploy evidence, signed bundles,
 and cloud artifact storage are **planned / not implemented**.
 
@@ -10,13 +10,13 @@ and cloud artifact storage are **planned / not implemented**.
 - **Content-addressed and immutable:** each record has a `dataDigest` over its
   canonical `data` object. Never rewrite history; append corrections as new
   records.
-- **Actual results:** `aef verify` records the command line, sanitized output,
+- **Actual results:** `ae verify` records the command line, sanitized output,
   and real `exitStatus`. Provider output is marked `simulated: true` when the
   fake provider produced it; it is never treated as a real check pass.
 - **Sanitized:** strings are redacted before storage. Synthetic fixture markers
   such as `EXAMPLE` are still redacted but are ignored by the built-in secret
   scan.
-- **Explicit execution:** `aef verify` runs commands only from checked-in
+- **Explicit execution:** `ae verify` runs commands only from checked-in
   profiles, which are executable configuration. Review profiles before use;
   issue text and CLI flags cannot supply verification commands.
 - **Scoped:** each record has a `runID`, `sequence`, `timestamp`, `kind`, and
@@ -41,7 +41,7 @@ and cloud artifact storage are **planned / not implemented**.
 | `data` | Sanitized, task-specific object. Verification records include `gate`, `command`, `passed`, `simulated`, and `output`; provider records include `skill`, `agent`, `provider`, `model`, `workspace`, `output`, and `simulated`. Chat records add `turn`, `prompt`, `response`, and `sessionId`. Review records contain `diffDigest`, `findings`, `checksWithoutFindings`, and `verified: false`; remediation records contain `findingId`, `status`, `reason`, and the originating review evidence ID. |
 | `dataDigest` | `sha256:` digest of canonical `data`. |
 | `previousDigest` | Optional link to the preceding record's data digest. |
-| `actor` | Local actor or `aef verify` / `aef worktree`. |
+| `actor` | Local actor or `ae verify` / `ae worktree`. |
 | `exitStatus` | Real process exit status when a command ran; omitted when no command was run. |
 | `usage` | `known: false` when a provider does not report token/cost data; never zero-by-default. |
 
@@ -59,10 +59,10 @@ SQLite approvals table.
 3. The content-addressed record file is written locally, then the transition
    and evidence reference are appended in one SQLite transaction where the
    store supports it.
-4. `aef evidence export <run-id> --format json|markdown|both [--out dir]`
+4. `ae evidence export <run-id> --format json|markdown|both [--out dir]`
    renders stored records. The default directory is
-   `.aef/evidence/export/<run-id>`.
-5. `aef trace <run-id>` reconstructs requirement → architecture → implementation
+   `.ae/evidence/export/<run-id>`.
+5. `ae trace <run-id>` reconstructs requirement → architecture → implementation
    → verification → review → release → feedback coverage from persisted
    records. Stages without records are reported as `missing`.
 
@@ -82,11 +82,11 @@ SQLite approvals table.
     "command": "go test ./...",
     "passed": true,
     "simulated": false,
-    "output": "ok  github.com/aef-framework/aef/internal/execution",
+    "output": "ok  github.com/yoosuf/ae.sh/internal/execution",
     "profile": "go"
   },
   "dataDigest": "sha256:...",
-  "actor": "aef verify",
+  "actor": "ae verify",
   "exitStatus": 0
 }
 ```
@@ -99,7 +99,7 @@ real run.
 Fake-provider output contains `simulated: true` and `usage.known: false`. It
 does not run shell commands, invoke models, or create commits. Required
 build/lint/test evidence is therefore not produced by the fake provider; the
-merge gate blocks with `missing required evidence` until `aef verify` records
+merge gate blocks with `missing required evidence` until `ae verify` records
 real local results. See [`progress.md`](../progress.md) for exact observed
 behavior.
 

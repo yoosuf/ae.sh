@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-AEF is pre-1.0 and under active development. Security fixes are targeted at the
+AE is pre-1.0 and under active development. Security fixes are targeted at the
 latest main branch and the most recent published pre-release, if any. No
 long-term support branches are currently promised.
 

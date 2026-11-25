@@ -1,5 +1,5 @@
 name: Bug report
-description: Report incorrect behavior in AEF
+description: Report incorrect behavior in AE
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -21,14 +21,14 @@ body:
       label: Reproduction steps
       description: Exact commands, sanitized config (no secrets), and inputs/fixture used.
       placeholder: |
-        1. aef ...
-        2. aef ...
+        1. ae ...
+        2. ae ...
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: AEF version / commit
+      label: AE version / commit
       placeholder: "commit SHA or pre-release tag"
     validations:
       required: true

@@ -14,7 +14,7 @@ Never accept credentials as CLI flags or store them in YAML config, prompts, or 
 
 ## Consequences
 
-- Users must configure secrets outside AEF; slightly more setup.
+- Users must configure secrets outside AE; slightly more setup.
 - Shell history and evidence stay clean.
 - Local approvals are attributable but not federated; critical changes still require an organizational approver outside the local CLI.
 - CI must inject secrets through the runner's secret mechanism.

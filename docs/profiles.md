@@ -1,7 +1,7 @@
 # Profiles
 
 Profiles are checked-in, executable configuration under
-`framework/profiles/<id>/profile.yaml`. `aef verify` runs their `checks` locally and
+`framework/profiles/<id>/profile.yaml`. `ae verify` runs their `checks` locally and
 records the command, sanitized output, and real exit status as evidence. Missing
 tools, missing wrappers, or failed commands are failures, never skipped passes.
 See [evidence](evidence.md) for the record format.
@@ -26,15 +26,15 @@ See [evidence](evidence.md) for the record format.
 Select one or more profiles when initializing a project:
 
 ```sh
-aef init --profile java
-aef init --profile python
-aef init --profile laravel
-aef init --profile typescript
-aef init --profile go,react
+ae init --profile java
+ae init --profile python
+ae init --profile laravel
+ae init --profile typescript
+ae init --profile go,react
 ```
 
-`aef init` rejects unknown profile names before writing `aef.yaml`. `aef doctor`
-also reports unknown profiles in an existing config. `aef validate` loads every
+`ae init` rejects unknown profile names before writing `ae.yaml`. `ae doctor`
+also reports unknown profiles in an existing config. `ae validate` loads every
 canonical profile, including `all`, and fails on malformed definitions, missing
 includes, or include cycles.
 

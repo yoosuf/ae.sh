@@ -11,14 +11,14 @@ integrations:
   jira:
     mode: jira-cloud
     baseURL: https://your-site.atlassian.net
-    tokenEnv: AEF_JIRA_TOKEN
+    tokenEnv: AE_JIRA_TOKEN
 ```
 
-- A live `aef run ... --issue TEAM-123 --confirm-live` or `aef autopilot --issue TEAM-123 --confirm-live` accepts a bare issue key or a supported Jira Cloud browse URL when `mode: jira-cloud` is configured. `plan` and `--dry-run` remain fixture-only and never fetch a live issue.
+- A live `ae run ... --issue TEAM-123 --confirm-live` or `ae autopilot --issue TEAM-123 --confirm-live` accepts a bare issue key or a supported Jira Cloud browse URL when `mode: jira-cloud` is configured. `plan` and `--dry-run` remain fixture-only and never fetch a live issue.
 - `baseURL` must be an HTTPS origin with no path, query, fragment, or embedded credentials. A supplied link must use the same host; HTTP links, other hosts, userinfo, and token-bearing query strings are rejected.
 - The token is read only from the environment variable named by `tokenEnv`; it is sent as an `Authorization: Bearer` header and never placed in flags, config, prompts, fixtures, URLs, or evidence.
 - The adapter requests `summary`, `description`, and `labels` from `/rest/api/3/issue/<key>` and normalizes the response into the provider-neutral `integration.Issue` contract. Response text is sanitized and validated against `framework/schemas/issue.schema.json`.
-- AEF metadata is mandatory: `aef-acceptance:`, `aef-path:`, optional `aef-semantics:`, `aef-dependency:`, and `aef-base-sha:` labels, or the equivalent description sections. Missing acceptance/path metadata fails closed; no criteria are invented.
+- AE metadata is mandatory: `ae-acceptance:`, `ae-path:`, optional `ae-semantics:`, `ae-dependency:`, and `ae-base-sha:` labels, or the equivalent description sections. Missing acceptance/path metadata fails closed; no criteria are invented.
 - Fixtures remain the offline default. A Jira link without `mode: jira-cloud`, or a live key without `--confirm-live`, is denied with exit code 4.
 - An approved Jira MCP server remains a design target, not an implemented adapter.
 
@@ -43,15 +43,15 @@ The local CLI adapter uses argument arrays and supports only:
 - `gh pr comment` for a sanitized comment, and **only** with separate
   `--comment --confirm-mutate` authorization.
 
-`aef autopilot --github-pr <ref> --confirm-live` records those reads as chained
+`ae autopilot --github-pr <ref> --confirm-live` records those reads as chained
 `kind: github` evidence and blocks on failing checks. It never creates a branch
-or PR, pushes, merges, or deploys. `aef review --pr 123` without `--diff`
+or PR, pushes, merges, or deploys. `ae review --pr 123` without `--diff`
 remains **planned / not implemented**; use `--github-pr` on `autopilot` for PR
 state evidence only.
 
-`aef review --diff <path> [--run id]` is a deterministic local pattern scan that
+`ae review --diff <path> [--run id]` is a deterministic local pattern scan that
 reports hypotheses with `verified: false`; it is not an independent review. With
-`--run`, the result is written as chained `kind: review` evidence. `aef review
+`--run`, the result is written as chained `kind: review` evidence. `ae review
 resolve --run id --finding rev-... --status fixed|accepted|false-positive --reason
 text` records a human decision as chained `kind: remediation` evidence.
 Unresolved findings block merge, release, and security-signoff gates; resolution
@@ -67,9 +67,9 @@ independently verified review path exists.
 - Skills are Markdown instruction contracts at canonical `framework/skills/<slug>/SKILL.md`.
 - Materialized user scope: `~/.claude/skills/<slug>/SKILL.md`.
 - Materialized project scope: `.claude/skills/<slug>/SKILL.md`.
-- Plugin scope: `<plugin>/skills/<slug>/SKILL.md` with `.claude-plugin/plugin.json`; `aef skills export` generates bundle directories locally.
+- Plugin scope: `<plugin>/skills/<slug>/SKILL.md` with `.claude-plugin/plugin.json`; `ae skills export` generates bundle directories locally.
 - Paths above were verified on 2026-11-25. Recheck before use; see [provider compatibility](provider-compatibility.md).
-- The Claude Code CLI adapter can run noninteractive prompts from argument arrays. `aef chat --provider claude --confirm-live --workspace <managed-worktree>` opts in to a live conversation; `--resume <session-id>` is used on later turns when the CLI returns `session_id`. `run`, `resume`, and `autopilot` additionally accept `--allow-writes`, which switches tools from `Read` to `Read,Write,Edit` without a shell tool and passes temporary permission settings that block file-tool reads and writes outside the managed worktree. Claude Code v2.1.314 or later is required for those settings; older binaries are rejected. No live model run, resume, or file edit was performed; local stub tests verify both argument shapes.
+- The Claude Code CLI adapter can run noninteractive prompts from argument arrays. `ae chat --provider claude --confirm-live --workspace <managed-worktree>` opts in to a live conversation; `--resume <session-id>` is used on later turns when the CLI returns `session_id`. `run`, `resume`, and `autopilot` additionally accept `--allow-writes`, which switches tools from `Read` to `Read,Write,Edit` without a shell tool and passes temporary permission settings that block file-tool reads and writes outside the managed worktree. Claude Code v2.1.314 or later is required for those settings; older binaries are rejected. No live model run, resume, or file edit was performed; local stub tests verify both argument shapes.
 
 ## Codex
 
@@ -79,11 +79,11 @@ independently verified review path exists.
 - Optional metadata: `agents/openai.yaml`.
 - **`.codex/skills` is not a documented Codex skill path** — do not use or claim it.
 - Both Claude Code and Codex follow the agentskills.io open standard.
-- The Codex CLI adapter can run noninteractive prompts from argument arrays. Persistent `aef chat --provider codex --confirm-live --workspace <managed-worktree>` uses `codex exec` without `--ephemeral`; later turns use `codex exec resume <thread-id>`. `run`, `resume`, and `autopilot` additionally accept `--allow-writes`, which changes the sandbox from `read-only` to `workspace-write`. No live model run, resume, or file edit was performed; local stub tests verify both argument shapes and thread ID capture.
+- The Codex CLI adapter can run noninteractive prompts from argument arrays. Persistent `ae chat --provider codex --confirm-live --workspace <managed-worktree>` uses `codex exec` without `--ephemeral`; later turns use `codex exec resume <thread-id>`. `run`, `resume`, and `autopilot` additionally accept `--allow-writes`, which changes the sandbox from `read-only` to `workspace-write`. No live model run, resume, or file edit was performed; local stub tests verify both argument shapes and thread ID capture.
 
 ## Provider conversations
 
-`aef chat` is a bounded, opt-in conversation path over the existing provider
+`ae chat` is a bounded, opt-in conversation path over the existing provider
 port:
 
 - `--provider` is required. `fake` works offline and simulates responses;
@@ -91,8 +91,8 @@ port:
 - Exactly one of `--message` or `--script` is accepted. Scripts are JSON files
   with a `messages` array and at most 20 turns; each turn has a 10s–30m timeout.
 - Live providers require `--confirm-live` and `--workspace` pointing to an
-  AEF-managed detached worktree. Credentials come from the provider's own
-  environment; AEF never accepts them as flags.
+  AE-managed detached worktree. Credentials come from the provider's own
+  environment; AE never accepts them as flags.
 - Session IDs are preserved across turns. If a provider advertises session
   metadata but returns no session ID, the command fails closed.
 - With `--run`, each turn writes sanitized `kind: provider` evidence with the
@@ -101,12 +101,12 @@ port:
 - Provider output remains untrusted text. It is not a check pass, an approval,
   or an independently verified review.
 - `chat` is read-only. File edits require `run`, `resume`, or `autopilot` with
-  `--allow-writes`, a live provider, `--confirm-live`, and a validated AEF-managed
+  `--allow-writes`, a live provider, `--confirm-live`, and a validated AE-managed
   worktree. Writes are still untrusted until real local checks and gates pass.
 
 ## Autopilot (opt-in orchestration)
 
-`aef autopilot` is an explicit opt-in loop that binds a managed detached
+`ae autopilot` is an explicit opt-in loop that binds a managed detached
 worktree to a run, advances workflow tasks, runs real local verification in that
 worktree, scans the workspace diff, and stops at every approval or policy gate:
 
@@ -120,18 +120,18 @@ worktree, scans the workspace diff, and stops at every approval or policy gate:
   are recorded as `local-manual` and cannot satisfy critical-change identity,
   distinct-role, or independently verified review requirements.
 - GitHub PR comments require `--github-pr`, `--comment`, and `--confirm-mutate`.
-  That is the only mutating GitHub action in AEF.
+  That is the only mutating GitHub action in AE.
 - The command never pushes, creates a PR, merges, deploys, or invents a check or
   review result. High-risk work still blocks at `independent-review`; unresolved
-  pattern-scan findings must be resolved with `aef review resolve`.
+  pattern-scan findings must be resolved with `ae review resolve`.
 
 ## Git worktrees
 
-Implemented local isolation model: `aef worktree prepare <run-id>` creates a
-detached worktree under `.aef/worktrees/<run-id>` from the recorded `HEAD`, and
-`aef worktree clean <run-id>` removes it without `--force`. Paths outside the
+Implemented local isolation model: `ae worktree prepare <run-id>` creates a
+detached worktree under `.ae/worktrees/<run-id>` from the recorded `HEAD`, and
+`ae worktree clean <run-id>` removes it without `--force`. Paths outside the
 managed root, symlink escapes, unsafe run IDs, branches, commits, pushes, and
-deployments are rejected. `aef run --workspace <path>` accepts only those
+deployments are rejected. `ae run --workspace <path>` accepts only those
 managed worktrees and records the resolved path in run state and evidence. This
 is exercised by `scripts/e2e-worktree.sh` in a throwaway git repository. SQLite
 `BindWorkspace` attaches a workspace once and refuses to re-point a run already

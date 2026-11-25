@@ -6,7 +6,7 @@ Accepted (Phase 0 architecture decision). Fake provider and offline fixtures are
 
 ## Context
 
-AEF must support Claude Code and Codex today without locking into either, and must be demonstrable without credentials or network access. Real model calls are nondeterministic and expensive for validation.
+AE must support Claude Code and Codex today without locking into either, and must be demonstrable without credentials or network access. Real model calls are nondeterministic and expensive for validation.
 
 ## Decision
 

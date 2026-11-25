@@ -6,7 +6,7 @@ Accepted (Phase 0 architecture decision). Policy evaluation and local approval i
 
 ## Context
 
-AEF processes untrusted issue text, repository content, model output, and MCP responses. Agent instructions in those inputs must not be able to weaken safety controls, bypass approvals, or redirect deployments. Policy sources can conflict (org vs repo vs workflow vs agent).
+AE processes untrusted issue text, repository content, model output, and MCP responses. Agent instructions in those inputs must not be able to weaken safety controls, bypass approvals, or redirect deployments. Policy sources can conflict (org vs repo vs workflow vs agent).
 
 ## Decision
 

@@ -34,8 +34,8 @@ generated provider manifests + SHA-256 checksums, pinned version, CLI commands `
 
 Exit criteria:
 
-- `aef validate` rejects malformed skills/workflows/policies/config and broken skill references. Provider manifest checksum conflicts are rejected during `aef skills install`, not by `validate`.
-- `aef skills install --dry-run` reports exact target paths for Claude and Codex scopes without writing files.
+- `ae validate` rejects malformed skills/workflows/policies/config and broken skill references. Provider manifest checksum conflicts are rejected during `ae skills install`, not by `validate`.
+- `ae skills install --dry-run` reports exact target paths for Claude and Codex scopes without writing files.
 - Offline fixtures and fake provider interface are present.
 
 ## Phase 2 — Offline workflow demonstration (implemented locally)
@@ -47,9 +47,9 @@ run that stops at approval gates.
 
 Exit criteria:
 
-- `aef plan --issue PROJ-101` and `aef run feature-development --issue PROJ-101 --dry-run` work from a fixture with no credentials.
+- `ae plan --issue PROJ-101` and `ae run feature-development --issue PROJ-101 --dry-run` work from a fixture with no credentials.
 - Cycles are rejected; only bounded remediation loops are allowed.
-- Each simulated task records `simulated: true`; `aef verify` separately records real command exit statuses for local checks. Provider usage is `known: false` when not reported, never zero.
+- Each simulated task records `simulated: true`; `ae verify` separately records real command exit statuses for local checks. Provider usage is `known: false` when not reported, never zero.
 
 ## Phase 3 — Lifecycle and execution (local subset implemented; remainder planned / not implemented)
 
@@ -58,12 +58,12 @@ Implemented locally with the fake provider: `status`, `status --list`,
 recovery, optimistic concurrency, migration from legacy approvals, evidence
 export, risk-scoped gates, stale-approval denial, blocked runs when required
 evidence is missing, `verify` with real local check exit statuses, detached
-AEF-managed worktree preparation/cleanup, `run --workspace`, and `trace`
+AE-managed worktree preparation/cleanup, `run --workspace`, and `trace`
 reports.
 
 Implemented locally but not exercised live: opt-in Jira Cloud REST intake,
 Claude Code/Codex conversations with session continuity, constrained write modes
-in an AEF-managed worktree, GitHub CLI reads/PR comments, and the `autopilot`
+in an AE-managed worktree, GitHub CLI reads/PR comments, and the `autopilot`
 loop that stops at gates. Still **planned / not implemented**: live service
 calls in this environment, live provider code edits, GitHub App/service identity,
 PR creation/merge/push, real CI/deploy hooks, independently verified review,
@@ -72,9 +72,9 @@ issue to a verified candidate with approvals and immutable evidence.
 
 ## Phase 4 — Review and PR automation (local subset implemented; remainder planned / not implemented)
 
-`aef review --diff` performs a deterministic local pattern scan and explicitly
+`ae review --diff` performs a deterministic local pattern scan and explicitly
 reports `verified: false`; it is not an independent review. With `--run`, scan
-results are persisted as typed, chained review evidence. `aef review resolve`
+results are persisted as typed, chained review evidence. `ae review resolve`
 records human `fixed`, `accepted`, or `false-positive` decisions as remediation
 evidence; unresolved findings block merge/release/security-signoff gates,
 approval records are invalidated on `review-findings-change`, and
@@ -91,7 +91,7 @@ explicitly accepted before merge signal.
 
 The 12 authored skills remain the catalogue; the full set across Product,
 Architecture, Cloud, Development, Quality, Security, DevOps, and Agentic domains
-is planned. `aef eval --suite ... --execute` runs deterministic structural
+is planned. `ae eval --suite ... --execute` runs deterministic structural
 checks over fixtures and rubrics and reports `modelBehaviorExecuted: false`.
 Without `--execute`, `eval` remains an inventory with `executed: false`.
 Behavioral evaluation, scores, and pass rates are planned / not implemented.

@@ -19,13 +19,13 @@ without compatibility guarantees.
 - GitHub issue/PR templates, CODEOWNERS placeholder, and CI workflow skeleton.
 - 12 canonical skills with evaluation fixtures, 10 workflow DAGs, two
   risk-scoped policies, profiles, agents, and templates.
-- Local Go CLI (`cmd/aef`) with `init`, `doctor`, `validate`, `skills
+- Local Go CLI (`cmd/ae`) with `init`, `doctor`, `validate`, `skills
   list/install/uninstall/export`, `plan`, `run`, `status`, `resume`, `cancel`,
   `approve`, `review --diff`, `verify`, `worktree`, `trace`, `evidence export`,
   `eval`, `version`, `chat`, and `review resolve`.
 - Opt-in Jira Cloud issue source that accepts configured HTTPS issue links or
   bare keys, reads tokens only from the environment, sanitizes issue text, and
-  requires explicit AEF metadata in labels or the description.
+  requires explicit AE metadata in labels or the description.
 - Opt-in provider chat with session continuity for fake, Claude Code, and Codex
   adapters, bounded turns/timeouts, managed-worktree requirements for live
   providers, and chained `kind: provider` evidence per turn.
@@ -37,7 +37,7 @@ without compatibility guarantees.
 - Opt-in GitHub CLI adapter for PR metadata, checks, bounded diffs, and a
   separately authorized PR comment. Credentials remain environment-only and no
   push, PR creation, merge, or deploy action is implemented.
-- `aef autopilot`, an opt-in orchestration loop that binds a validated managed
+- `ae autopilot`, an opt-in orchestration loop that binds a validated managed
   worktree before any provider task (including pre-approval tasks), advances
   workflow tasks, runs real local checks in that workspace, scans workspace and
   PR diffs, records GitHub PR evidence, and stops at fail-closed approval/policy
@@ -50,20 +50,20 @@ without compatibility guarantees.
   merge/release/security-signoff gates, and facts are reconstructed on resume.
 - Bounded remediation attempts are now enforced from
   `Workflow.remediation.maxAttempts` and persisted when a failed attempt occurs.
-- `aef verify` executes checked-in profile checks and a built-in secret-shape
+- `ae verify` executes checked-in profile checks and a built-in secret-shape
   scan locally, then records commands, sanitized output, and real exit statuses
   as evidence.
 - Canonical `java`, `python`, `laravel`, and `typescript` profiles with local
   format, lint, build, test, and dependency checks.
 - Aggregate `all` profile that reuses every canonical profile's checks with
   de-duplication by gate and command, plus `docs/profiles.md`.
-- `aef worktree prepare|clean` creates and removes detached worktrees only under
-  `.aef/worktrees/<run-id>`; `aef run --workspace` accepts only those managed
+- `ae worktree prepare|clean` creates and removes detached worktrees only under
+  `.ae/worktrees/<run-id>`; `ae run --workspace` accepts only those managed
   worktrees.
-- `aef trace` reconstructs requirement → architecture → implementation →
+- `ae trace` reconstructs requirement → architecture → implementation →
   verification → review → release → feedback coverage from persisted evidence
   and marks uncovered stages `missing`.
-- `aef eval --execute` runs deterministic structural checks over skill and
+- `ae eval --execute` runs deterministic structural checks over skill and
   security fixtures without invoking a model.
 - `scripts/e2e-worktree.sh` verifies detached worktree preparation, managed
   workspace runs, local verification, and clean removal in a throwaway git
@@ -90,6 +90,11 @@ without compatibility guarantees.
 
 ### Changed
 
+- Renamed the project short name and every user-facing identifier to `ae`: the
+  CLI binary and entry point, config file, local state/evidence directories,
+  environment-variable prefix, schema IDs, skill metadata keys, Jira labels,
+  provider manifests, and Go module path. Legacy config/state directories are
+  not migrated automatically; initialize a fresh project with `ae init`.
 - Repository remote and source-clone documentation now use
   `git@github.com:yoosuf/ae.sh.git`; the GitHub repository is `yoosuf/ae.sh`.
 - Canonical framework assets moved from top-level directories into `framework/`
@@ -109,9 +114,9 @@ without compatibility guarantees.
   review.
 - Verification commands execute only from checked-in profiles; missing tools
   are recorded as failures, never as skipped passes.
-- `aef init` validates profile names before writing config, reports the full
+- `ae init` validates profile names before writing config, reports the full
   canonical profile list in help, and de-duplicates repeated selections.
-- `aef validate` loads every canonical profile, including `all`, and reports the
+- `ae validate` loads every canonical profile, including `all`, and reports the
   resolved profile list. Composite profiles support recursive `includes` with
   cycle rejection.
 - Provider prompts require stable finding IDs so review evidence can be
@@ -124,8 +129,8 @@ without compatibility guarantees.
   high-risk `independent-review` gate.
 - Live Jira issue intake now requires `--confirm-live`; `plan` and `--dry-run`
   remain fixture-only and never fetch from a configured Jira Cloud site.
-- Live provider runs require both `--confirm-live` and a managed AEF worktree.
-  `aef verify` can execute profile checks inside that worktree and records the
+- Live provider runs require both `--confirm-live` and a managed AE worktree.
+  `ae verify` can execute profile checks inside that worktree and records the
   workspace path in evidence.
 - GitHub integration config is validated: `local-cli` or `disabled` modes only,
   HTTPS origin `baseURL`, and environment variable *names* for token/webhook
@@ -141,7 +146,7 @@ without compatibility guarantees.
 
 ### Fixed
 
-- `aef init` now fails closed when the selected root does not contain the
+- `ae init` now fails closed when the selected root does not contain the
   canonical `framework/` assets, rather than writing a configuration that
   cannot be validated later.
 - Offline and worktree end-to-end checks now use throwaway Go build caches, so
@@ -181,7 +186,7 @@ without compatibility guarantees.
   closed. PR diffs are pattern-scanned before a run can complete.
 - Workspace flags on `run`, `resume`, `chat`, and `autopilot` now require a
   registered git worktree whose real path matches the managed path, not merely
-  a directory under `.aef/worktrees`; `autopilot` additionally requires the
+  a directory under `.ae/worktrees`; `autopilot` additionally requires the
   worktree dedicated to its own run.
 - Claude write mode passes temporary permission settings that block file-tool
   access outside the working directory and requires a CLI version that supports

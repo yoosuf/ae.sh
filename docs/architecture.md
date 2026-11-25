@@ -25,7 +25,7 @@ flowchart LR
 
 ## Components
 
-### CLI (`aef`, Go 1.27)
+### CLI (`ae`, Go 1.27)
 
 Entry point for `init`, `doctor`, `validate`, `skills`, `plan`, `run`,
 `status`, `resume`, `cancel`, `approve`, `review --diff`, `review resolve`,
@@ -37,7 +37,7 @@ opt-in implementations that were not exercised against live services.
 ### Configuration and policy
 
 The declared precedence is org > repo > workflow > agent > untrusted content.
-This tree loads repository `aef.yaml` and repository policy files; org and
+This tree loads repository `ae.yaml` and repository policy files; org and
 workflow policy layering remains planned. Precedence, highest first:
 
 1. immutable runtime safety rules (compiled in)
@@ -93,7 +93,7 @@ invoked in this tree. The fake provider returns outputs marked
 `simulated: true` for offline demos; it does not run shell commands or call a
 model. Provider name is recorded in task evidence; `model` is recorded when an
 adapter reports it and omitted otherwise. Usage is stored as
-`known: false` rather than an invented zero. `aef verify` is the local path
+`known: false` rather than an invented zero. `ae verify` is the local path
 that records real command exit statuses.
 
 ### Evidence

@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-This directory records architecture decisions for the Agentic Engineering Framework. Records are numbered, immutable once accepted, and superseded only by a new ADR that references the old one.
+This directory records architecture decisions for the Agentic Engineering. Records are numbered, immutable once accepted, and superseded only by a new ADR that references the old one.
 
 Phase 0 decisions (ADR-0001 through ADR-0010) are recorded as **Accepted** architecture direction for the Phase 0–2 implementation. Acceptance here means "this is the design we are building", not that every item is implemented; see the [command status matrix](../../README.md#command-status-matrix) and [roadmap](../roadmap.md).
 

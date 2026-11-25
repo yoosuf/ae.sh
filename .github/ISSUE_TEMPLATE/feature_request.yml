@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest a capability or improvement for AEF
+description: Suggest a capability or improvement for AE
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
@@ -45,7 +45,7 @@ body:
   - type: checkboxes
     id: principles
     attributes:
-      label: Fit with AEF principles
+      label: Fit with AE principles
       options:
         - label: This does not require a mandatory hosted service, dashboard, or paid model.
           required: true

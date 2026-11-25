@@ -18,7 +18,7 @@ Status: design-level STRIDE-style review for Phase 0–2. No penetration test or
 | GitHub CLI → engine | PR metadata, checks, diffs, comments | Argument arrays, env-only credentials, bounded diff size, sanitized evidence, explicit `--confirm-live` and separate `--comment --confirm-mutate`. |
 | Repository → engine | Source files, hooks, configs, symlinks | Path allowlists, realpath checks, no automatic hook execution. |
 | Model/provider output → engine | Generated text, tool calls | Typed artifacts, schema validation, bounded actions, review gates. |
-| Provider writes → managed worktree | File edits from Claude/Codex | Opt-in `--allow-writes`, live-provider confirmation, git-validated AEF worktree bound before any provider task, no shell tool for Claude, Claude permission settings that block writes outside the working directory (v2.1.314+), `workspace-write` for Codex; edits remain untrusted until local checks pass. |
+| Provider writes → managed worktree | File edits from Claude/Codex | Opt-in `--allow-writes`, live-provider confirmation, git-validated AE worktree bound before any provider task, no shell tool for Claude, Claude permission settings that block writes outside the working directory (v2.1.314+), `workspace-write` for Codex; edits remain untrusted until local checks pass. |
 | MCP servers → engine | Tool descriptions/responses | Explicit allowlist, untrusted data, least privilege. |
 | Generated skills → provider | Materialized `SKILL.md` files | Manifest + SHA-256, pinned version, dry-run first. |
 | Local CLI → planned cloud adapters | AWS APIs | Optional, least-privilege roles, secrets from external store. |
@@ -29,7 +29,7 @@ Status: design-level STRIDE-style review for Phase 0–2. No penetration test or
 | --- | --- | --- |
 | Spoofing | Forged approver identity; malicious MCP server impersonating Jira | Local approver identity, role, candidate SHA, artifact digest, and `identitySource: local-manual` are implemented; federated identity remains planned. Require explicit server allowlist; never infer identity from issue text. |
 | Tampering | Modified `SKILL.md` or provider copy; altered evidence | Canonical skills are source Markdown; generated provider manifests carry SHA-256 checksums and pinned versions. `skills install` rejects divergent unmanaged files unless forced; evidence is content-addressed and immutable. |
-| Repudiation | Claimed test success with no record | `aef verify` records the command, sanitized output, and real exit status; missing tools fail closed. Fake-provider output is `simulated: true` and does not satisfy gates. Provider usage is `known: false` when unavailable, never zero-by-default. |
+| Repudiation | Claimed test success with no record | `ae verify` records the command, sanitized output, and real exit status; missing tools fail closed. Fake-provider output is `simulated: true` and does not satisfy gates. Provider usage is `known: false` when unavailable, never zero-by-default. |
 | Information disclosure | Tokens in flags/prompts/fixtures; sensitive issue text in exports | No credentials in flags/config/prompts/fixtures; use env/external store. Sanitize inputs before evidence export; redact secrets. |
 | Denial of service | Cyclic DAGs, unbounded remediation, path explosion | Reject cycles; bounded remediation loops; timeouts/budgets planned with real execution. Validate DAG before run. |
 | Elevation of privilege | Issue text instructing agent to change policy; malicious hook; symlink escape | Fail-closed policy precedence (runtime safety > org > repo > workflow defaults > agent instructions > untrusted content); no automatic hook execution; realpath/path containment checks. |
@@ -44,7 +44,7 @@ Issue descriptions, code comments, commit messages, tool output, and MCP respons
 
 A cloned repository may contain hooks, config, or scripts that execute on checkout. Do not auto-run hooks or trust repo-local policy over org policy. Treat any executable content from the target repository as untrusted and require human approval before execution.
 
-`aef verify` is an explicit exception: it intentionally runs shell commands from
+`ae verify` is an explicit exception: it intentionally runs shell commands from
 checked-in `framework/profiles/*/profile.yaml`. Profiles are therefore executable
 configuration, not passive data. Review them before running `verify`, use the
 command only in repositories you trust, and never derive commands from issue
@@ -71,7 +71,7 @@ Changes touching auth, billing, tenant isolation, IAM, secrets, infrastructure, 
 
 ## Residual risk / not implemented
 
-- No strong sandbox for model-generated code. AEF-managed detached worktrees and opt-in constrained write modes are implemented locally but were not exercised live; provider output still requires real local checks before it can pass gates.
-- `aef verify` includes a built-in credential-shape scan of the workspace; a dedicated scanner for final evidence bundles remains planned.
+- No strong sandbox for model-generated code. AE-managed detached worktrees and opt-in constrained write modes are implemented locally but were not exercised live; provider output still requires real local checks before it can pass gates.
+- `ae verify` includes a built-in credential-shape scan of the workspace; a dedicated scanner for final evidence bundles remains planned.
 - No multi-user RBAC or signed approvals; the dashboard/hosted service is planned.
 - No threat mitigation is proven by tests in this documentation; verify implementation status in the README command matrix.
