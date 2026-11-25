@@ -175,6 +175,22 @@ func TestProviderReviewLiveRequiresExplicitConfirmation(t *testing.T) {
 	}
 }
 
+func TestProviderReviewLiveRequiresManagedWorkspace(t *testing.T) {
+	root := t.TempDir()
+	initReviewRepo(t, root)
+	diffPath := filepath.Join(root, "change.diff")
+	if err := os.WriteFile(diffPath, []byte(reviewDiff), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	app := App{Stdout: &stdout, Stderr: &stderr, Root: root, JSON: true,
+		Args: []string{"review", "--diff", diffPath, "--provider", "claude",
+			"--candidate-sha", "candidate123", "--base-sha", "base123", "--confirm-live"}}
+	if code := app.Run(context.Background()); code != ExitPolicy {
+		t.Fatalf("confirmed live review without workspace exited %d, want %d: %s", code, ExitPolicy, stdout.String())
+	}
+}
+
 func TestProviderReviewPersistsReviewEvidence(t *testing.T) {
 	ctx := context.Background()
 	root := t.TempDir()
