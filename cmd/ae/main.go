@@ -1,11 +1,11 @@
-// Command aef is the local-first Agentic Engineering Framework CLI.
+// Command ae is the local-first Agentic Engineering Framework CLI.
 package main
 
 import (
 	"context"
 	"os"
 
-	"github.com/aef-framework/aef/internal/cli"
+	"github.com/yoosuf/ae.sh/internal/cli"
 )
 
 func main() {

@@ -11,9 +11,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/aef-framework/aef/internal/framework"
-	"github.com/aef-framework/aef/internal/util"
-	"github.com/aef-framework/aef/internal/version"
+	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/util"
+	"github.com/yoosuf/ae.sh/internal/version"
 )
 
 const (

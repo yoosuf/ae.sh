@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/evidence"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/evidence"
 )
 
 func TestReviewResolveWritesHumanDecisionEvidence(t *testing.T) {

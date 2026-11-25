@@ -11,10 +11,10 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/aef-framework/aef/internal/framework"
-	"github.com/aef-framework/aef/internal/schema"
-	"github.com/aef-framework/aef/internal/util"
-	"github.com/aef-framework/aef/internal/version"
+	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/schema"
+	"github.com/yoosuf/ae.sh/internal/util"
+	"github.com/yoosuf/ae.sh/internal/version"
 )
 
 // Skill is the normalized canonical representation of a SKILL.md file.

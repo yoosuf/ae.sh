@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aef-framework/aef/internal/integration"
-	"github.com/aef-framework/aef/internal/schema"
-	"github.com/aef-framework/aef/internal/util"
+	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/schema"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 // Record is one evidence entry.

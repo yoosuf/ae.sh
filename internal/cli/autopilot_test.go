@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/config"
-	"github.com/aef-framework/aef/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/config"
+	"github.com/yoosuf/ae.sh/internal/framework"
 )
 
 const autopilotFixture = `{

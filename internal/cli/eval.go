@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aef-framework/aef/internal/config"
+	"github.com/yoosuf/ae.sh/internal/config"
 	"gopkg.in/yaml.v3"
 )
 

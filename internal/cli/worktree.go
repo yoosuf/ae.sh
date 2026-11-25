@@ -9,10 +9,10 @@ import (
 	"regexp"
 	"strings"
 
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/evidence"
-	"github.com/aef-framework/aef/internal/execution"
-	"github.com/aef-framework/aef/internal/util"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/execution"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 var worktreeRunIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*$`)

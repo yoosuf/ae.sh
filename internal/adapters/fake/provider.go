@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/aef-framework/aef/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/integration"
 )
 
 // Provider is a deterministic fake agent provider.

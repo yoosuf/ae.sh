@@ -14,8 +14,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aef-framework/aef/internal/config"
-	"github.com/aef-framework/aef/internal/util"
+	"github.com/yoosuf/ae.sh/internal/config"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 const maxDiffBytes = 2 << 20

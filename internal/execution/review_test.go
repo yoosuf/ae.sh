@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/evidence"
-	"github.com/aef-framework/aef/internal/execution"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/execution"
 )
 
 func TestCollectReviewEvidenceReconstructsResolutionAfterRestart(t *testing.T) {

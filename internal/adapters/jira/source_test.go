@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/config"
+	"github.com/yoosuf/ae.sh/internal/config"
 )
 
 const tokenEnv = "AEF_TEST_JIRA_TOKEN"

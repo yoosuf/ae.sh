@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/framework"
 )
 
 func TestEmbeddedAssetsMatchCanonical(t *testing.T) {

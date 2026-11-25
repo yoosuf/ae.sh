@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/aef-framework/aef/internal/evidence"
-	"github.com/aef-framework/aef/internal/util"
+	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 // ReviewFindingRef is a stable reference to a finding recorded in evidence.

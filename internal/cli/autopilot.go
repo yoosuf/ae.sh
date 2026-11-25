@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aef-framework/aef/internal/adapters/github"
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/execution"
-	"github.com/aef-framework/aef/internal/integration"
-	"github.com/aef-framework/aef/internal/util"
-	"github.com/aef-framework/aef/internal/workflow"
+	"github.com/yoosuf/ae.sh/internal/adapters/github"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/execution"
+	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/util"
+	"github.com/yoosuf/ae.sh/internal/workflow"
 )
 
 const (

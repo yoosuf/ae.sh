@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/config"
-	"github.com/aef-framework/aef/internal/integration"
-	"github.com/aef-framework/aef/internal/util"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/config"
+	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 const (

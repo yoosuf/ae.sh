@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/config"
-	"github.com/aef-framework/aef/internal/evidence"
-	"github.com/aef-framework/aef/internal/execution"
-	"github.com/aef-framework/aef/internal/schema"
-	"github.com/aef-framework/aef/internal/util"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/config"
+	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/execution"
+	"github.com/yoosuf/ae.sh/internal/schema"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 const reviewDiff = `diff --git a/src/api.go b/src/api.go

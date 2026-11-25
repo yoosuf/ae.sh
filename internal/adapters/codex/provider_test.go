@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aef-framework/aef/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/integration"
 )
 
 func TestResumeUsesCodexExecResumeSubcommand(t *testing.T) {

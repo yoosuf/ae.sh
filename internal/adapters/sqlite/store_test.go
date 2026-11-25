@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/execution"
+	"github.com/yoosuf/ae.sh/internal/execution"
 )
 
 func testRun(id string) execution.Run {

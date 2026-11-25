@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/aef-framework/aef/internal/util"
-	"github.com/aef-framework/aef/internal/version"
+	"github.com/yoosuf/ae.sh/internal/util"
+	"github.com/yoosuf/ae.sh/internal/version"
 )
 
 // ExportPlugin writes plugin-shaped bundles for local development. Plugins are

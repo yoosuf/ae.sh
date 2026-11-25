@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aef-framework/aef/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/integration"
 )
 
 // Claude Code added the settings keys that make file tools refuse paths

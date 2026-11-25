@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aef-framework/aef/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/integration"
 )
 
 // Provider invokes `codex exec --json` with a read-only sandbox by default.

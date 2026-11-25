@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/config"
-	"github.com/aef-framework/aef/internal/evidence"
-	"github.com/aef-framework/aef/internal/execution"
-	"github.com/aef-framework/aef/internal/framework"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/config"
+	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/execution"
+	"github.com/yoosuf/ae.sh/internal/framework"
 )
 
 func createMinimalFrameworkRoot(t *testing.T, root string) {

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/framework"
-	"github.com/aef-framework/aef/internal/util"
+	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 func TestInstallPlanApplyConflictAndUninstall(t *testing.T) {

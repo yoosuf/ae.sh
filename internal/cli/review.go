@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aef-framework/aef/internal/util"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 const reviewNote = "Local pattern-scan hypotheses only. Not an independent review; no code was changed and no checks were run."

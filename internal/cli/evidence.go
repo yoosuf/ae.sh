@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sqliteadapter "github.com/aef-framework/aef/internal/adapters/sqlite"
-	"github.com/aef-framework/aef/internal/config"
-	"github.com/aef-framework/aef/internal/evidence"
-	"github.com/aef-framework/aef/internal/execution"
-	"github.com/aef-framework/aef/internal/integration"
+	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
+	"github.com/yoosuf/ae.sh/internal/config"
+	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/execution"
+	"github.com/yoosuf/ae.sh/internal/integration"
 )
 
 // appendRunEvidence writes one sanitized evidence record to a run. Missing

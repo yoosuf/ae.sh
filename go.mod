@@ -1,4 +1,4 @@
-module github.com/aef-framework/aef
+module github.com/yoosuf/ae.sh
 
 go 1.27
 

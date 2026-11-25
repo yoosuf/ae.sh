@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/config"
+	"github.com/yoosuf/ae.sh/internal/config"
 )
 
 func githubStub(t *testing.T, body string) (string, string) {

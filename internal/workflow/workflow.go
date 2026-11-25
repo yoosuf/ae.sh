@@ -11,9 +11,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/aef-framework/aef/internal/framework"
-	"github.com/aef-framework/aef/internal/schema"
-	"github.com/aef-framework/aef/internal/util"
+	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/schema"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 // Task is a node in the workflow DAG.

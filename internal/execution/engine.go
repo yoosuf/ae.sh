@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aef-framework/aef/internal/evidence"
-	"github.com/aef-framework/aef/internal/integration"
-	"github.com/aef-framework/aef/internal/policy"
-	"github.com/aef-framework/aef/internal/util"
-	"github.com/aef-framework/aef/internal/version"
-	"github.com/aef-framework/aef/internal/workflow"
+	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/policy"
+	"github.com/yoosuf/ae.sh/internal/util"
+	"github.com/yoosuf/ae.sh/internal/version"
+	"github.com/yoosuf/ae.sh/internal/workflow"
 )
 
 // Engine coordinates workflow tasks against the persistence and provider

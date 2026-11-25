@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/evidence"
 )
 
 func TestWriteSanitizesIdentityFields(t *testing.T) {

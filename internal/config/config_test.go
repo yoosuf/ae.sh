@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/aef-framework/aef/internal/framework"
-	"github.com/aef-framework/aef/internal/version"
+	"github.com/yoosuf/ae.sh/internal/framework"
+	"github.com/yoosuf/ae.sh/internal/version"
 )
 
 func TestKnownProfilesIncludeRequestedStacks(t *testing.T) {
