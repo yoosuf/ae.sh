@@ -43,7 +43,7 @@ and cloud artifact storage are **planned / not implemented**.
 | `timestamp` | UTC creation time. |
 | `kind` | `input`, `plan`, `risk`, `approval`, `provider`, `test`, `review`, `remediation`, `gate`, `artifact`, `transition`, `merge`, `deployment`, or `note`. |
 | `subject` | Human-readable subject, often the task ID or gate name. |
-| `data` | Sanitized, task-specific object. Verification records include `gate`, `command`, `passed`, `simulated`, and `output`; provider records include `skill`, `agent`, `provider`, `model`, `workspace`, `output`, and `simulated`. Chat records add `turn`, `prompt`, `response`, and `sessionId`. Review records contain `diffDigest`, `findings`, `checksWithoutFindings`, and `verified: false`; remediation records contain `findingId`, `status`, `reason`, and the originating review evidence ID. |
+| `data` | Sanitized, task-specific object. Verification records include `gate`, `command`, `passed`, `simulated`, and `output`; provider records include `skill`, `agent`, `provider`, `routingProfile`, `requestedModel`, `model`, `workspace`, `output`, and `simulated`. Chat records add `turn`, `prompt`, `response`, and `sessionId`; `requestedModel` comes from local config while `model` is the actual model reported by the adapter, when available. Review records contain `diffDigest`, `findings`, `checksWithoutFindings`, and `verified: false`; remediation records contain `findingId`, `status`, `reason`, and the originating review evidence ID. |
 | `dataDigest` | `sha256:` digest of canonical `data`. |
 | `previousDigest` | Optional link to the preceding record's data digest. |
 | `actor` | Local actor or `ae verify` / `ae worktree`. |

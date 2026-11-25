@@ -14,6 +14,14 @@ without compatibility guarantees.
 - A curated `assets/docs/` visual layer for installation, getting started,
   architecture, integrations, evidence, security, roadmap, and profiles
   documentation, with descriptive alt text and local-only references.
+- Provider-neutral model routing: canonical profiles in
+  `framework/routing/profiles.yaml`, a `routing` JSON Schema, local
+  `provider.routes` mappings, `ae.model-class` skill metadata, agent
+  `routingProfile`, workflow task `routingProfile`, `ae chat --route`, and
+  requested/actual model fields in provider evidence.
+- Documentation for the task/risk/cost model matrix in
+  `docs/model-routing.md`, with official-doc references and explicit
+  "verify before pinning" caveats. No live model invocation was performed.
 - Phase 0 documentation and decision records: architecture, getting started,
   installation, integrations, evidence, provider compatibility, threat model,
   and roadmap.

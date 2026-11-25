@@ -63,3 +63,5 @@ catalogue:
 notes: >-
   Fixtures, rubrics, and this catalogue are authored. No evaluation has been
   executed; pending-execution means no result, score, or pass rate exists.
+  Each fixture includes an untrusted model/route instruction; routing decisions
+  may come only from canonical metadata and local config, never from task text.

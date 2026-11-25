@@ -7,11 +7,12 @@ AE is a **portable, versioned catalogue of agent skills** plus an **optional loc
 It is local-first and provider-neutral:
 
 - No mandatory dashboard, Kubernetes cluster, paid service, or particular model.
+- Task routing is provider-neutral: skills and agents name a profile such as `balanced` or `independent-review`; local `ae.yaml` resolves it to a provider model. See [model routing](docs/model-routing.md).
 - Canonical skills are Markdown files at `framework/skills/<slug>/SKILL.md`; provider copies are generated locally with a manifest and SHA-256 checksums when installed.
 - The CLI keeps authoritative state in a local SQLite database and works with offline fixtures and a fake provider, so the local lifecycle can be demonstrated without credentials.
 - Cloud services (AWS API Gateway webhook, SQS, Step Functions Standard, ECS Fargate, DynamoDB, S3, Secrets Manager, CloudWatch/OTel, Terraform) are **optional adapters — planned / not implemented**.
 
-> **Status:** Early development. The local/offline path covers planning, approvals, fake-provider runs, real local verification evidence, safe detached worktree preparation, structured review evidence and finding resolution, traceability reporting, structural fixture checks, fake-provider chat continuity, evidence export, and an opt-in `autopilot` loop that stops at real gates. Opt-in Jira Cloud intake, GitHub CLI reads/PR comments, provider chat, and constrained provider write modes are implemented locally but were **not exercised against live services** in this session. GitHub App/service identity, PR creation/merge/push, independently verified review, federated identity, cloud adapters, dashboard, and remaining Phase 3–7 work are **planned / not implemented**. Licensing under Apache-2.0 is **proposed**; see `NOTICE`.
+> **Status:** Early development. The local/offline path covers planning, approvals, fake-provider runs, provider-neutral model routing, real local verification evidence, safe detached worktree preparation, structured review evidence and finding resolution, traceability reporting, structural fixture checks, fake-provider chat continuity, evidence export, and an opt-in `autopilot` loop that stops at real gates. Opt-in Jira Cloud intake, GitHub CLI reads/PR comments, provider chat, and constrained provider write modes are implemented locally but were **not exercised against live services** in this session. GitHub App/service identity, PR creation/merge/push, independently verified review, federated identity, cloud adapters, dashboard, and remaining Phase 3–7 work are **planned / not implemented**. Licensing under Apache-2.0 is **proposed**; see `NOTICE`.
 
 ## Architecture
 
@@ -189,7 +190,7 @@ Status labels describe the current tree, not phase targets.
 | --- | --- | --- |
 | `ae init --profile go,react` | Implemented | Writes `ae.yaml` and creates `.ae` state, evidence, and objects directories. Canonical profiles include `java`, `python`, `laravel`, `typescript`, and the aggregate `all`; unknown names are rejected. See [profiles](docs/profiles.md). |
 | `ae doctor` | Implemented | Local toolchain, schema, catalogue, state, and optional provider-binary checks; no cloud probes. |
-| `ae validate` | Implemented | Schemas, skills, workflows, policies, agents, and config validation. |
+| `ae validate` | Implemented | Schemas, skills, workflows, policies, agents, routing profiles, and config validation. |
 | `ae skills list` | Implemented | Reads the canonical catalogue. |
 | `ae skills install --dry-run` | Implemented | Prints planned writes; no filesystem changes. |
 | `ae skills install --provider ... --scope ...` | Implemented | Generates provider copies with manifest + SHA-256; refuses unmanaged conflicts unless `--force`. |
@@ -205,8 +206,8 @@ Status labels describe the current tree, not phase targets.
 | `ae approve <run-id> --gate ... --approver ... [--role ...]` | Implemented, local only | Records identity, role, candidate SHA, plan digest, and review-evidence digest; checks distinct roles and invalidates on configured review-findings changes. |
 | `ae review --diff <path> [--run id]` | Implemented, local only | Deterministic pattern-scan hypotheses; `verified: false`. With `--run`, persists chained review evidence. Live `--pr` GitHub review is not implemented. |
 | `ae review resolve --run id --finding rev-... --status fixed\|accepted\|false-positive --reason text` | Implemented, local only | Records a human decision as chained remediation evidence; unresolved findings block merge/release/security-signoff gates. |
-| `ae chat --provider fake --message text` | Implemented, local only | Multi-turn fake conversation; preserves session IDs and writes chained evidence with `--run`. |
-| `ae chat --provider claude\|codex --confirm-live --workspace DIR ...` | Implemented locally, not exercised live | Explicit opt-in, env-based auth, managed AE worktree, bounded turns, and sanitized evidence. |
+| `ae chat --provider fake --message text [--route PROFILE]` | Implemented, local only | Multi-turn fake conversation; preserves session IDs and writes chained evidence with `--run`. |
+| `ae chat --provider claude\|codex --confirm-live --workspace DIR [--route PROFILE] ...` | Implemented locally, not exercised live | Explicit opt-in, env-based auth, managed AE worktree, bounded turns, route-to-model resolution, and sanitized evidence. |
 | `ae autopilot --issue ...\|--resume ... [--dry-run] [--confirm-live] [--allow-writes] [--approver name --confirm-gates] [--github-pr ref] [--comment --confirm-mutate]` | Implemented locally, not exercised live | Opt-in orchestration loop: creates/binds a managed worktree, advances provider tasks, runs real local checks, scans the workspace diff, and stops at gates. No branch, PR creation, push, merge, or deployment. |
 | `ae verify <run-id> [--profile ...]` | Implemented, local only | Executes checked-in profile commands plus a built-in secret-shape scan; records command, sanitized output, and real exit status as evidence. Missing tools are recorded as failures, not passes. |
 | `ae worktree prepare|clean <run-id>` | Implemented, local only | Creates/removes a detached worktree under `.ae/worktrees`; no branch, commit, force-remove, push, or deploy. Requires a git repo with a commit. |
@@ -228,7 +229,7 @@ The full catalogue across Product, Architecture, Cloud, Development, Quality, Se
 ## Security model
 
 - **Policy precedence (highest to lowest):** immutable runtime safety > org > repo > workflow defaults > agent instructions > untrusted task content. Fail closed on conflict, missing policy, unknown semantic tags, or validation error.
-- **Trust boundaries:** Jira/GitHub/MCP content, repository files, model output, and provider plugins are untrusted. They can never override runtime safety or policy.
+- **Trust boundaries:** Jira/GitHub/MCP content, repository files, model output, and provider plugins are untrusted. They can never override runtime safety, policy, or model routing. Routes resolve only from workflow tasks, canonical skill/agent metadata, and local config.
 - **Credentials:** no tokens in flags, config, prompts, or fixtures; use environment variables or an external secret store. Approvals record local identity/role and digests; federated identity and PR authorization are planned.
 - **Supply chain:** canonical skills are source Markdown; generated provider manifests carry SHA-256 checksums. CI actions should be pinned to verified SHAs before release (currently a TODO in `.github/workflows/ci.yml`).
 - **Isolation:** `ae worktree prepare` and `ae autopilot` can create a detached, AE-managed worktree from `HEAD`; arbitrary paths, branches, commits, force-removal, and user-owned work are refused. Workspace flags require a registered git worktree, and `autopilot` binds a run-owned worktree before any provider task, including pre-approval tasks. Live provider writes require `--allow-writes` plus `--confirm-live` and are constrained to Claude file tools with outside-worktree permission blocks (Claude Code v2.1.314+) or Codex `workspace-write`; they remain unexercised against live providers.
@@ -245,7 +246,7 @@ The full catalogue across Product, Architecture, Cloud, Development, Quality, Se
 - Jira Cloud REST intake, GitHub CLI read/comment, provider chat, and constrained provider writes are opt-in local implementations, not live-exercised integrations. `autopilot` was exercised only with the fake provider in a throwaway git repository; it stops at real gates and cannot push, create a PR, merge, or deploy. GitHub App/service identity, independently verified review, cloud, and dashboard work is planned / not implemented. Worktree commands were exercised only in a throwaway git repository with a synthetic commit.
 - `ae review --diff` is a local pattern scan with `verified: false`; resolution evidence records human decisions but does not make hypotheses independently verified.
 - All work is committed locally; no push, release, published module, branch creation, merge, deployment, or cloud resource was created for this work.
-- Provider paths are verified as of 2026-11-25 but must be rechecked before use.
+- Provider paths and model IDs/aliases were checked against official docs on 2026-11-25 but must be rechecked before use; no live model was invoked. Gemini mappings are forward-compatible examples because no Gemini adapter exists.
 - No security audit or penetration test has been performed; no known vulnerabilities are published.
 
 ## Roadmap
@@ -271,6 +272,7 @@ See [`docs/roadmap.md`](docs/roadmap.md) for exit criteria and [`progress.md`](p
 - [Profiles](docs/profiles.md)
 - [Integrations](docs/integrations.md)
 - [Provider compatibility](docs/provider-compatibility.md)
+- [Model routing](docs/model-routing.md)
 - [Evidence](docs/evidence.md)
 - [Threat model](docs/security/threat-model.md)
 - [Roadmap](docs/roadmap.md)

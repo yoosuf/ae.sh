@@ -86,6 +86,16 @@ independently verified review path exists.
 - Both Claude Code and Codex follow the agentskills.io open standard.
 - The Codex CLI adapter can run noninteractive prompts from argument arrays. Persistent `ae chat --provider codex --confirm-live --workspace <managed-worktree>` uses `codex exec` without `--ephemeral`; later turns use `codex exec resume <thread-id>`. `run`, `resume`, and `autopilot` additionally accept `--allow-writes`, which changes the sandbox from `read-only` to `workspace-write`. No live model run, resume, or file edit was performed; local stub tests verify both argument shapes and thread ID capture.
 
+## Provider model routing
+
+Provider tasks resolve a routing profile from the workflow task, skill metadata
+(`ae.model-class`), or agent definition, then map it to a provider model through
+`provider.routes` in `ae.yaml`. Precedence is runtime safety/policy, workflow
+task, skill, agent, local config, then `balanced`. Untrusted task content cannot
+select or downgrade a route. Claude and Codex receive the resolved model via
+`--model`; missing mappings fail closed for live providers. The fake provider is
+offline and needs no mapping. See [model routing](model-routing.md).
+
 ## Provider conversations
 
 `ae chat` is a bounded, opt-in conversation path over the existing provider
@@ -93,6 +103,9 @@ port:
 
 - `--provider` is required. `fake` works offline and simulates responses;
   `claude` and `codex` are live providers.
+- Optional `--route <profile>` selects a provider-neutral routing profile;
+  `provider.routes` in `ae.yaml` resolves it to a model alias/ID. Unknown
+  profiles and missing mappings fail closed. See [model routing](model-routing.md).
 - Exactly one of `--message` or `--script` is accepted. Scripts are JSON files
   with a `messages` array and at most 20 turns; each turn has a 10s–30m timeout.
 - Live providers require `--confirm-live` and `--workspace` pointing to an
@@ -101,8 +114,8 @@ port:
 - Session IDs are preserved across turns. If a provider advertises session
   metadata but returns no session ID, the command fails closed.
 - With `--run`, each turn writes sanitized `kind: provider` evidence with the
-  prompt, response, session ID, model, simulation flag, usage, and a chained
-  `previousDigest`.
+  prompt, response, session ID, routing profile, requested model, actual model
+  when reported, simulation flag, usage, and a chained `previousDigest`.
 - Provider output remains untrusted text. It is not a check pass, an approval,
   or an independently verified review.
 - `chat` is read-only. File edits require `run`, `resume`, or `autopilot` with

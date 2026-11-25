@@ -60,8 +60,8 @@ roles, and rejection of stale or self approvals.
 
 ### Canonical asset layout
 
-Skills, workflows, policies, agents, profiles, schemas, and templates live under
-`framework/`. Go code resolves them through `internal/framework/paths.go`, so
+Skills, workflows, policies, agents, routing profiles, profiles, schemas, and
+templates live under `framework/`. Go code resolves them through `internal/framework/paths.go`, so
 loaders and docs cannot drift to different locations. Generated provider copies
 remain outside this tree in the documented Claude and Codex skill directories.
 
@@ -91,15 +91,17 @@ Named workflows (definitions present; executable locally with the fake provider)
 
 ### Providers and fakes
 
-A provider port accepts a skill payload and returns a typed result. The
-`skills install` command materializes skills into documented Claude/Codex
+A provider port accepts a skill payload plus a provider-neutral routing profile
+and returns a typed result. Canonical routing profiles live in
+`framework/routing/profiles.yaml`; `ae.yaml` maps them to provider model IDs.
+The `skills install` command materializes skills into documented Claude/Codex
 paths with manifests. Claude Code and Codex CLI adapters exist but were not
 invoked in this tree. The fake provider returns outputs marked
 `simulated: true` for offline demos; it does not run shell commands or call a
-model. Provider name is recorded in task evidence; `model` is recorded when an
-adapter reports it and omitted otherwise. Usage is stored as
-`known: false` rather than an invented zero. `ae verify` is the local path
-that records real command exit statuses.
+model. Provider name, routing profile, requested model, and actual model (when
+reported) are recorded in task evidence. Usage is stored as `known: false`
+rather than an invented zero. `ae verify` is the local path that records real
+command exit statuses. See [`model-routing.md`](model-routing.md).
 
 ### Evidence
 
