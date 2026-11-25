@@ -90,6 +90,8 @@ without compatibility guarantees.
 
 ### Changed
 
+- Repository remote and source-clone documentation now use
+  `git@github.com:yoosuf/ae.sh.git`; the GitHub repository is `yoosuf/ae.sh`.
 - Canonical framework assets moved from top-level directories into `framework/`
   (`agents/`, `policies/`, `profiles/`, `schemas/`, `skills/`, `templates/`, and
   `workflows/`). Go loaders, tests, scripts, and docs now resolve those paths

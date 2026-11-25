@@ -16,14 +16,14 @@ arbitrary project directories.
 ## Install from source (macOS / Linux)
 
 ```sh
-git clone <REPOSITORY_URL> aef
-cd aef
+git clone git@github.com:yoosuf/ae.sh.git ae.sh
+cd ae.sh
 go build -o aef ./cmd/aef
 ./aef doctor
 ```
 
 Run project configuration commands from this checkout, or pass its path
-explicitly with `--root /path/to/aef`. `aef init` fails closed when the
+explicitly with `--root /path/to/ae.sh`. `aef init` fails closed when the
 canonical assets are not present instead of creating an unusable configuration.
 
 To place it on your `PATH`, use the provided installer (no `sudo` escalation; it asks for confirmation before writing to `/usr/local/bin`):

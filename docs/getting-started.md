@@ -18,15 +18,15 @@ see the command status matrix in the [README](../README.md).
 
 The current release operates from the AEF checkout because workflows, skills,
 policies, agents, and profiles are canonical files under its `framework/`
-directory. Use `--root /path/to/aef` when invoking a binary from another
+directory. Use `--root /path/to/ae.sh` when invoking a binary from another
 directory. Standalone installation with a separately packaged asset bundle is
 planned, not implemented.
 
 ## 1. Build
 
 ```sh
-git clone <REPOSITORY_URL> aef
-cd aef
+git clone git@github.com:yoosuf/ae.sh.git ae.sh
+cd ae.sh
 go build -o aef ./cmd/aef
 ./aef doctor
 ```
