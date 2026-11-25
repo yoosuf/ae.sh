@@ -5,6 +5,7 @@ role: Independent reviewer
 skills: [code-review, solution-architecture]
 providerPreference: [claude, codex]
 fallbackPolicy: require-independent-reviewer
+routingProfile: independent-review
 toolAllowlist: [Read, Grep, Glob, git diff, git show]
 scopes:
   read: ["**"]

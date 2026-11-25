@@ -13,6 +13,7 @@ tasks:
     name: Incident intake
     skill: jira-intake
     agent: sre
+    routingProfile: recovery
     dependsOn: []
     timeout: 10m
     outputs: [issue-brief.json]
@@ -57,6 +58,7 @@ tasks:
     name: Reproduction and evidence capture
     skill: unit-testing
     agent: qa-engineer
+    routingProfile: deep-reasoning
     dependsOn: [investigation-plan]
     timeout: 25m
     outputs: [evidence.json]
@@ -90,6 +92,7 @@ tasks:
     name: Findings handoff
     skill: agent-handoff
     agent: orchestrator
+    routingProfile: recovery
     dependsOn: [incident-approval]
     timeout: 10m
     outputs: [evidence.md]

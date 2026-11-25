@@ -8,6 +8,7 @@ framework/
 ├── agents/     provider-neutral agent definitions
 ├── policies/   risk-scoped policy bundles
 ├── profiles/   executable local verification profiles
+├── routing/    provider-neutral model routing profiles
 ├── schemas/    JSON Schemas mirrored into internal/schema/assets
 ├── skills/     canonical SKILL.md instruction contracts
 ├── templates/  issue, plan, evidence, ADR, and review templates

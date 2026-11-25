@@ -5,6 +5,7 @@ role: UI implementation using semantic custom classes and design tokens
 skills: [backend-development, unit-testing, agent-handoff]
 providerPreference: [claude, codex]
 fallbackPolicy: prefer-secondary-provider
+routingProfile: balanced
 toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, npm test, git diff]
 scopes:
   read: ["**"]

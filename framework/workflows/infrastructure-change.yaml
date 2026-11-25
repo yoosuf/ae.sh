@@ -102,6 +102,7 @@ tasks:
     name: Bounded remediation
     skill: backend-development
     agent: cloud-engineer
+    routingProfile: recovery
     dependsOn: [review]
     timeout: 30m
     condition: "review.findings > 0"

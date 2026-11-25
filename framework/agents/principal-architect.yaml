@@ -5,6 +5,7 @@ role: Architecture, deterministic risk classification, and plan owner
 skills: [requirement-analysis, risk-assessment, solution-architecture, technical-planning]
 providerPreference: [claude, codex]
 fallbackPolicy: prefer-secondary-provider
+routingProfile: deep-reasoning
 toolAllowlist: [Read, Grep, Glob, git diff, git show]
 scopes:
   read: ["**"]

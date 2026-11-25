@@ -5,6 +5,7 @@ role: Workflow orchestrator and handoff coordinator
 skills: [agent-handoff, technical-planning, risk-assessment]
 providerPreference: [claude, codex]
 fallbackPolicy: require-human-on-provider-failure
+routingProfile: deep-reasoning
 toolAllowlist: [Read, Grep, Glob, git status, ae status, ae resume]
 scopes:
   read: ["**"]

@@ -24,6 +24,7 @@ tasks:
     name: Data risk classification
     skill: risk-assessment
     agent: database-engineer
+    routingProfile: deep-reasoning
     dependsOn: [intake]
     timeout: 10m
     outputs: [risk-assessment.json]
@@ -102,6 +103,7 @@ tasks:
     name: Bounded remediation
     skill: backend-development
     agent: database-engineer
+    routingProfile: recovery
     dependsOn: [review]
     timeout: 30m
     condition: "review.findings > 0"

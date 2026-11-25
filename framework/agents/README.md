@@ -13,6 +13,9 @@ the target provider's native form:
   provider skills.
 - `toolAllowlist` and `scopes` become provider permission constraints.
 - `budgets`, `timeouts`, and `retries` become run-level limits.
+- `routingProfile` is a provider-neutral default from
+  `framework/routing/profiles.yaml`; a workflow task override or skill
+  `ae.model-class` takes precedence. Provider model IDs stay in local `ae.yaml`.
 - `escalation` and `independence` are enforced by the orchestrator, not by the
   provider.
 

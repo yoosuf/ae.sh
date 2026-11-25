@@ -5,6 +5,7 @@ role: Release candidate, merge authorization, and deployment coordinator
 skills: [pull-request-management, unit-testing, technical-planning]
 providerPreference: [codex, claude]
 fallbackPolicy: require-human-on-provider-failure
+routingProfile: recovery
 toolAllowlist: [Read, Grep, Glob, git diff, git tag, gh pr, ae status]
 scopes:
   read: ["**"]

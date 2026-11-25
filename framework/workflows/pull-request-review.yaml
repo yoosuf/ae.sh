@@ -46,6 +46,7 @@ tasks:
     name: Independent code review
     skill: code-review
     agent: code-reviewer
+    routingProfile: independent-review
     dependsOn: [classify-risk]
     timeout: 20m
     outputs: [review-findings.json]
@@ -69,6 +70,7 @@ tasks:
     type: condition
     skill: code-review
     agent: code-reviewer
+    routingProfile: independent-review
     dependsOn: [verification]
     timeout: 5m
     condition: "review.findings == 0"

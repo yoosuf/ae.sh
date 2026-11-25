@@ -5,6 +5,7 @@ role: Isolated backend implementation and unit test author
 skills: [git-worktree-management, backend-development, unit-testing, agent-handoff]
 providerPreference: [codex, claude]
 fallbackPolicy: prefer-secondary-provider
+routingProfile: balanced
 toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, git diff, git worktree, go test]
 scopes:
   read: ["**"]

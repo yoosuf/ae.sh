@@ -5,6 +5,7 @@ role: Schema migration author and data-safety owner
 skills: [risk-assessment, technical-planning, backend-development, unit-testing]
 providerPreference: [claude, codex]
 fallbackPolicy: require-secondary-provider
+routingProfile: deep-reasoning
 toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, git diff, psql]
 scopes:
   read: ["**"]

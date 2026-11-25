@@ -5,6 +5,7 @@ role: Independent security reviewer and threat classification owner
 skills: [risk-assessment, code-review, requirement-analysis]
 providerPreference: [claude, codex]
 fallbackPolicy: require-independent-reviewer
+routingProfile: independent-review
 toolAllowlist: [Read, Grep, Glob, git diff, git show, secret-scan, dependency-audit]
 scopes:
   read: ["**"]

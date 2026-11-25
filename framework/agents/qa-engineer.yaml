@@ -5,6 +5,7 @@ role: Test execution and verification evidence owner
 skills: [unit-testing, requirement-analysis, agent-handoff]
 providerPreference: [codex, claude]
 fallbackPolicy: prefer-secondary-provider
+routingProfile: balanced
 toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, go test, npm test, dotnet test]
 scopes:
   read: ["**"]

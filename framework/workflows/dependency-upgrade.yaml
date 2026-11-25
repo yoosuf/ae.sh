@@ -91,6 +91,7 @@ tasks:
     name: Dependency audit evidence
     skill: unit-testing
     agent: security-engineer
+    routingProfile: independent-review
     dependsOn: [tests]
     timeout: 15m
     outputs: [evidence.json, evidence.md]

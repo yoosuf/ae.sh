@@ -46,6 +46,7 @@ tasks:
     name: Architecture decision and plan
     skill: solution-architecture
     agent: principal-architect
+    routingProfile: deep-reasoning
     dependsOn: [classify-risk]
     timeout: 30m
     outputs: [adr.md, plan.json]

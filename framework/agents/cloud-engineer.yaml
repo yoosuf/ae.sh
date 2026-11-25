@@ -5,6 +5,7 @@ role: Infrastructure and delivery pipeline engineer
 skills: [risk-assessment, technical-planning, git-worktree-management, unit-testing]
 providerPreference: [codex, claude]
 fallbackPolicy: require-secondary-provider
+routingProfile: deep-reasoning
 toolAllowlist: [Read, Grep, Glob, Edit, Write, Bash, git diff, terraform, aws]
 scopes:
   read: ["**"]

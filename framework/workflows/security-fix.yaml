@@ -91,6 +91,7 @@ tasks:
     name: Independent security review
     skill: code-review
     agent: security-engineer
+    routingProfile: independent-review
     dependsOn: [tests]
     timeout: 25m
     outputs: [review-findings.json]
@@ -102,6 +103,7 @@ tasks:
     name: Bounded security remediation
     skill: backend-development
     agent: backend-engineer
+    routingProfile: recovery
     dependsOn: [review]
     timeout: 30m
     condition: "review.findings > 0"
