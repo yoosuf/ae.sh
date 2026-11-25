@@ -99,12 +99,34 @@ tasks:
       state: reviewing
     onFailure:
       action: block
+  - id: security-review
+    name: Independent security deep review
+    skill: security-review
+    agent: security-reviewer
+    dependsOn: [review]
+    timeout: 25m
+    outputs: [security-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: test-review
+    name: Independent security test review
+    skill: test-review
+    agent: test-reviewer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [test-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
   - id: remediate
     name: Bounded security remediation
     skill: backend-development
     agent: backend-engineer
     routingProfile: recovery
-    dependsOn: [review]
+    dependsOn: [review, security-review, test-review]
     timeout: 30m
     condition: "review.findings > 0"
     outputs: []

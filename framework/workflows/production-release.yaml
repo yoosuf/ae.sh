@@ -76,11 +76,33 @@ tasks:
       state: reviewing
     onFailure:
       action: block
+  - id: architecture-review
+    name: Independent release architecture review
+    skill: architecture-review
+    agent: architecture-reviewer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [architecture-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: test-review
+    name: Independent release test review
+    skill: test-review
+    agent: test-reviewer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [test-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
   - id: deploy-authorization
     name: Deployment authorization
     type: approval
     gate: release
-    dependsOn: [review]
+    dependsOn: [review, architecture-review, test-review]
     requiredApprovers: 1
     bindToArtifact: evidence.json
     "on":

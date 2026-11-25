@@ -99,12 +99,34 @@ tasks:
       state: reviewing
     onFailure:
       action: block
+  - id: architecture-review
+    name: Independent migration architecture review
+    skill: architecture-review
+    agent: architecture-reviewer
+    dependsOn: [review]
+    timeout: 25m
+    outputs: [architecture-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: test-review
+    name: Independent migration test review
+    skill: test-review
+    agent: test-reviewer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [test-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
   - id: remediate
     name: Bounded remediation
     skill: backend-development
     agent: database-engineer
     routingProfile: recovery
-    dependsOn: [review]
+    dependsOn: [review, architecture-review, test-review]
     timeout: 30m
     condition: "review.findings > 0"
     outputs: []

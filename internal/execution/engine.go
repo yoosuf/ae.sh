@@ -655,16 +655,42 @@ func (e *Engine) gateEvidence(ctx context.Context, runID string) map[string]bool
 	if err != nil {
 		return map[string]bool{}
 	}
+	return gateEvidenceFromRecords(records)
+}
+
+// gateEvidenceFromRecords accepts observed test evidence and only the review
+// gate produced by a non-simulated, model-selected provider review. A local
+// pattern scan or a fake provider can never satisfy independent-review.
+func gateEvidenceFromRecords(records []EvidenceRecord) map[string]bool {
 	out := map[string]bool{}
 	for _, item := range records {
 		var record evidence.Record
-		if json.Unmarshal([]byte(item.JSON), &record) != nil || record.Kind != "test" {
+		if json.Unmarshal([]byte(item.JSON), &record) != nil {
 			continue
 		}
-		gate, _ := record.Data["gate"].(string)
-		passed, _ := record.Data["passed"].(bool)
-		if gate != "" && passed && record.ExitStatus != nil && *record.ExitStatus == 0 {
-			out[gate] = true
+		if record.ExitStatus == nil || *record.ExitStatus != 0 {
+			continue
+		}
+		switch record.Kind {
+		case "test":
+			gate, _ := record.Data["gate"].(string)
+			passed, _ := record.Data["passed"].(bool)
+			if gate != "" && passed {
+				out[gate] = true
+			}
+		case "review":
+			gate, _ := record.Data["gate"].(string)
+			independent, _ := record.Data["independentReview"].(bool)
+			simulated, _ := record.Data["simulated"].(bool)
+			mode, _ := record.Data["mode"].(string)
+			profile, _ := record.Data["routingProfile"].(string)
+			provider, _ := record.Data["provider"].(string)
+			model, _ := record.Data["requestedModel"].(string)
+			if gate == "independent-review" && independent && !simulated &&
+				mode == "provider-backed-review" && profile == "independent-review" &&
+				provider != "" && provider != "fake" && model != "" {
+				out[gate] = true
+			}
 		}
 	}
 	return out
@@ -915,10 +941,10 @@ func buildPrompt(task workflow.Task, run Run) string {
 
 func evidenceKind(skill string) string {
 	switch {
+	case strings.HasSuffix(skill, "-review") || skill == "review":
+		return "review"
 	case strings.Contains(skill, "test"):
 		return "test"
-	case strings.Contains(skill, "review"):
-		return "review"
 	case strings.Contains(skill, "risk"):
 		return "risk"
 	case strings.Contains(skill, "handoff"):

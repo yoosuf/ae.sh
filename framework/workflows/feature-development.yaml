@@ -113,11 +113,44 @@ tasks:
       state: reviewing
     onFailure:
       action: block
+  - id: security-review
+    name: Independent security review
+    skill: security-review
+    agent: security-reviewer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [security-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: architecture-review
+    name: Independent architecture review
+    skill: architecture-review
+    agent: architecture-reviewer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [architecture-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
+  - id: test-review
+    name: Independent test review
+    skill: test-review
+    agent: test-reviewer
+    dependsOn: [review]
+    timeout: 20m
+    outputs: [test-review-findings.json]
+    "on":
+      state: reviewing
+    onFailure:
+      action: block
   - id: remediate
     name: Bounded remediation
     skill: backend-development
     agent: backend-engineer
-    dependsOn: [review]
+    dependsOn: [review, security-review, architecture-review, test-review]
     timeout: 30m
     condition: "review.findings > 0"
     outputs: []
