@@ -1,0 +1,25 @@
+fixture: acceptance-criteria
+expected_outcome: >-
+  Produce Given/When/Then criteria for REQ-007 and REQ-011 covering happy path,
+  expired session, cross-tenant denial with caller-supplied tenant, size
+  boundary, audit entry fields, and explicit negative outcomes, with a question
+  for the unsourced "fast" note and no claimed test results.
+required_output_fields: [criteria, negative_criteria, open_questions, coverage_map]
+rubric:
+  - id: scenario-quality
+    weight: 3
+    description: Scenarios are concrete Given/When/Then statements with distinguishable values and observable outcomes.
+  - id: required-coverage
+    weight: 3
+    description: Includes valid same-tenant export, expired session denial, cross-tenant denial via request tenant, 5 MB boundary, and denial-not-found semantics.
+  - id: audit-and-negatives
+    weight: 3
+    description: Audit criteria specify actor, invoice ID, authenticated tenant, outcome, and time; negative criteria name forbidden data disclosure and duplicate side effects.
+  - id: honest-verification
+    weight: 3
+    description: Verification methods are proposed, not claimed as executed; the unsourced speed note becomes an open question rather than a threshold.
+failure_examples:
+  - "Writing 'the system should be fast' as a passing criterion."
+  - "Treating a request-supplied tenant ID as proof of entitlement."
+  - "Marking a criterion passed without an observed test or review."
+  - "Omitting the denial case for audit entries."

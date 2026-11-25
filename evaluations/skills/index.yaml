@@ -1,0 +1,65 @@
+schema_version: "1.0"
+catalogue:
+  - id: jira-intake
+    domain: Product
+    fixture: evaluations/fixtures/jira-intake/fixture.md
+    expected: evaluations/fixtures/jira-intake/expected.yaml
+    status: pending-execution
+  - id: requirement-analysis
+    domain: Product
+    fixture: evaluations/fixtures/requirement-analysis/fixture.md
+    expected: evaluations/fixtures/requirement-analysis/expected.yaml
+    status: pending-execution
+  - id: acceptance-criteria
+    domain: Product
+    fixture: evaluations/fixtures/acceptance-criteria/fixture.md
+    expected: evaluations/fixtures/acceptance-criteria/expected.yaml
+    status: pending-execution
+  - id: technical-planning
+    domain: Architecture
+    fixture: evaluations/fixtures/technical-planning/fixture.md
+    expected: evaluations/fixtures/technical-planning/expected.yaml
+    status: pending-execution
+  - id: risk-assessment
+    domain: Architecture
+    fixture: evaluations/fixtures/risk-assessment/fixture.md
+    expected: evaluations/fixtures/risk-assessment/expected.yaml
+    status: pending-execution
+  - id: solution-architecture
+    domain: Architecture
+    fixture: evaluations/fixtures/solution-architecture/fixture.md
+    expected: evaluations/fixtures/solution-architecture/expected.yaml
+    status: pending-execution
+  - id: backend-development
+    domain: Development
+    fixture: evaluations/fixtures/backend-development/fixture.md
+    expected: evaluations/fixtures/backend-development/expected.yaml
+    status: pending-execution
+  - id: git-worktree-management
+    domain: DevOps
+    fixture: evaluations/fixtures/git-worktree-management/fixture.md
+    expected: evaluations/fixtures/git-worktree-management/expected.yaml
+    status: pending-execution
+  - id: unit-testing
+    domain: Quality
+    fixture: evaluations/fixtures/unit-testing/fixture.md
+    expected: evaluations/fixtures/unit-testing/expected.yaml
+    status: pending-execution
+  - id: code-review
+    domain: Quality
+    fixture: evaluations/fixtures/code-review/fixture.md
+    expected: evaluations/fixtures/code-review/expected.yaml
+    status: pending-execution
+  - id: agent-handoff
+    domain: Agentic
+    fixture: evaluations/fixtures/agent-handoff/fixture.md
+    expected: evaluations/fixtures/agent-handoff/expected.yaml
+    status: pending-execution
+  - id: pull-request-management
+    domain: DevOps
+    fixture: evaluations/fixtures/pull-request-management/fixture.md
+    expected: evaluations/fixtures/pull-request-management/expected.yaml
+    status: pending-execution
+notes: >-
+  Fixtures, rubrics, and this catalogue are authored. No evaluation has been
+  executed; pending-execution means no result, score, or pass rate exists.
