@@ -1,0 +1,8 @@
+# CODEOWNERS placeholder.
+# Replace @REPLACE_WITH_MAINTAINER with the real maintainer/team handle and
+# configure branch protection in repository settings for reviews to be required.
+# Order matters: the last matching pattern wins.
+
+*       @REPLACE_WITH_MAINTAINER
+/docs/  @REPLACE_WITH_MAINTAINER
+/.github/ @REPLACE_WITH_MAINTAINER

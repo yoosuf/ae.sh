@@ -1,0 +1,66 @@
+name: Bug report
+description: Report incorrect behavior in AEF
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please redact tokens, issue text, and customer data.
+        For security vulnerabilities, follow SECURITY.md instead of opening a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Exact commands, sanitized config (no secrets), and inputs/fixture used.
+      placeholder: |
+        1. aef ...
+        2. aef ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: AEF version / commit
+      placeholder: "commit SHA or pre-release tag"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "macOS 15 / Linux distro, Go 1.27, provider + version if relevant"
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Which phase/area?
+      options:
+        - "Phase 0 docs/CI"
+        - "Phase 1 skills/CLI basics"
+        - "Phase 2 offline workflow"
+        - "Planned feature (not implemented)"
+        - "Unknown"
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Sanitized output
+      description: Paste relevant output with secrets and private data removed.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and removed secrets from this report.
+          required: true

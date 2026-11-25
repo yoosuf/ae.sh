@@ -1,0 +1,53 @@
+name: Feature request
+description: Suggest a capability or improvement for AEF
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check docs/roadmap.md first: many requested features are already planned but not implemented.
+        Please keep local-first, provider-neutral principles in mind.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do and what blocks you today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the interface or behaviour you would like. Include example commands if relevant.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - "Skills catalogue"
+        - "CLI"
+        - "Workflow engine / policy"
+        - "Evidence"
+        - "Provider integration"
+        - "Docs"
+        - "Planned cloud adapter"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What have you tried, and why is it insufficient?
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Fit with AEF principles
+      options:
+        - label: This does not require a mandatory hosted service, dashboard, or paid model.
+          required: true
+        - label: I understand unimplemented roadmap items are not available today.
+          required: true

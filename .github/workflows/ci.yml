@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# NOTE: Third-party actions are referenced by tag here for readability.
+# TODO: Before release, replace each with a FULL 40-char commit SHA that has been
+# verified against the upstream repository/tag. Do not invent or copy unverified
+# SHAs. Pinning by tag is not supply-chain safe for a released project.
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go build and checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4 # TODO: pin to a verified commit SHA before release
+
+      - name: Set up Go
+        uses: actions/setup-go@v5 # TODO: pin to a verified commit SHA before release
+        with:
+          go-version: '1.27'
+          cache: true
+
+      # The Go module and ./cmd/aef entrypoint are present in this tree.
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Test with race detector
+        run: go test -race ./...
+
+      - name: Validate schemas and skills
+        run: scripts/check-schemas.sh
+
+      - name: Build CLI
+        run: go build -o dist/aef ./cmd/aef
