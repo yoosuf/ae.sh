@@ -61,9 +61,10 @@ implemented**. Do not open PRs that claim live integrations were exercised.
 - Keep generated files (materialized skills, manifests, checksums) consistent
   with their canonical source. Canonical JSON Schemas under `framework/schemas/`
   and their embedded copies under `internal/schema/assets/` must match exactly.
-- For changes under `ui/`, run `npm test` at minimum. `npm run typecheck` and
-  `npm run build` require local dependencies to be installed; report explicitly
-  if they could not run.
+- For changes under `ui/`, run `npm test --offline` at minimum; it needs no
+  installed dependencies and is also run by CI. `npm run typecheck` and
+  `npm run build` require a normal dependency install; report explicitly if they
+  could not run.
 - Note any new dependency and its license. Changes to dependencies should
   reference an ADR when they affect architecture.
 

@@ -6,12 +6,15 @@ network, provider credentials, approvals, or deployments are involved.
 From the repository root, with `ae` on `PATH`:
 
 ```sh
+ae init --profile go
 ae run feature-development --issue examples/offline-workflow/issue-PROJ-101.json --dry-run
 ```
 
-The `--issue` flag accepts a **path** to the JSON fixture in this directory; it
-does not require a live Jira connection. If the CLI has not been installed yet,
-use `go run ./cmd/ae` in place of `ae` from the repository root.
+The `--issue` flag accepts a **path** to the JSON fixture in this directory or
+the shorthand `PROJ-101`; it does not require a live Jira connection. If the CLI
+has not been installed yet, use `go run ./cmd/ae` in place of `ae` from the
+repository root. See [integration setup](../../docs/integration-setup.md) for
+all opt-in integrations.
 
 Expected behavior in dry-run mode:
 

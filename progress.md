@@ -48,6 +48,13 @@ what was actually run in this tree. It is not a release report.
 | `make check` after all local hardening, schema fix, and docs updates | Passed: format check, build, vet, unit tests, race tests, schema validation, offline E2E, and worktree E2E. |
 | `git diff --check` after final edits | Passed; no whitespace errors in tracked changes. |
 | Targeted `go test ./internal/config ./internal/adapters/identity ./internal/adapters/attestation ./internal/cli -count=1` after adding extension points | Passed: config validation rejects HTTP/userinfo/query issuers, credential values in env-name fields, unsafe labels, and unknown modes; both adapter `Verify` methods fail closed without reading env values; `ae doctor` reports both extension points. No live verifier or service was called. |
+| `make check` after the onboarding/hygiene documentation changes | Passed: format check, build, vet, unit tests, race tests, schema validation, offline E2E, and worktree E2E. |
+| `go run ./cmd/ae audit --json` | Exited 0 with overall `incomplete`: `credential-shapes` (281 readable text files), `embedded-schemas`, and `canonical-references` passed; `generated-skill-copies` was `skipped` (no installed copies); `ci-action-pinning` was `needs-authorization` for `actions/checkout@v4` and `actions/setup-go@v5`. No unverified SHAs were invented. |
+| `go run ./cmd/ae eval --suite all --execute --behavioral --json` | Exited 0 with `status: passed`, `mode: structural-fixture-checks+behavioral-fake-provider`, `provider: fake`, `executed: true`, `modelBehaviorExecuted: false`, 9 security cases passed, and 15/15 fake-provider cases passed. No model was invoked. |
+| `go run ./cmd/ae doctor --json` in the checkout without `ae.yaml` | Exited 0 and reported `repository: fail` with `ae.yaml not found (run \`ae init\` first)`, confirming the docs now require init before doctor. `provider/gemini`, `identity/federated`, and `review/external-attestation` were reported as `extension-point`. No live service was called. |
+| `cd ui && npm test --offline` | Passed: 2 Node tests verified no runtime network/write path and the embedded-snapshot element. |
+| `bash -n scripts/uninstall.sh` | Passed; updated allowlist syntax is valid. |
+| `git diff --check` and a credential-shape grep over docs/scripts/config/source | Passed; no whitespace errors and no real credential values. Only pre-existing synthetic `FAKE`/`EXAMPLE` test fixtures matched. |
 
 ### Local hardening observed
 

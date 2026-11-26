@@ -38,7 +38,6 @@ the source of truth for the exact state transitions and gates.
 git clone git@github.com:yoosuf/ae.sh.git ae.sh
 cd ae.sh
 go build -o ae ./cmd/ae
-./ae doctor
 ```
 
 Place `ae` on your `PATH` or keep using `./ae` in the examples below. Use the
@@ -48,17 +47,19 @@ touching the checkout.
 ## 2. Initialize local configuration
 
 ```sh
-./ae init --profile go,react
+./ae init --profile go
 ```
 
 This writes YAML config into the current project. Profiles select the local
-verification checks recorded by `ae verify`; the example uses Go and React.
-Other canonical profiles are `java`, `python`, `laravel`, `typescript`, `dotnet`,
-`nodejs`, `vue`, `astro`, `aws`, and the aggregate `all`. Unknown names are
-rejected before config is written. `all` reuses every canonical profile's checks
-and is intended only for repositories with all relevant toolchains; select
-specific profiles for a single-stack project. See [profiles](profiles.md). No
-network calls are made by initialization.
+verification checks recorded by `ae verify`; the Go profile is safe in this
+checkout. Other canonical profiles are `java`, `python`, `dotnet`, `nodejs`,
+`typescript`, `react`, `vue`, `astro`, `laravel`, `aws`, and the aggregate `all`.
+Unknown names are rejected before config is written. `all` reuses every
+canonical profile's checks and is intended only for repositories with all
+relevant toolchains; select specific profiles for a single-stack project. React
+and other non-Go profiles assume their toolchains exist in the target project,
+not necessarily in the AE checkout. See [profiles](profiles.md). No network
+calls are made by initialization.
 
 ## 3. Validate
 
@@ -75,8 +76,8 @@ and optional provider binaries. Neither contacts a provider.
 
 ```sh
 ./ae skills list
-./ae skills install --provider claude --scope user --version 0.1.0 --dry-run
-./ae skills install --provider codex --scope project --version 0.1.0
+./ae skills install --provider claude --scope user --dry-run
+./ae skills install --provider codex --scope project
 ```
 
 Start with `--dry-run` to see which files would be written. Use the documented
@@ -123,8 +124,8 @@ The run stops at the merge gate. After a local merge approval, resuming is
 real build/lint/test results. That block is intentional: the framework does not
 invent a pass. Structured review findings are also recorded and must be resolved
 with `ae review resolve` before merge/release gates. See [evidence](evidence.md)
-for the record format and [integrations](integrations.md) for opt-in Jira and
-chat setup.
+for the record format, [integration setup](integration-setup.md) for practical
+opt-in configuration, and [integrations](integrations.md) for trust contracts.
 
 ## 7. Run all local checks
 
@@ -145,7 +146,9 @@ records the commands verified in this tree.
 - Do not put tokens in flags, config, or fixtures.
 - Fixtures are the default; live Jira/chat/GitHub reads require explicit opt-in configuration and credentials from environment variables or the user's `gh` login.
 - `autopilot` stops at approval gates and never pushes, creates a PR, merges, or deploys; high-risk work still blocks at independent review.
-- Do not expect GitHub App identity, PR creation/merge, or cloud behavior; those integrations are planned.
+- Gemini, GitHub App, federated identity, and external attestation config shapes
+  are fail-closed extension points; live variants, PR creation/merge, and cloud
+  behavior remain planned. See [integration setup](integration-setup.md).
 - If a validation or policy check fails, stop. The framework fails closed by design.
 - Do not push, publish, or deploy without explicit authorization.
 

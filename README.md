@@ -77,15 +77,19 @@ Core packages contain no provider SDKs. Adapters translate between the local cor
 
 ## Quickstart
 
+**Current releases are checkout-scoped.** Workflows, skills, policies, agents,
+and profiles must be available under the AE checkout (or a copy passed with
+`--root`). A standalone packaged asset bundle is planned / not implemented.
 Build from source (module publication via `go install ...@latest` is planned):
 
 ```sh
 # 1. Build the CLI (macOS/Linux; see docs/installation.md)
 go build -o ae ./cmd/ae
 
-# 2. Scaffold local config for selected profiles
-./ae init --profile go,react
-# Other canonical profiles: java, python, laravel, typescript, and all
+# 2. Scaffold local config; do this before doctor or any workflow command
+./ae init --profile go
+# Other canonical profiles: java, python, dotnet, nodejs, typescript, react,
+# vue, astro, laravel, aws, all. See docs/profiles.md.
 
 # 3. Check the local environment and validate the catalogue
 ./ae doctor
@@ -93,11 +97,11 @@ go build -o ae ./cmd/ae
 
 # 4. See the available skills and install them for your provider
 ./ae skills list
-./ae skills install --provider claude --scope user --version 0.1.0 --dry-run
-./ae skills install --provider codex --scope project --version 0.1.0
+./ae skills install --provider claude --scope user --dry-run
+./ae skills install --provider codex --scope project
 ```
 
-Use `--root DIR` to operate on a copy of the framework without writing to the current checkout. Provider paths are documented in [`docs/provider-compatibility.md`](docs/provider-compatibility.md); verify them before use because provider conventions change.
+Use `--root DIR` to operate on a copy of the framework without writing to the current checkout. For step-by-step Jira, GitHub, provider, evidence, dashboard, and eval setup, see the [integration setup guide](docs/integration-setup.md). Provider paths are documented in [`docs/provider-compatibility.md`](docs/provider-compatibility.md); verify them before use because provider conventions change.
 
 ## Offline demo
 
@@ -194,8 +198,8 @@ Status labels describe the current tree, not phase targets.
 
 | Command | Status | Notes |
 | --- | --- | --- |
-| `ae init --profile go,react` | Implemented | Writes `ae.yaml` and creates `.ae` state, evidence, and objects directories. Canonical profiles include `java`, `python`, `laravel`, `typescript`, and the aggregate `all`; unknown names are rejected. See [profiles](docs/profiles.md). |
-| `ae doctor` | Implemented | Local toolchain, schema, catalogue, state, and optional provider-binary checks; reports Gemini as a fail-closed extension point. No cloud probes. |
+| `ae init --profile go` | Implemented | Writes `ae.yaml` and creates `.ae` state, evidence, and objects directories. Canonical profiles include `java`, `python`, `dotnet`, `nodejs`, `typescript`, `react`, `vue`, `astro`, `laravel`, `aws`, and `all`; unknown names are rejected. See [profiles](docs/profiles.md). |
+| `ae doctor` | Implemented | Local toolchain, schema, catalogue, state, and optional provider-binary checks; reports Gemini, GitHub App, federated identity, and external attestation fail-closed boundaries. No cloud probes. |
 | `ae validate` | Implemented | Schemas, skills, workflows, policies, agents, routing profiles, and config validation. |
 | `ae skills list` | Implemented | Reads the canonical catalogue. |
 | `ae skills install --dry-run` | Implemented | Prints planned writes; no filesystem changes. |

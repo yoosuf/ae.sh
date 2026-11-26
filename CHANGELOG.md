@@ -11,6 +11,15 @@ without compatibility guarantees.
 
 ### Added
 
+- A practical [integration setup guide](docs/integration-setup.md) covering the
+  full `ae.yaml` reference, status labels, exit codes, offline/fake setup, Jira
+  Cloud intake and bug reporting, GitHub CLI reads/comments, Claude/Codex live
+  providers, fail-closed extension points, evidence signing, the read-only
+  dashboard, eval modes, autopilot, managed worktrees, troubleshooting, and
+  explicit "not available yet" boundaries. Live service calls are marked
+  unexercised and no credential value appears in config, flags, or prompts.
+- A root `.gitignore` so local builds and generated state are not accidentally
+  committed.
 - A fail-closed Gemini provider extension point. `provider.default: gemini` is
   accepted and reported by `ae doctor`, but every invocation returns
   `not implemented`; no binary, API call, or model mapping is exercised.
@@ -157,6 +166,18 @@ without compatibility guarantees.
 
 ### Changed
 
+- Onboarding docs now require `ae init` before `doctor` or workflow commands,
+  use the checkout-scoped `--root` contract explicitly, list every canonical
+  profile, avoid a hardcoded skill version, replace `git describe --tags` with
+  `ae version`, and mark `go install ...@latest` as planned / not available.
+- Installation docs point to `scripts/uninstall.sh` for manifest-based cleanup
+  and include a troubleshooting table; prerequisites now list `make`,
+  `python3`, and `tar`.
+- CI runs the same checks contributors are told to run: formatting, schema
+  validation, both offline E2E scripts, and offline UI tests in addition to
+  build, vet, and unit/race tests.
+- `CONTRIBUTING.md` tells UI contributors to run `npm test --offline`, which
+  needs no dependency install, and to report when typecheck/build cannot run.
 - Renamed the project short name and every user-facing identifier to `ae`: the
   CLI binary and entry point, config file, local state/evidence directories,
   environment-variable prefix, schema IDs, skill metadata keys, Jira labels,
@@ -216,6 +237,11 @@ without compatibility guarantees.
 
 ### Fixed
 
+- `scripts/uninstall.sh` now recognizes the `security-review`,
+  `architecture-review`, and `test-review` canonical skills, so an
+  all-profile install can be fully removed with the provided script.
+- The offline workflow example now shows `ae init` and documents the `PROJ-101`
+  fixture shorthand.
 - The canonical and embedded evidence schemas now accept `kind: github`, so
   `autopilot --github-pr` evidence records validate instead of being rejected at
   build time.
