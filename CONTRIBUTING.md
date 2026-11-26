@@ -12,10 +12,11 @@ subset of Phases 3–5: `status`, `resume`, `cancel`, `approve`, fail-closed
 gates, `verify` with real local check results, detached worktree preparation,
 `run --workspace`, `trace`, evidence export, structured review findings and
 resolution evidence, fake-provider chat continuity, and structural evaluation
-checks. Opt-in Jira Cloud, GitHub CLI PR reads/comments, provider chat,
-constrained provider write modes, and the `autopilot` loop are implemented
-locally but were not exercised against live services. GitHub App/service
-identity, PR creation/merge/push, independently verified review, federated
+checks. Opt-in Jira Cloud intake and `jira report-bug`, GitHub CLI PR
+reads/comments, provider chat, constrained provider write modes, and the
+`autopilot` loop are implemented locally but were not exercised against live
+services. GitHub App/service identity, PR creation/merge/push, independently
+verified review, federated
 identity, cloud adapters, the dashboard, behavioral evaluation, and remaining
 Phase 3–7 work are **planned / not implemented**. Do not open PRs that claim
 live integrations were exercised.

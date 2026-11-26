@@ -54,6 +54,12 @@ without compatibility guarantees.
 - Opt-in Jira Cloud issue source that accepts configured HTTPS issue links or
   bare keys, reads tokens only from the environment, sanitizes issue text, and
   requires explicit AE metadata in labels or the description.
+- Opt-in `ae jira report-bug`: report a bounded, sanitized bug as a comment on
+  an existing Jira ticket (`--issue`) or as a new ticket (`--project`, optional
+  `--issue-type`). Live writes require `mode: jira-cloud` and `--confirm-mutate`;
+  `--dry-run` previews without network, token, or evidence access. Optional
+  `--run` evidence stores digests and identifiers, not raw bug text. Local
+  HTTP/CLI-stub tests only; no live Jira write was performed.
 - Opt-in provider chat with session continuity for fake, Claude Code, and Codex
   adapters, bounded turns/timeouts, managed-worktree requirements for live
   providers, and chained `kind: provider` evidence per turn.

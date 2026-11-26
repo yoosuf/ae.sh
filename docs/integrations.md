@@ -5,7 +5,7 @@
 External responses remain untrusted data; explicit configuration, confirmation,
 sanitization, and policy gates control what can advance a run.
 
-All integrations sit behind ports in the optional adapter layer. Core packages never import provider SDKs. The implemented path is local filesystem, config, SQLite state, offline fixtures, fake provider, generated skill copies, local approval/evidence lifecycle commands, opt-in Jira Cloud REST intake, opt-in GitHub CLI PR reads/comments, opt-in provider conversations with constrained write modes, and an opt-in `autopilot` orchestration loop. Live services were not called in this session; only local HTTP/TLS and CLI-stub tests were run.
+All integrations sit behind ports in the optional adapter layer. Core packages never import provider SDKs. The implemented path is local filesystem, config, SQLite state, offline fixtures, fake provider, generated skill copies, local approval/evidence lifecycle commands, opt-in Jira Cloud REST intake and bug reporting, opt-in GitHub CLI PR reads/comments, opt-in provider conversations with constrained write modes, and an opt-in `autopilot` orchestration loop. Live Jira writes and other live services were not called in this session; only local HTTP/TLS and CLI-stub tests were run.
 
 ## Jira Cloud
 
@@ -25,7 +25,23 @@ integrations:
 - The adapter requests `summary`, `description`, and `labels` from `/rest/api/3/issue/<key>` and normalizes the response into the provider-neutral `integration.Issue` contract. Response text is sanitized and validated against `framework/schemas/issue.schema.json`.
 - AE metadata is mandatory: `ae-acceptance:`, `ae-path:`, optional `ae-semantics:`, `ae-dependency:`, and `ae-base-sha:` labels, or the equivalent description sections. Missing acceptance/path metadata fails closed; no criteria are invented.
 - Fixtures remain the offline default. A Jira link without `mode: jira-cloud`, or a live key without `--confirm-live`, is denied with exit code 4.
-- An approved Jira MCP server remains a design target, not an implemented adapter.
+- `ae jira report-bug` writes one bounded, sanitized bug report through Jira
+  Cloud REST v3. Use `--issue TEAM-123` to add a comment to an existing ticket,
+  or `--project TEAM [--issue-type Bug]` to create a new ticket. `--title` and
+  one of `--description` / `--description-file` are required. A live write needs
+  both `mode: jira-cloud` and `--confirm-mutate`; `--dry-run` previews the target
+  without building an adapter, reading the token, or writing evidence.
+- Bug text is trimmed, bounded (200 title runes, 32 KiB description), scanned
+  for credential shapes, sanitized, and sent as an ADF document. Keys, project
+  keys, and issue types are pattern-validated; response keys must match the
+  requested project. The token is never in flags, config, URLs, prompts,
+  fixtures, or evidence.
+- With `--run <id>`, the result is recorded as one chained `kind: artifact`
+  evidence entry containing digests and identifiers, not raw bug text. A Jira
+  response is untrusted data; a successful write satisfies no AE gate.
+- No live Jira write was executed. The adapter and CLI are covered by local
+  HTTP/CLI-stub tests only. An approved Jira MCP server remains a design target,
+  not an implemented adapter.
 
 ## GitHub
 

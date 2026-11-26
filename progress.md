@@ -32,7 +32,8 @@ what was actually run in this tree. It is not a release report.
 | `make check` after the live-review fixes | Passed: build, vet, unit tests, race tests (including the concurrent evidence-chain test), schema validation, offline E2E, and worktree E2E. |
 | Fresh-throwaway `ae eval --suite all --execute --json` and `ae skills install --provider all --scope project` after final hardening | Passed: 9 security cases and 15 skill fixtures with `modelBehaviorExecuted: false`; 15 skills in both Claude and Codex manifests with zero SHA-256 mismatches. |
 | Authorized live `ae review --provider codex --skill code-review --confirm-live` in a throwaway managed worktree | Exited 0 with `routingProfile: independent-review`, `requestedModel: gpt-6.2-astra`, `model: null`, `verified: false`, and nine untrusted hypotheses. Claude review was attempted but the CLI returned `Not logged in`; no write, push, PR, merge, deploy, or live service mutation occurred. |
-| `go run ./cmd/ae --help` | Passed; `autopilot` and the live/write flags on `run` and `resume` are exposed, along with `chat --route`. |
+| `go build ./...`, `go test ./internal/adapters/jira/... ./internal/cli/...`, and `git diff --check` after adding Jira bug reporting | Passed: comment/new-ticket paths, ADF payloads, key/project/type validation, credential-shape rejection, HTTPS enforcement, dry-run with no source/token/evidence access, confirmation denial, chained evidence with digests, and symlink rejection. No live Jira call was made. |
+| `go run ./cmd/ae --help` | Passed; `autopilot`, `jira report-bug`, and the live/write flags on `run` and `resume` are exposed, along with `chat --route`. |
 | `bash -n scripts/uninstall.sh` and a throwaway-manifest safety check | Passed; documented Claude/Codex roots are accepted and `.codex/skills` is rejected. |
 
 ### Canonical asset layout
@@ -179,7 +180,16 @@ made in the source repository.
   when a profile/provider mapping is missing.
 - `internal/adapters/jira`: bare key and configured browse-link parsing, ADF
   text flattening, AE metadata extraction, sanitization, env-only bearer
-  headers, and fail-closed missing metadata.
+  headers, and fail-closed missing metadata. Bug reporting adds bounded and
+  sanitized title/description validation, credential-shape rejection, HTTPS
+  enforcement, project/key/issue-type checks, response key/id validation on
+  create and comment, and separate ADF payload paths for new and existing
+  tickets.
+- `internal/cli`: `jira report-bug` dry-run/JSON previews, explicit
+  `--confirm-mutate` policy denial, fixture-mode denial, description-file
+  handling that rejects symlinks and oversized files, and chained `kind:
+  artifact` evidence containing digests and identifiers rather than raw report
+  text.
 - `internal/adapters/github`: local `gh` stubs verifying PR JSON parsing, read
   argument shapes, check/diff reads, env-only tokens kept out of arguments,
   mutation denial, and mode validation; no live GitHub call was made.
@@ -239,7 +249,8 @@ rules that particular output would not satisfy the gate.
   `--resume` on later turns).
 - Codex CLI chat (`codex exec --json --sandbox read-only`, with
   `codex exec resume <thread-id>` on later turns).
-- Jira Cloud REST issue intake; an approved Jira MCP adapter remains planned.
+- Jira Cloud REST issue intake and `ae jira report-bug` writes (existing-ticket
+  comments and new-ticket creation); an approved Jira MCP adapter remains planned.
 - GitHub CLI PR reads/comments; PR creation, merge, push, and GitHub
   App/service identity remain planned.
 - Constrained provider write modes (`--allow-writes`) and the live file edits
@@ -359,9 +370,10 @@ review-resolution behavior were exercised offline.
   slugs did not match their canonical checklist headings, and a review with no
   observed model identity could still earn gate credit. Both are now
   fail-closed, with canonical reference slugs and explicit tests.
-- No live Jira, GitHub, cloud, or dashboard result is asserted. The one live
-  provider result is recorded above as untrusted hypotheses, never as verified
-  findings.
+- No live Jira read/write, GitHub, cloud, or dashboard result is asserted. The
+  one live provider result is recorded above as untrusted hypotheses, never as
+  verified findings. Jira bug reporting was exercised only through local
+  HTTP/CLI stubs; no ticket was created and no comment was posted.
 
 ## Next steps
 
@@ -370,8 +382,8 @@ review-resolution behavior were exercised offline.
    commits are made in small reviewable batches.
 2. Add executed behavioral evaluation and independently verified findings; one
    authorized live provider review produced only hypotheses.
-3. Exercise live Claude/Jira/GitHub adapters and live Codex chat/write paths
-   only after authorization and credential setup, recording exact commands and
-   sanitized outcomes.
+3. Exercise live Claude/Jira/GitHub adapters, both Jira bug-report modes, and
+   live Codex chat/write paths only after authorization and credential setup,
+   recording exact commands and sanitized outcomes.
 4. Pin CI actions to verified commit SHAs and produce a signed release before
    calling the project stable.
