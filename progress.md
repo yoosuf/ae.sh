@@ -28,6 +28,10 @@ what was actually run in this tree. It is not a release report.
 | `ae skills install --provider all --scope project` in a throwaway checkout | Passed: Claude and Codex provider manifests with 15 skills each and zero SHA-256 checksum mismatches. No generated file was hand-edited in the source tree. |
 | `make check` after the review upgrades | Passed: build, vet, unit tests, race tests, schema validation, offline E2E, and worktree E2E. |
 | Throwaway-checkout `ae review --diff ... --provider fake --skill test-review --candidate-sha ... --base-sha ... --json` | Passed after the fake-adapter fix: one simulated no-op result with zero findings, `verified: false`, and `simulated: true`. |
+| `go test ./internal/cli ./internal/execution ./internal/evidence ./internal/adapters/sqlite ./internal/schema` | Passed after adding pinned live-diff binding, required check-class coverage, observed-model enforcement, read-only reviewer scopes, combined specialist findings, and atomic evidence chaining. |
+| `make check` after the live-review fixes | Passed: build, vet, unit tests, race tests (including the concurrent evidence-chain test), schema validation, offline E2E, and worktree E2E. |
+| Fresh-throwaway `ae eval --suite all --execute --json` and `ae skills install --provider all --scope project` after final hardening | Passed: 9 security cases and 15 skill fixtures with `modelBehaviorExecuted: false`; 15 skills in both Claude and Codex manifests with zero SHA-256 mismatches. |
+| Authorized live `ae review --provider codex --skill code-review --confirm-live` in a throwaway managed worktree | Exited 0 with `routingProfile: independent-review`, `requestedModel: gpt-6.2-astra`, `model: null`, `verified: false`, and nine untrusted hypotheses. Claude review was attempted but the CLI returned `Not logged in`; no write, push, PR, merge, deploy, or live service mutation occurred. |
 | `go run ./cmd/ae --help` | Passed; `autopilot` and the live/write flags on `run` and `resume` are exposed, along with `chat --route`. |
 | `bash -n scripts/uninstall.sh` and a throwaway-manifest safety check | Passed; documented Claude/Codex roots are accepted and `.codex/skills` is rejected. |
 
@@ -183,8 +187,8 @@ made in the source repository.
   stubs verifying noninteractive argument shape, session resume, constrained
   write-mode flags, Claude outside-worktree permission blocks, rejection of
   Claude versions without those settings, `--model` from the resolved request,
-  and requested/actual model capture; no live model was invoked. The fake
-  adapter echoes route fields in its simulated output for observability and
+  and requested/actual model capture; no live model was invoked in those stub
+  tests. The fake adapter echoes route fields in its simulated output for observability and
   advertises no model-selection capability.
 - `internal/evidence`: credential-shaped values in actor and subject fields are
   redacted in the persisted record. `internal/config`: credential literals in
@@ -206,6 +210,29 @@ made in the source repository.
   fake-provider review that returns a simulated no-op. `validate` reports
   15 skills, 15 agents, 10 workflows, and 5 routing profiles.
 
+## Authorized live review observed
+
+With explicit authorization, a throwaway checkout was prepared at the pinned
+base `af337e5` and candidate `62c5fa5`. A 2,838-line, 152,685-byte diff was
+credential-scanned and passed to the read-only Codex route. The exact review
+command used `--provider codex --skill code-review --candidate-sha 62c5fa5...
+--base-sha af337e5... --run ... --workspace <managed worktree> --confirm-live
+--timeout 15m`. It completed with exit 0, `verified: false`, and nine hypotheses
+covering diff/SHA binding, test evidence at the review gate, reviewer write
+access, incomplete review coverage, model identity, specialist remediation,
+concurrent evidence chains, diff-size enforcement, and the local schema limit.
+
+The hypotheses were checked against code before edits; they were not applied as
+provider instructions. Locally confirmed gaps were fixed with tests: live review
+now binds the diff to committed, clean workspace state; every review gate must
+answer the canonical check classes; test records cannot satisfy
+`independent-review`; reviewers are forced read-only and intersect agent write
+scopes; specialist findings feed remediation; evidence append is serialized;
+diff reads are bounded while reading; the 100-finding schema rule applies only
+to provider results; and gate credit requires an observed model matching local
+config. The live Codex adapter reported no observed model, so under the final
+rules that particular output would not satisfy the gate.
+
 ## Implemented but not exercised live
 
 - Claude Code CLI chat (`claude --bare -p ... --output-format json`, with
@@ -219,13 +246,14 @@ made in the source repository.
   they enable; no live model edited a file. Real commits in the user's
   repository, branch pushes, CI/deploy hooks, and cloud deployment also remain
   unexercised.
-- Live model selection through `--model`; routing resolves to local aliases or
-  IDs and is passed to the Claude/Codex adapters, but no live provider call was
-  made and no requested model was confirmed against an installed CLI.
+- Live model selection through `--model` for chat and writes; routing resolves
+  to local aliases or IDs and is passed to the Claude/Codex adapters. One
+  authorized Codex review used the configured route, but its adapter did not
+  report an observed model identity; Claude chat/write paths remain unexercised.
 - Opt-in provider-backed `ae review --provider claude|codex` with a canonical
-  strongest-route skill. The command, fixed route, strict parser, and evidence
-  chain are locally tested with stubs; no live Claude/Codex review was invoked,
-  so provider findings were not observed outside this repository.
+  strongest-route skill. One authorized Codex review returned hypotheses in a
+  throwaway checkout; the Claude route was attempted but blocked by CLI
+  authentication. No provider result is treated as externally verified.
 - Behavioral model evaluation; `eval --execute` runs deterministic structure
   checks only. The added model-route injection cases are authored fixtures,
   not executed model behavior.
@@ -235,23 +263,24 @@ made in the source repository.
   executed in the offline E2E; missing tools in other profiles remain explicit
   failures under `ae verify`.
 - `review --diff` is a local pattern scan with `verified: false`, not an
-  independent code review. The provider-backed review path is implemented and
-  locally stub-tested, but no live review result was observed.
+  independent code review. The provider-backed path returned one live Codex
+  hypothesis set, but no result has been independently verified.
 - Federated approver identity; local identity and role capture are implemented.
 
-The opt-in adapters above were implemented and locally tested with HTTP or
-executable stubs, but these live paths require explicit authorization and
-credentials (or organizational context) and were **not run**. The fake chat
-path and all local review-resolution behavior were exercised offline.
+Except for the authorized Codex review above, the opt-in adapters in this
+section were implemented and locally tested with HTTP or executable stubs.
+Their live paths require separate explicit authorization and credentials (or
+organizational context) and were **not run**. The fake chat path and all local
+review-resolution behavior were exercised offline.
 
 ## Planned / not implemented
 
 - Remaining Phase 3 work: authorized live issue/provider calls, real code
   changes, federated approver identity, and real CI/deploy integration.
-- Phase 4: an authorized live provider-backed review, independently verified
-  findings, GitHub PR creation/merge/push, and merge signal. The local provider
-  review path can record the `independent-review` gate only when an observed,
-  non-simulated, model-selected provider result exists.
+- Phase 4: independently verified findings, GitHub PR creation/merge/push, and
+  merge signal. One authorized live provider review was exercised; the local
+  provider path can record the `independent-review` gate only when an observed,
+  non-simulated provider result matches the configured model.
 - Phase 5: full skill catalogue and executed behavioral evaluation suites.
 - Phase 6: optional AWS adapters and Terraform reference architecture.
 - Phase 7: optional dashboard, multi-user features, stable 1.0 release.
@@ -266,12 +295,15 @@ path and all local review-resolution behavior were exercised offline.
   logical commits; model routing is recorded in four small commits; the review
   upgrades are recorded in `31e48bf` (contracts/reviewers), `07d18d5`
   (provider-backed review), `7113f1d` (lifecycle gates), `68fefe0` (live
-  workspace denial test), and `2f0ddf2` (fake-provider no-op review). No push,
-  publish,
-  deploy, or cloud resource creation was executed, requested, or approved by
-  the agent. The remote-tracking ref advanced externally to `31e48bf` after the
-  first review commit; its reflog records `update by push`, and the later local
-  review commits were not pushed by this session.
+  workspace denial test), `2f0ddf2` (fake-provider no-op review), and `62c5fa5`
+  (status docs). The live-review fixes are in `6152470` (binding, coverage,
+  evidence chain, schema), `9d466ce` (reviewer scopes and combined findings),
+  and `5f90c35` (observed-model gate and canonical check slugs), followed by a
+  final status commit. No push, publish, deploy, PR, merge, or cloud resource
+  creation was executed, requested, or approved by the agent. A local
+  `git rev-parse` showed `origin/main` still at `62c5fa5`, with local `main`
+  ahead; the earlier remote-tracking reflog attributes its prior advance to
+  `update by push` outside this session's commands.
 - Visual-layer files (`assets/`, `docs/superpowers/`, and image links in several
   docs) were kept out of the routing and review code commits.
 - No credentials were used, stored in CLI flags/config/prompts/fixtures, or
@@ -320,16 +352,26 @@ path and all local review-resolution behavior were exercised offline.
   call, scans staged, unstaged, untracked, and PR diffs, requires registered
   git worktrees for workspace flags, confines Claude writes with version-gated
   permission settings, and redacts every persisted evidence string field.
-- No live provider, Jira, GitHub, cloud, or dashboard result is asserted.
+- The authorized live review returned nine hypotheses. Each was compared with
+  the local code before any edit; generated provider text was not executed as
+  instructions. All nine were addressed where locally confirmed, with new tests
+  and a final self-review that found two further gaps: two code-review check
+  slugs did not match their canonical checklist headings, and a review with no
+  observed model identity could still earn gate credit. Both are now
+  fail-closed, with canonical reference slugs and explicit tests.
+- No live Jira, GitHub, cloud, or dashboard result is asserted. The one live
+  provider result is recorded above as untrusted hypotheses, never as verified
+  findings.
 
 ## Next steps
 
 1. Obtain explicit human authorization before any push, publish, deployment,
-   cloud resource creation, or live provider/Jira/GitHub call. Local commits
-   are made in small reviewable batches.
-2. Exercise the provider-backed independent review path with an authorized
-   provider, then add executed behavioral evaluation.
-3. Exercise live Claude/Codex/Jira/GitHub adapters only after authorization and
-   credential setup, recording exact commands and sanitized outcomes.
+   cloud resource creation, or additional live provider/Jira/GitHub call. Local
+   commits are made in small reviewable batches.
+2. Add executed behavioral evaluation and independently verified findings; one
+   authorized live provider review produced only hypotheses.
+3. Exercise live Claude/Jira/GitHub adapters and live Codex chat/write paths
+   only after authorization and credential setup, recording exact commands and
+   sanitized outcomes.
 4. Pin CI actions to verified commit SHAs and produce a signed release before
    calling the project stable.
