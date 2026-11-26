@@ -3,10 +3,15 @@ package cli
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
@@ -14,6 +19,7 @@ import (
 	"github.com/yoosuf/ae.sh/internal/evidence"
 	"github.com/yoosuf/ae.sh/internal/execution"
 	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/routing"
 	"github.com/yoosuf/ae.sh/internal/schema"
 	"github.com/yoosuf/ae.sh/internal/util"
 )
@@ -241,7 +247,7 @@ func TestProviderReviewPersistsReviewEvidence(t *testing.T) {
 	if err := os.WriteFile(diffPath, []byte(reviewDiff), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	stub := &reviewStubProvider{result: providerReviewJSON}
+	stub := &reviewStubProvider{result: providerReviewJSON, model: "fable"}
 	var stdout, stderr bytes.Buffer
 	app := App{
 		Stdout: &stdout, Stderr: &stderr, Root: root, JSON: true,
@@ -259,7 +265,7 @@ func TestProviderReviewPersistsReviewEvidence(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.Mode != "provider-backed-review" || result.EvidenceRecordID == "" || result.Model != "stub-model" {
+	if result.Mode != "provider-backed-review" || result.EvidenceRecordID == "" || result.Model != "fable" {
 		t.Fatalf("unexpected result: %+v", result)
 	}
 	if result.RequestedModel != "fable" || result.Simulated {
@@ -290,15 +296,210 @@ func TestProviderReviewPersistsReviewEvidence(t *testing.T) {
 	}
 }
 
+func TestProviderReviewRequiresCompleteCheckCoverage(t *testing.T) {
+	binding := reviewBinding{
+		Provider: "codex", Skill: "security-review", RoutingProfile: routing.IndependentReview,
+		CandidateSHA: "candidate123", BaseSHA: "base123",
+		DiffDigest: "sha256:" + strings.Repeat("a", 64), RequireChecks: true,
+	}
+	incomplete := `{"findings":[],"checksWithoutFindings":[]}`
+	if _, err := normalizeProviderReview(incomplete, binding); err == nil {
+		t.Fatal("empty provider review earned gate credit")
+	}
+	partial := `{"findings":[],"checksWithoutFindings":["authentication-session","authorization","tenant-isolation"]}`
+	if _, err := normalizeProviderReview(partial, binding); err == nil {
+		t.Fatal("partial provider review earned gate credit")
+	}
+	complete := `{"findings":[],"checksWithoutFindings":["authentication-session","authorization","tenant-isolation","injection","network-files","secrets-crypto","dependencies-config","audit-abuse"]}`
+	result, err := normalizeProviderReview(complete, binding)
+	if err != nil {
+		t.Fatalf("complete provider review was rejected: %v", err)
+	}
+	if result.BaseSHA != "base123" || result.Verified || len(result.Findings) != 0 {
+		t.Fatalf("unexpected normalized review: %+v", result)
+	}
+}
+
+func TestProviderReviewRejectsObservedModelMismatch(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	cfg := initReviewRepo(t, root)
+	const runID = "run-provider-model-mismatch"
+	store, err := sqliteadapter.Open(cfg.StatePath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateRun(ctx, execution.Run{
+		ID: runID, WorkflowID: "feature-development", WorkflowVersion: "1.0.0",
+		IssueKey: "TEST-1", State: "reviewing", Status: "running", Risk: "high",
+		CandidateSHA: "candidate123", BaseSHA: "base123", Actor: "tester",
+		CreatedAt: "2026-01-01T00:00:00Z", UpdatedAt: "2026-01-01T00:00:00Z", Version: 1,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	diffPath := filepath.Join(root, "change.diff")
+	if err := os.WriteFile(diffPath, []byte(reviewDiff), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stub := &reviewStubProvider{result: providerReviewJSON, model: "different-model"}
+	var stdout, stderr bytes.Buffer
+	app := App{
+		Stdout: &stdout, Stderr: &stderr, Root: root, JSON: true,
+		Args: []string{"review", "--diff", diffPath, "--provider", "claude",
+			"--skill", "security-review", "--run", runID},
+		ProviderFactory: func(string) (integration.Provider, error) { return stub, nil },
+	}
+	if code := app.Run(ctx); code != ExitOK {
+		t.Fatalf("provider review exited %d: %s %s", code, stdout.String(), stderr.String())
+	}
+	store, err = sqliteadapter.Open(cfg.StatePath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	records, err := store.Evidence(ctx, runID)
+	if err != nil || len(records) != 1 {
+		t.Fatalf("expected one evidence record, got %d: %v", len(records), err)
+	}
+	var record evidence.Record
+	if err := json.Unmarshal([]byte(records[0].JSON), &record); err != nil {
+		t.Fatal(err)
+	}
+	if record.Data["independentReview"] != false || record.Data["modelMatches"] != false {
+		t.Fatalf("mismatched observed model earned gate credit: %+v", record.Data)
+	}
+}
+
+func TestReadReviewDiffEnforcesRegularFileAndLimit(t *testing.T) {
+	root := t.TempDir()
+	dirPath := filepath.Join(root, "not-a-file")
+	if err := os.Mkdir(dirPath, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readReviewDiff(dirPath); err == nil {
+		t.Fatal("non-regular diff path was accepted")
+	}
+	largePath := filepath.Join(root, "large.diff")
+	raw := bytes.Repeat([]byte("x"), maxReviewDiffBytes+1)
+	if err := os.WriteFile(largePath, raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readReviewDiff(largePath); err == nil {
+		t.Fatal("oversized diff was accepted")
+	}
+}
+
+func TestBindLiveReviewDiffRequiresPinnedCommittedChange(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	runGitForTest := func(args ...string) string {
+		t.Helper()
+		cmd := exec.Command("git", args...)
+		cmd.Dir = root
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %s: %v: %s", strings.Join(args, " "), err, out)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	runGitForTest("init", "-q", "-b", "main")
+	file := filepath.Join(root, "file.txt")
+	if err := os.WriteFile(file, []byte("base\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGitForTest("add", "file.txt")
+	runGitForTest("-c", "user.name=AE", "-c", "user.email=ae@example.invalid", "commit", "-qm", "base", "--no-gpg-sign")
+	base := runGitForTest("rev-parse", "HEAD")
+	if err := os.WriteFile(file, []byte("candidate\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runGitForTest("add", "file.txt")
+	runGitForTest("-c", "user.name=AE", "-c", "user.email=ae@example.invalid", "commit", "-qm", "candidate", "--no-gpg-sign")
+	candidate := runGitForTest("rev-parse", "HEAD")
+	diff, err := runGit(ctx, root, "diff", base, candidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256([]byte(diff))
+	digest := "sha256:" + hex.EncodeToString(sum[:])
+	if err := bindLiveReviewDiff(ctx, root, base, candidate, digest); err != nil {
+		t.Fatalf("committed diff was rejected: %v", err)
+	}
+	if err := bindLiveReviewDiff(ctx, root, base, candidate, "sha256:"+strings.Repeat("b", 64)); err == nil {
+		t.Fatal("unrelated diff was accepted")
+	}
+	if err := bindLiveReviewDiff(ctx, root, base, base, "sha256:"+strings.Repeat("b", 64)); err == nil {
+		t.Fatal("workspace HEAD mismatch was not detected")
+	}
+}
+
+func TestAppendRunEvidenceSerializesConcurrentChain(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	cfg := initReviewRepo(t, root)
+	store, err := sqliteadapter.Open(cfg.StatePath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	const runID = "run-concurrent-evidence"
+	const writers = 8
+	var wg sync.WaitGroup
+	errs := make(chan error, writers)
+	for i := 0; i < writers; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			_, err := appendRunEvidence(ctx, cfg, store, runID, "review",
+				fmt.Sprintf("concurrent review %d", i), "ae-test",
+				map[string]any{"index": i}, nil, nil)
+			errs <- err
+		}(i)
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("concurrent evidence append failed: %v", err)
+		}
+	}
+	rows, err := store.Evidence(ctx, runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != writers {
+		t.Fatalf("expected %d records, got %d", writers, len(rows))
+	}
+	previous := ""
+	for i, row := range rows {
+		var record evidence.Record
+		if err := json.Unmarshal([]byte(row.JSON), &record); err != nil {
+			t.Fatal(err)
+		}
+		if record.Sequence != i || row.Sequence != i {
+			t.Fatalf("sequence fork at %d: %+v, row %d", i, record, row.Sequence)
+		}
+		if record.PreviousDigest != previous {
+			t.Fatalf("chain fork at %d: %q, want %q", i, record.PreviousDigest, previous)
+		}
+		previous = record.DataDigest
+	}
+}
+
 type reviewStubProvider struct {
 	calls  int
 	result string
+	model  string
+	live   bool
 }
 
 func (p *reviewStubProvider) Name() string { return "claude" }
 
 func (p *reviewStubProvider) Capabilities() integration.Capabilities {
-	return integration.Capabilities{StructuredOutput: true, ModelSelection: true}
+	return integration.Capabilities{StructuredOutput: true, ModelSelection: true, Live: p.live}
 }
 
 func (p *reviewStubProvider) Run(_ context.Context, request integration.RunRequest) (integration.RunResult, error) {
@@ -308,7 +509,7 @@ func (p *reviewStubProvider) Run(_ context.Context, request integration.RunReque
 		Output:         map[string]any{"result": p.result},
 		ExitStatus:     &exit,
 		RequestedModel: request.RequestedModel,
-		Model:          "stub-model",
+		Model:          p.model,
 		Simulated:      false,
 	}, nil
 }

@@ -47,8 +47,11 @@ func New(dir, objectsDir string) *Manager {
 	return &Manager{Dir: dir, ObjectsDir: objectsDir}
 }
 
-// Write builds, validates, stores and exports one evidence record.
-func (m *Manager) Write(ctx context.Context, runID string, sequence int, kind, subject, actor string, data map[string]any, exitStatus *int, usage *integration.Usage, previous string) (Record, error) {
+// Build constructs and validates one evidence record without writing files.
+// Callers that need an atomic database chain can call Build inside a store
+// transaction and Persist after the transaction commits.
+func (m *Manager) Build(ctx context.Context, runID string, sequence int, kind, subject, actor string, data map[string]any, exitStatus *int, usage *integration.Usage, previous string) (Record, error) {
+	_ = ctx
 	if data == nil {
 		data = map[string]any{}
 	}
@@ -72,10 +75,6 @@ func (m *Manager) Write(ctx context.Context, runID string, sequence int, kind, s
 		ExitStatus:     exitStatus,
 		Usage:          usage,
 	}
-	encoded, err := json.MarshalIndent(record, "", "  ")
-	if err != nil {
-		return Record{}, err
-	}
 	generic, err := util.JSONValue(record)
 	if err != nil {
 		return Record{}, err
@@ -83,22 +82,52 @@ func (m *Manager) Write(ctx context.Context, runID string, sequence int, kind, s
 	if err := schema.Validate("evidence", generic); err != nil {
 		return Record{}, err
 	}
-	dir := filepath.Join(m.Dir, runID)
-	if err := util.EnsureDir(dir); err != nil {
+	return record, nil
+}
+
+// Write builds, validates, stores and exports one evidence record.
+func (m *Manager) Write(ctx context.Context, runID string, sequence int, kind, subject, actor string, data map[string]any, exitStatus *int, usage *integration.Usage, previous string) (Record, error) {
+	record, err := m.Build(ctx, runID, sequence, kind, subject, actor, data, exitStatus, usage, previous)
+	if err != nil {
 		return Record{}, err
 	}
-	name := fmt.Sprintf("%04d-%s.json", sequence, evidenceNamePattern.ReplaceAllString(record.Kind, "-"))
-	if err := os.WriteFile(filepath.Join(dir, name), append(encoded, '\n'), 0o600); err != nil {
-		return Record{}, err
-	}
-	objectDir := filepath.Join(m.ObjectsDir, strings.TrimPrefix(record.DataDigest, "sha256:")[:2])
-	if err := util.EnsureDir(objectDir); err != nil {
-		return Record{}, err
-	}
-	if err := os.WriteFile(filepath.Join(objectDir, strings.TrimPrefix(record.DataDigest, "sha256:")), raw, 0o600); err != nil {
+	if err := m.Persist(record); err != nil {
 		return Record{}, err
 	}
 	return record, nil
+}
+
+// Persist writes the content-addressed object and JSON export for a built
+// record. It is idempotent by digest: rewriting the same immutable bytes is
+// safe when a previous process committed the database row before exiting.
+func (m *Manager) Persist(record Record) error {
+	raw, err := json.Marshal(record.Data)
+	if err != nil {
+		return err
+	}
+	if util.Digest(raw) != record.DataDigest {
+		return fmt.Errorf("evidence record %s data digest mismatch", record.RecordID)
+	}
+	encoded, err := json.MarshalIndent(record, "", "  ")
+	if err != nil {
+		return err
+	}
+	dir := filepath.Join(m.Dir, record.RunID)
+	if err := util.EnsureDir(dir); err != nil {
+		return err
+	}
+	name := fmt.Sprintf("%04d-%s.json", record.Sequence, evidenceNamePattern.ReplaceAllString(record.Kind, "-"))
+	if err := os.WriteFile(filepath.Join(dir, name), append(encoded, '\n'), 0o600); err != nil {
+		return err
+	}
+	objectDir := filepath.Join(m.ObjectsDir, strings.TrimPrefix(record.DataDigest, "sha256:")[:2])
+	if err := util.EnsureDir(objectDir); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(objectDir, strings.TrimPrefix(record.DataDigest, "sha256:")), raw, 0o600); err != nil {
+		return err
+	}
+	return nil
 }
 
 // ExportJSON writes a complete run evidence bundle.

@@ -78,6 +78,32 @@ func TestScanDiffCreatesValidStructuredFindings(t *testing.T) {
 	}
 }
 
+func TestLocalScanFindingsAreNotLimitedByProviderSchemaRule(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "many.diff")
+	var diff strings.Builder
+	diff.WriteString("diff --git a/src/api.go b/src/api.go\n--- a/src/api.go\n+++ b/src/api.go\n@@ -0,0 +1,101 @@\n")
+	for i := 1; i <= 101; i++ {
+		diff.WriteString("+ token = \"synthetic-value\"\n")
+	}
+	if err := os.WriteFile(path, []byte(diff.String()), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	result, err := ScanDiff(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Findings) != 101 {
+		t.Fatalf("expected 101 local findings, got %d", len(result.Findings))
+	}
+	generic, err := util.JSONValue(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := schema.Validate("review", generic); err != nil {
+		t.Fatalf("local scan with 101 findings failed canonical schema: %v", err)
+	}
+}
+
 func TestReviewEvidencePersistence(t *testing.T) {
 	ctx := context.Background()
 	root := t.TempDir()

@@ -15,6 +15,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
+	"github.com/yoosuf/ae.sh/internal/evidence"
 	"github.com/yoosuf/ae.sh/internal/execution"
 	"github.com/yoosuf/ae.sh/internal/util"
 )
@@ -429,6 +430,62 @@ func (s *Store) AppendEvidence(ctx context.Context, record execution.EvidenceRec
 	record.Sequence = next
 	_, err := s.db.ExecContext(ctx, `INSERT INTO evidence (run_id, sequence, json) VALUES (?,?,?)`, record.RunID, record.Sequence, record.JSON)
 	return err
+}
+
+// AppendEvidenceChained reserves the next sequence and previous digest under an
+// immediate SQLite transaction, then lets the caller build the immutable record
+// from that chain position. It prevents concurrent writers from forking the
+// audit chain. The returned record is stored exactly as built.
+func (s *Store) AppendEvidenceChained(ctx context.Context, runID string, build func(sequence int, previous string) (execution.EvidenceRecord, error)) (execution.EvidenceRecord, error) {
+	conn, err := s.db.Conn(ctx)
+	if err != nil {
+		return execution.EvidenceRecord{}, err
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
+		return execution.EvidenceRecord{}, err
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_, _ = conn.ExecContext(context.Background(), "ROLLBACK")
+		}
+	}()
+
+	var last string
+	sequence := 0
+	previous := ""
+	err = conn.QueryRowContext(ctx, `SELECT json FROM evidence WHERE run_id=? ORDER BY sequence DESC LIMIT 1`, runID).Scan(&last)
+	switch {
+	case err == nil:
+		var record evidence.Record
+		if err := json.Unmarshal([]byte(last), &record); err != nil {
+			return execution.EvidenceRecord{}, fmt.Errorf("parse previous evidence record: %w", err)
+		}
+		sequence = record.Sequence + 1
+		previous = record.DataDigest
+	case errors.Is(err, sql.ErrNoRows):
+	default:
+		return execution.EvidenceRecord{}, err
+	}
+
+	record, err := build(sequence, previous)
+	if err != nil {
+		return execution.EvidenceRecord{}, err
+	}
+	record.RunID = runID
+	record.Sequence = sequence
+	if strings.TrimSpace(record.JSON) == "" {
+		return execution.EvidenceRecord{}, fmt.Errorf("built evidence record has no JSON payload")
+	}
+	if _, err := conn.ExecContext(ctx, `INSERT INTO evidence (run_id, sequence, json) VALUES (?,?,?)`, runID, sequence, record.JSON); err != nil {
+		return execution.EvidenceRecord{}, err
+	}
+	if _, err := conn.ExecContext(ctx, "COMMIT"); err != nil {
+		return execution.EvidenceRecord{}, err
+	}
+	committed = true
+	return record, nil
 }
 
 func (s *Store) Evidence(ctx context.Context, runID string) ([]execution.EvidenceRecord, error) {

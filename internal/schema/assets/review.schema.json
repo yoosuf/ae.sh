@@ -34,7 +34,6 @@
     "simulated": { "type": "boolean" },
     "findings": {
       "type": "array",
-      "maxItems": 100,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -73,5 +72,16 @@
       "items": { "type": "string" }
     },
     "note": { "type": "string", "minLength": 1 }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "mode": { "const": "provider-backed-review" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "properties": { "findings": { "maxItems": 100 } }
+      }
+    }
+  ]
 }
