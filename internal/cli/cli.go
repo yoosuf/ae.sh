@@ -241,7 +241,8 @@ Commands:
   verify <run-id> [--profile go,react]
   worktree prepare <run-id> | worktree clean <run-id>
   trace <run-id> [--format json|markdown] [--out FILE]
-  evidence export <run-id> --format json|markdown|both [--out dir]
+  evidence export <run-id> --format json|markdown|both [--out dir] [--sign --key-file path|--key-env NAME]
+  evidence verify <run-id> --bundle DIR [--key-file path]
   eval --suite security|skills|all [--execute]
   version
 

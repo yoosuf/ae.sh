@@ -721,24 +721,45 @@ func validateReviewResult(result ReviewResult) error {
 }
 
 func (a *App) cmdEvidence(ctx context.Context, args []string) error {
-	if len(args) == 0 || args[0] != "export" {
-		return usage("evidence requires: export <run-id>")
+	if len(args) == 0 {
+		return usage("evidence requires: export <run-id> | verify <run-id> --bundle DIR")
 	}
-	if len(args) < 2 {
+	switch args[0] {
+	case "export":
+		return a.cmdEvidenceExport(ctx, args[1:])
+	case "verify":
+		return a.cmdEvidenceVerify(args[1:])
+	default:
+		return usage("unknown evidence subcommand %q", args[0])
+	}
+}
+
+func (a *App) cmdEvidenceExport(ctx context.Context, args []string) error {
+	if len(args) == 0 {
 		return usage("evidence export requires a run id")
 	}
+	runID := args[0]
 	fs := newFlagSet("evidence export")
 	format := fs.String("format", "both", "json, markdown, or both")
 	out := fs.String("out", "", "output directory (default .ae/evidence/export)")
-	if err := fs.Parse(args[2:]); err != nil {
+	sign := fs.Bool("sign", false, "write an Ed25519 signature sidecar for the JSON bundle")
+	keyFile := fs.String("key-file", "", "path to a PEM PKCS#8 Ed25519 private key")
+	keyEnv := fs.String("key-env", "", "name of an environment variable holding the key path")
+	if err := fs.Parse(args[1:]); err != nil {
 		return usage("evidence export: %v", err)
+	}
+	if !*sign && (*keyFile != "" || *keyEnv != "") {
+		return usage("evidence export --key-file and --key-env require --sign")
+	}
+	if *sign && *format == "markdown" {
+		return invalid("a signature requires the JSON bundle: use --format json or both")
 	}
 	cfg, store, err := a.openStore()
 	if err != nil {
 		return err
 	}
 	defer store.Close()
-	records, err := store.Evidence(ctx, args[1])
+	records, err := store.Evidence(ctx, runID)
 	if err != nil {
 		return err
 	}
@@ -753,7 +774,7 @@ func (a *App) cmdEvidence(ctx context.Context, args []string) error {
 	evidence.SortRecords(parsed)
 	dir := *out
 	if dir == "" {
-		dir = filepath.Join(cfg.EvidenceDir(), "export", args[1])
+		dir = filepath.Join(cfg.EvidenceDir(), "export", runID)
 	}
 	var files []string
 	switch *format {
@@ -772,7 +793,47 @@ func (a *App) cmdEvidence(ctx context.Context, args []string) error {
 		}
 		files = append(files, path)
 	}
-	a.emit(map[string]any{"records": len(parsed), "files": files})
+	result := map[string]any{"records": len(parsed), "files": files, "signed": false}
+	if *sign {
+		key, err := loadSigningKey(*keyFile, *keyEnv)
+		if err != nil {
+			return err
+		}
+		signature, err := signEvidenceBundle(dir, parsed, key)
+		if err != nil {
+			return err
+		}
+		files = append(files, filepath.Join(dir, evidenceSignatureFile))
+		result["files"] = files
+		result["signed"] = true
+		result["signatureFile"] = filepath.Join(dir, evidenceSignatureFile)
+		result["bundleDigest"] = signature.BundleDigest
+		result["keyID"] = signature.KeyID
+		result["note"] = signature.Note
+	}
+	a.emit(result)
+	return nil
+}
+
+func (a *App) cmdEvidenceVerify(args []string) error {
+	if len(args) == 0 {
+		return usage("evidence verify requires a run id")
+	}
+	runID := args[0]
+	fs := newFlagSet("evidence verify")
+	bundle := fs.String("bundle", "", "directory containing evidence.json and signature.json")
+	keyFile := fs.String("key-file", "", "optional PEM PKCS#8 public key path for key pinning")
+	if err := fs.Parse(args[1:]); err != nil {
+		return usage("evidence verify: %v", err)
+	}
+	if *bundle == "" {
+		return usage("evidence verify requires --bundle DIR")
+	}
+	result, err := verifyEvidenceBundle(*bundle, runID, *keyFile)
+	if err != nil {
+		return err
+	}
+	a.emit(result)
 	return nil
 }
 
