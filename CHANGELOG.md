@@ -41,7 +41,8 @@ without compatibility guarantees.
   "verify before pinning" caveats. No live model invocation was performed.
 - Phase 0 documentation and decision records: architecture, getting started,
   installation, integrations, evidence, provider compatibility, threat model,
-  and roadmap.
+  and roadmap, plus `docs/implementation-plan.md` for the remaining
+  `Planned / not implemented` backlog.
 - Governance files: proposed Apache-2.0 license, NOTICE, contributing guide,
   security policy, code of conduct, and repository agent instructions.
 - GitHub issue/PR templates, CODEOWNERS placeholder, and CI workflow skeleton.

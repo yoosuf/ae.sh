@@ -2,8 +2,8 @@
 
 Thanks for your interest in the Agentic Engineering. This project is
 early-stage: the catalogue, CLI, and workflow engine are being built in phases.
-Please read this file, `AGENTS.md`, and `docs/roadmap.md` before opening a pull
-request.
+Please read this file, `AGENTS.md`, `docs/roadmap.md`, and
+`docs/implementation-plan.md` before opening a pull request.
 
 ## Scope and status
 

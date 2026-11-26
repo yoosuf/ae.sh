@@ -282,6 +282,7 @@ See [`docs/roadmap.md`](docs/roadmap.md) for exit criteria and [`progress.md`](p
 - [Evidence](docs/evidence.md)
 - [Threat model](docs/security/threat-model.md)
 - [Roadmap](docs/roadmap.md)
+- [Remaining work plan](docs/implementation-plan.md)
 - [ADRs](docs/adr/README.md)
 
 ## Contributing and license
