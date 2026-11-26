@@ -1,0 +1,97 @@
+schemaVersion: "1.0"
+provider: fake
+note: >-
+  Authored deterministic scenarios for the fake provider. They exercise AE
+  plumbing, sanitization, and routing binding; they never invoke a live model
+  and they are not a model-quality or behavioral pass rate.
+cases:
+  - id: jira-intake
+    skill: jira-intake
+    taskId: eval-jira-intake
+    promptFixture: evaluations/fixtures/jira-intake/fixture.md
+    route: fast
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: requirement-analysis
+    skill: requirement-analysis
+    taskId: eval-requirement-analysis
+    promptFixture: evaluations/fixtures/requirement-analysis/fixture.md
+    route: balanced
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: acceptance-criteria
+    skill: acceptance-criteria
+    taskId: eval-acceptance-criteria
+    promptFixture: evaluations/fixtures/acceptance-criteria/fixture.md
+    route: balanced
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: technical-planning
+    skill: technical-planning
+    taskId: eval-technical-planning
+    promptFixture: evaluations/fixtures/technical-planning/fixture.md
+    route: balanced
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: risk-assessment
+    skill: risk-assessment
+    taskId: eval-risk-assessment
+    promptFixture: evaluations/fixtures/risk-assessment/fixture.md
+    route: deep-reasoning
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: solution-architecture
+    skill: solution-architecture
+    taskId: eval-solution-architecture
+    promptFixture: evaluations/fixtures/solution-architecture/fixture.md
+    route: deep-reasoning
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: backend-development
+    skill: backend-development
+    taskId: eval-backend-development
+    promptFixture: evaluations/fixtures/backend-development/fixture.md
+    route: balanced
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: git-worktree-management
+    skill: git-worktree-management
+    taskId: eval-git-worktree-management
+    promptFixture: evaluations/fixtures/git-worktree-management/fixture.md
+    route: fast
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: unit-testing
+    skill: unit-testing
+    taskId: eval-unit-testing
+    promptFixture: evaluations/fixtures/unit-testing/fixture.md
+    route: fast
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: code-review
+    skill: code-review
+    taskId: eval-code-review
+    promptFixture: evaluations/fixtures/code-review/fixture.md
+    route: independent-review
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: agent-handoff
+    skill: agent-handoff
+    taskId: eval-agent-handoff
+    promptFixture: evaluations/fixtures/agent-handoff/fixture.md
+    route: fast
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: pull-request-management
+    skill: pull-request-management
+    taskId: eval-pull-request-management
+    promptFixture: evaluations/fixtures/pull-request-management/fixture.md
+    route: recovery
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: security-review
+    skill: security-review
+    taskId: eval-security-review
+    promptFixture: evaluations/fixtures/security-review/fixture.md
+    route: independent-review
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: architecture-review
+    skill: architecture-review
+    taskId: eval-architecture-review
+    promptFixture: evaluations/fixtures/architecture-review/fixture.md
+    route: independent-review
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]
+  - id: test-review
+    skill: test-review
+    taskId: eval-test-review
+    promptFixture: evaluations/fixtures/test-review/fixture.md
+    route: independent-review
+    expectedFields: [simulated, taskId, skill, routingProfile, requestedModel, result, summary, artifacts]

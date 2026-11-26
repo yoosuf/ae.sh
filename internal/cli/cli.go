@@ -112,7 +112,7 @@ func (a *App) Run(ctx context.Context) int {
 	case "evidence":
 		err = a.cmdEvidence(ctx, args)
 	case "eval":
-		err = a.cmdEval(args)
+		err = a.cmdEval(ctx, args)
 	case "version":
 		a.emit(map[string]any{"version": version.Version, "schemaVersion": version.SchemaVersion})
 	default:
@@ -243,7 +243,7 @@ Commands:
   trace <run-id> [--format json|markdown] [--out FILE]
   evidence export <run-id> --format json|markdown|both [--out dir] [--sign --key-file path|--key-env NAME]
   evidence verify <run-id> --bundle DIR [--key-file path]
-  eval --suite security|skills|all [--execute]
+  eval --suite security|skills|all [--execute] [--behavioral]
   version
 
 Exit codes: 0 ok, 1 error, 2 usage, 3 validation, 4 policy denied, 5 conflict.
