@@ -11,10 +11,13 @@ worktree preparation, structured review evidence and finding resolution,
 bounded remediation accounting, fake-provider chat continuity, opt-in Jira
 Cloud and provider-chat adapters, constrained provider write modes, a local
 GitHub CLI PR evidence/comment adapter, an opt-in `autopilot` loop, traceability
-reporting, and structural evaluation checks. Live service calls, live provider
-code changes, GitHub App identity, cloud adapters, dashboard, and remaining
-Phase 3–7 work are **planned / not implemented**; no dates are committed. [`progress.md`](../progress.md) records
-the commands actually verified in this tree.
+reporting, structural evaluation checks, deterministic fake-provider scenarios,
+local evidence signing/verification, a read-only `ae audit` report, and a
+read-only local dashboard snapshot. Live service calls, live provider code
+changes, GitHub App identity, cloud adapters, hosted/multi-user dashboard, and
+remaining Phase 3–7 work are **planned / not implemented**; no dates are
+committed. [`progress.md`](../progress.md) records the commands actually verified
+in this tree.
 
 ## Phase 0 — Foundation (implemented locally)
 
@@ -97,16 +100,16 @@ implemented**; local scans and fake output remain blocked at
 `independent-review`. Exit criteria: review findings must be addressed or
 explicitly accepted before merge signal.
 
-## Phase 5 — Full catalogue and evaluation (structural checks implemented; remainder planned / not implemented)
+## Phase 5 — Full catalogue and evaluation (local checks implemented; remainder planned / not implemented)
 
 The 15 authored skills remain the catalogue; the full set across Product,
 Architecture, Cloud, Development, Quality, Security, DevOps, and Agentic domains
 is planned. `ae eval --suite ... --execute` runs deterministic structural
 checks over fixtures and rubrics and reports `modelBehaviorExecuted: false`.
 Without `--execute`, `eval` remains an inventory with `executed: false`.
-Behavioral evaluation, scores, and pass rates are planned / not implemented.
-Exit criteria: catalogue versioning and reproducible behavioral evaluation
-reports.
+`--behavioral` adds 15 reproducible fake-provider plumbing scenarios; it does
+not invoke a model or report model-quality scores. Exit criteria: catalogue
+versioning and real model behavioral evaluation remain planned.
 
 ## Phase 6 — Optional AWS adapters (planned / not implemented)
 
@@ -115,11 +118,13 @@ Fargate execution, DynamoDB state projection, S3 evidence artifacts, Secrets
 Manager for credentials, CloudWatch/OTel telemetry, and Terraform reference
 architecture. No cloud resources exist today.
 
-## Phase 7 — Optional dashboard and 1.0 (planned / not implemented)
+## Phase 7 — Optional dashboard and 1.0 (local snapshot implemented; remainder planned / not implemented)
 
-React/Vite/TypeScript dashboard as a read-only view over local state/evidence,
-multi-user features, stable SemVer release and provenance. Exit criteria:
-documented compatibility commitments and release signing.
+A read-only, self-contained snapshot viewer over local state/evidence is
+implemented by `ae dashboard snapshot`; an optional React/Vite/TypeScript source
+viewer lives under `ui/`. Hosted/multi-user features, stable SemVer release, and
+external provenance remain planned. Exit criteria: documented compatibility
+commitments, notarized provenance, and verified release signing.
 
 ## Cross-cutting principles
 

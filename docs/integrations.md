@@ -195,6 +195,12 @@ MCP may be used for tool access (for example an approved Jira MCP server), but:
 
 AWS usage is optional and adapter-only: API Gateway webhook ingress, SQS queueing, Step Functions Standard orchestration, ECS Fargate execution, DynamoDB state projection, S3 evidence artifacts, Secrets Manager for credentials, CloudWatch/OTel telemetry, and Terraform reference architecture. No cloud resources are created by Phase 0–2, and no account or deployment is assumed.
 
-## Dashboard — planned / not implemented
+## Dashboard — implemented locally; hosted/multi-user planned
 
-An optional React/Vite/TypeScript dashboard may read local state/evidence in a later phase. It is not required for any workflow and does not exist yet.
+`ae dashboard snapshot --run <run-id> --out DIR` writes a sanitized, self-contained
+static viewer (`index.html`, `app.js`, `styles.css`, `snapshot.json`) from local
+run, history, approval, evidence, trace, and review state. Open it directly from
+disk; there is no server, API, credential use, or write path. An optional
+React/Vite/TypeScript source viewer lives under `ui/`, but no AE command depends
+on npm or that build. Hosted and multi-user dashboard features remain planned /
+not implemented.

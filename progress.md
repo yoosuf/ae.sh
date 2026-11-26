@@ -1,6 +1,6 @@
 # Progress
 
-Last verified: 2026-11-25 (local macOS session, Go 1.27). This file records
+Last verified: 2026-11-26 (local macOS session, Go 1.27). This file records
 what was actually run in this tree. It is not a release report.
 
 ## Implemented and verified locally
@@ -35,6 +35,35 @@ what was actually run in this tree. It is not a release report.
 | `go build ./...`, `go test ./internal/adapters/jira/... ./internal/cli/...`, and `git diff --check` after adding Jira bug reporting | Passed: comment/new-ticket paths, ADF payloads, key/project/type validation, credential-shape rejection, HTTPS enforcement, dry-run with no source/token/evidence access, confirmation denial, chained evidence with digests, and symlink rejection. No live Jira call was made. |
 | `go run ./cmd/ae --help` | Passed; `autopilot`, `jira report-bug`, and the live/write flags on `run` and `resume` are exposed, along with `chat --route`. |
 | `bash -n scripts/uninstall.sh` and a throwaway-manifest safety check | Passed; documented Claude/Codex roots are accepted and `.codex/skills` is rejected. |
+| `go test ./internal/cli/... -run 'TestEvidence|TestAudit' -count=1` | Passed after adding local evidence signing/verification and `ae audit`. |
+| `go test ./internal/cli/... -run 'TestBehavioral|TestStructuralEval' -count=1` | Passed after adding fake-provider behavioral scenarios; all 15 cases passed and the structural mode stayed unchanged. |
+| `go test ./internal/cli/... -run TestDashboard -count=1` | Passed; run-scoped snapshot files were written, credential-shaped evidence was redacted, review findings were labeled hypotheses, and missing run/output-directory inputs failed closed. |
+| `cmp -s framework/schemas/evidence.schema.json internal/schema/assets/evidence.schema.json`, `go test ./internal/evidence ./internal/schema -count=1`, and `go test ./internal/cli/... -run TestAutopilot -count=1` | Passed after adding the `github` evidence kind; canonical and embedded schemas match and evidence builds validate. |
+| `go run ./cmd/ae audit --json` | Exited 0 with overall `incomplete`: `credential-shapes`, `embedded-schemas`, and `canonical-references` passed; `generated-skill-copies` was `skipped` (no installed copies); `ci-action-pinning` was `needs-authorization`. This is a local report, not release approval. |
+| `go run ./cmd/ae eval --suite all --execute --behavioral --json` | Exited 0 with `status: passed`, `mode: structural-fixture-checks+behavioral-fake-provider`, `provider: fake`, `executed: true`, `modelBehaviorExecuted: false`, and 15/15 fake-provider cases passed. No model was invoked. |
+| `go run ./cmd/ae --help` | Exposed `audit`, `jira report-bug`, `evidence verify`, `dashboard snapshot`, and `eval ... [--behavioral]`. |
+| `npm test --offline` in `ui/` | Passed: 2 Node tests verified no runtime network/write path and the embedded-snapshot element. |
+| `npm install --offline --no-audit --no-fund` in `ui/` | Failed with `ENOTCACHED` for `@types/react` from the configured npm registry. UI `typecheck` and `build` were therefore **not run**; the CLI does not depend on npm. |
+| `make check` after all local hardening, schema fix, and docs updates | Passed: format check, build, vet, unit tests, race tests, schema validation, offline E2E, and worktree E2E. |
+| `git diff --check` after final edits | Passed; no whitespace errors in tracked changes. |
+
+### Local hardening observed
+
+The new local-only commands keep clear trust boundaries:
+
+- `ae evidence export ... --sign` and `ae evidence verify` use a local Ed25519
+  key and offline digest/chain checks only. No external timestamp, notarization,
+  transparency log, or provider attestation is claimed.
+- `ae eval --behavioral` invokes the deterministic fake provider with sanitized
+  fixture prompts and asserts routing, skill, output-field, `Simulated`, and
+  `Usage.Known` bindings. It does not invoke a model, write evidence, or affect
+  gates; `modelBehaviorExecuted` stays `false`.
+- `ae audit` is read-only. On this checkout it reported `incomplete`, not
+  `passed`, because CI action SHAs are not authoritatively pinned and no provider
+  skill copies are installed to verify.
+- `ae dashboard snapshot` is run-scoped and self-contained. The generated viewer
+  reads an embedded snapshot from disk; no server, API, credentials, or write
+  path is used. Review findings are shown as untrusted hypotheses.
 
 ### Canonical asset layout
 
@@ -292,12 +321,15 @@ review-resolution behavior were exercised offline.
   merge signal. One authorized live provider review was exercised; the local
   provider path can record the `independent-review` gate only when an observed,
   non-simulated provider result matches the configured model.
-- Phase 5: full skill catalogue and executed behavioral evaluation suites.
+- Phase 5: full skill catalogue and real model behavioral evaluation. Structural
+  checks and deterministic fake-provider scenarios are implemented.
 - Phase 6: optional AWS adapters and Terraform reference architecture.
-- Phase 7: optional dashboard, multi-user features, stable 1.0 release.
-- Signed/notarized evidence bundles, cloud artifact storage, external
-  transparency logs, security audit, release signing, and verified SHA pinning
-  of CI actions.
+- Phase 7: hosted/multi-user dashboard, stable 1.0 release. The local read-only
+  dashboard snapshot is implemented.
+- Notarized/externally attested bundles, cloud artifact storage, external
+  transparency logs, external security audit, release signing, and verified SHA
+  pinning of CI actions. Local Ed25519 signatures, offline verification, and a
+  read-only `ae audit` report are implemented.
 
 ## Repository state
 
@@ -310,11 +342,19 @@ review-resolution behavior were exercised offline.
   (status docs). The live-review fixes are in `6152470` (binding, coverage,
   evidence chain, schema), `9d466ce` (reviewer scopes and combined findings),
   and `5f90c35` (observed-model gate and canonical check slugs), followed by a
-  final status commit. No push, publish, deploy, PR, merge, or cloud resource
-  creation was executed, requested, or approved by the agent. A local
-  `git rev-parse` showed `origin/main` still at `62c5fa5`, with local `main`
-  ahead; the earlier remote-tracking reflog attributes its prior advance to
-  `update by push` outside this session's commands.
+  final status commit. Jira bug reporting is in `aeec491`, `73118d8`, and
+  `b832251`; the remaining-work plan is in `e9eee7b` and `6f21c1d`. This
+  hardening batch added `62c6d38` (`ae audit`), `35802a7` (signed bundles),
+  `bf5e62a` (behavioral eval), `6dfbc0c` (dashboard snapshot), `f4e7e68`
+  (optional UI source), `302f7b0` (github evidence schema fix), and `2c94b7e`
+  (single JSON error envelope on behavioral eval failure), followed by a final
+  docs/status commit. No push, publish, deploy, PR, merge, or cloud
+  resource creation was executed, requested, or approved by the agent.
+  Immediately before the final docs commit, `git rev-parse HEAD origin/main`
+  showed local `2c94b7e5c3c938103181a9b9ae5a54d587d92b4e` and remote-tracking
+  `bf5e62a3029b8b5dec9af01f8f8960fac6537d7e`; the earlier remote-tracking reflog
+  attributes its prior advance to `update by push` outside this session's
+  commands. Exact final refs are reported in the session handoff.
 - Visual-layer files (`assets/`, `docs/superpowers/`, and image links in several
   docs) were kept out of the routing and review code commits.
 - No credentials were used, stored in CLI flags/config/prompts/fixtures, or

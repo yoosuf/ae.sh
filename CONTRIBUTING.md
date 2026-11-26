@@ -10,16 +10,18 @@ Please read this file, `AGENTS.md`, `docs/roadmap.md`, and
 The local/offline path for Phases 0–2 is implemented, together with a local
 subset of Phases 3–5: `status`, `resume`, `cancel`, `approve`, fail-closed
 gates, `verify` with real local check results, detached worktree preparation,
-`run --workspace`, `trace`, evidence export, structured review findings and
-resolution evidence, fake-provider chat continuity, and structural evaluation
-checks. Opt-in Jira Cloud intake and `jira report-bug`, GitHub CLI PR
-reads/comments, provider chat, constrained provider write modes, and the
+`run --workspace`, `trace`, evidence export with optional local signatures and
+offline verification, structured review findings and resolution evidence,
+fake-provider chat continuity, structural evaluation checks, deterministic
+fake-provider behavioral scenarios, a read-only `audit` report, and a read-only
+local dashboard snapshot. Opt-in Jira Cloud intake and `jira report-bug`, GitHub
+CLI PR reads/comments, provider chat, constrained provider write modes, and the
 `autopilot` loop are implemented locally but were not exercised against live
 services. GitHub App/service identity, PR creation/merge/push, independently
-verified review, federated
-identity, cloud adapters, the dashboard, behavioral evaluation, and remaining
-Phase 3–7 work are **planned / not implemented**. Do not open PRs that claim
-live integrations were exercised.
+verified review, federated identity, cloud adapters, hosted/multi-user
+dashboard, model-quality evaluation, and remaining Phase 3–7 work are
+**planned / not implemented**. Do not open PRs that claim live integrations were
+exercised.
 
 ## Getting set up
 
@@ -55,7 +57,11 @@ live integrations were exercised.
 - Add or update tests for code changes when the test suite exists. If you could
   not run tests, say so explicitly.
 - Keep generated files (materialized skills, manifests, checksums) consistent
-  with their canonical source.
+  with their canonical source. Canonical JSON Schemas under `framework/schemas/`
+  and their embedded copies under `internal/schema/assets/` must match exactly.
+- For changes under `ui/`, run `npm test` at minimum. `npm run typecheck` and
+  `npm run build` require local dependencies to be installed; report explicitly
+  if they could not run.
 - Note any new dependency and its license. Changes to dependencies should
   reference an ADR when they affect architecture.
 

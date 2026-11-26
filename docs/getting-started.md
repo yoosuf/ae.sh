@@ -3,9 +3,12 @@
 This guide describes the implemented local/offline workflow. Opt-in Jira Cloud,
 GitHub CLI PR reads/comments, provider chat, constrained provider writes, and the
 `autopilot` loop are implemented locally but were not exercised against live
-services. GitHub App/service identity, PR creation/merge/push, independently
-verified review, cloud, and dashboard behavior is **planned / not implemented**;
-see the command status matrix in the [README](../README.md).
+services. A read-only local audit report, local evidence signing/verification,
+fake-provider behavioral scenarios, and a read-only local dashboard snapshot are
+implemented. GitHub App/service identity, PR creation/merge/push, independently
+verified review, cloud adapters, and hosted/multi-user dashboard behavior are
+**planned / not implemented**; see the command status matrix in the
+[README](../README.md).
 
 ## Prerequisites
 

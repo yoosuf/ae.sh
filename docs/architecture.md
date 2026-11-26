@@ -25,7 +25,7 @@ flowchart LR
     CORE --> EV["Evidence + verify + trace<br/>JSON + Markdown"]
     ADAPTER --> AGENT["Claude Code / Codex / fake"]
     CORE -. "planned" .-> CLOUD["AWS + Terraform adapters"]
-    STATE -. "planned, read-only" .-> DASH["Optional dashboard"]
+    STATE -. "read-only local snapshot" .-> DASH["Optional dashboard"]
 ```
 
 ## Components
@@ -34,10 +34,12 @@ flowchart LR
 
 Entry point for `init`, `doctor`, `validate`, `skills`, `plan`, `run`,
 `status`, `resume`, `cancel`, `approve`, `review --diff`, `review resolve`,
-`chat`, `verify`, `worktree`, `trace`, `evidence export`, `eval`, and `version`.
-Commands are thin: they parse input, call core services, and render results.
-Offline commands require no network access; live Jira/provider commands are
-opt-in implementations that were not exercised against live services.
+`chat`, `verify`, `worktree`, `trace`, `audit`, `evidence export/verify`,
+`dashboard snapshot`, `eval` (including deterministic fake-provider scenarios),
+and `version`. Commands are thin: they parse input, call core services, and
+render results. Offline commands require no network access; live Jira/provider
+commands are opt-in implementations that were not exercised against live
+services.
 
 ### Configuration and policy
 
@@ -105,16 +107,21 @@ command exit statuses. See [`model-routing.md`](model-routing.md).
 
 ### Evidence
 
-Content-addressed immutable records with JSON and Markdown exports, local
-verification evidence, and a traceability report that marks uncovered stages as
-`missing`. See [`evidence.md`](evidence.md).
+Content-addressed immutable records with JSON and Markdown exports, optional
+local Ed25519 signature sidecars with offline verification, local verification
+evidence, a read-only `ae audit` report, a traceability report that marks
+uncovered stages as `missing`, and a read-only static dashboard snapshot. See
+[`evidence.md`](evidence.md).
 
 ## What is not implemented
 
 - Live service calls (Jira/Claude/Codex/GitHub), live provider code changes, and CI/deploy hooks. Opt-in Jira, GitHub CLI read/comment, provider-chat, constrained provider-write, and `autopilot` adapters/commands are implemented locally but were not exercised live.
 - AWS adapters and Terraform reference architecture.
-- Dashboard, multi-user authorization, hosted service.
-- Behavioral evaluation suites and the full skill catalogue; structural fixture checks are implemented.
-- Signed evidence bundles and cloud artifact storage.
+- Hosted/multi-user dashboard, multi-user authorization, and hosted service. The
+  local static snapshot is implemented.
+- Model-quality behavioral evaluation and the full skill catalogue; structural
+  fixtures and deterministic fake-provider scenarios are implemented.
+- Externally attested/notarized evidence and cloud artifact storage. Local
+  Ed25519 bundle signing and offline verification are implemented.
 
 See [`roadmap.md`](roadmap.md), [`progress.md`](../progress.md), and ADRs in [`adr/`](adr/).

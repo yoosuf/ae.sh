@@ -12,7 +12,7 @@ It is local-first and provider-neutral:
 - The CLI keeps authoritative state in a local SQLite database and works with offline fixtures and a fake provider, so the local lifecycle can be demonstrated without credentials.
 - Cloud services (AWS API Gateway webhook, SQS, Step Functions Standard, ECS Fargate, DynamoDB, S3, Secrets Manager, CloudWatch/OTel, Terraform) are **optional adapters — planned / not implemented**.
 
-> **Status:** Early development. The local/offline path covers planning, approvals, fake-provider runs, provider-neutral model routing, real local verification evidence, safe detached worktree preparation, structured review evidence and finding resolution, traceability reporting, structural fixture checks, fake-provider chat continuity, evidence export, and an opt-in `autopilot` loop that stops at real gates. One read-only live Codex `independent-review` call was exercised in a throwaway checkout; Claude review was attempted but the CLI was not logged in. Provider findings were treated as untrusted hypotheses and addressed only where locally confirmed; this is **not** independently verified review. Opt-in Jira Cloud intake and `ae jira report-bug` (comment on an existing ticket or create a new one), GitHub CLI reads/PR comments, provider chat, and constrained provider write modes are implemented locally but were **not exercised against live services**. GitHub App/service identity, PR creation/merge/push, externally verified review, federated identity, cloud adapters, dashboard, and remaining Phase 3–7 work are **planned / not implemented**. Licensing under Apache-2.0 is **proposed**; see `NOTICE`.
+> **Status:** Early development. The local/offline path covers planning, approvals, fake-provider runs, provider-neutral model routing, real local verification evidence, safe detached worktree preparation, structured review evidence and finding resolution, traceability reporting, structural fixture checks, deterministic fake-provider behavioral scenarios, fake-provider chat continuity, evidence export with optional local Ed25519 signatures and offline verification, a read-only local `ae audit` report, a read-only local dashboard snapshot, and an opt-in `autopilot` loop that stops at real gates. One read-only live Codex `independent-review` call was exercised in a throwaway checkout; Claude review was attempted but the CLI was not logged in. Provider findings were treated as untrusted hypotheses and addressed only where locally confirmed; this is **not** independently verified review. Opt-in Jira Cloud intake and `ae jira report-bug` (comment on an existing ticket or create a new one), GitHub CLI reads/PR comments, provider chat, and constrained provider write modes are implemented locally but were **not exercised against live services**. GitHub App/service identity, PR creation/merge/push, externally verified review, federated identity, cloud adapters, hosted/multi-user dashboard, and remaining Phase 3–7 work are **planned / not implemented**. Licensing under Apache-2.0 is **proposed**; see `NOTICE`.
 
 ## Architecture
 
@@ -42,8 +42,9 @@ flowchart TB
 
     subgraph optional["Planned / not implemented (Phase 3+)"]
         AWS["AWS adapters<br/>API GW, SQS, Step Functions,<br/>ECS Fargate, DynamoDB, S3,<br/>Secrets Manager, CloudWatch/OTel"]
-        UI["Optional React/Vite/TS dashboard"]
     end
+
+    DB -. "read-only local snapshot" .-> UI["Optional local dashboard"]
 
     J -. "opt-in" .-> CLI
     GH -. "opt-in" .-> CLI
@@ -219,12 +220,17 @@ Status labels describe the current tree, not phase targets.
 | `ae worktree prepare|clean <run-id>` | Implemented, local only | Creates/removes a detached worktree under `.ae/worktrees`; no branch, commit, force-remove, push, or deploy. Requires a git repo with a commit. |
 | `ae run ... --workspace <path>` | Implemented, local only | Accepts only AE-managed worktree directories and records the workspace in run evidence; a bound workspace is never silently re-pointed. |
 | `ae trace <run-id> [--format ...] [--out ...]` | Implemented, local only | Reconstructs lifecycle coverage from persisted evidence; missing stages remain `missing`. |
-| `ae evidence export <run-id>` | Implemented | JSON/Markdown exports from stored run evidence. |
+| `ae evidence export <run-id> [--format json\|markdown\|both] [--out dir]` | Implemented, local only | JSON/Markdown exports from stored run evidence. |
+| `ae evidence export <run-id> --sign --key-file path\|--key-env NAME` | Implemented, local only | Adds a local Ed25519 `signature.json` sidecar; the environment variable *name* points to a key file, never key material in flags or config. |
+| `ae evidence verify <run-id> --bundle DIR [--key-file path]` | Implemented, local only | Recomputes export digests/chains and verifies the sidecar offline; tampered or missing signatures fail closed. |
+| `ae audit [--json]` | Implemented, local only | Read-only credential-shape, embedded-schema, canonical-reference, generated-copy, and CI-pin report. Generated-copy checks are `skipped` when no provider copies are installed; unverifiable action SHAs are `needs-authorization`, not passes. No release approval is granted. |
+| `ae dashboard snapshot --run <id> --out DIR` | Implemented, local only | Writes a sanitized, self-contained static snapshot (`index.html`, `app.js`, `styles.css`, `snapshot.json`); no server, API, credentials, or write path. |
 | `ae eval --suite ...` | Implemented as inventory only | Reports authored fixtures as `executed: false`. |
 | `ae eval --suite ... --execute` | Implemented, local only | Runs deterministic structural checks on fixtures; `modelBehaviorExecuted: false` because no model is invoked. |
+| `ae eval --suite skills\|all --execute --behavioral` | Implemented, local only | Also runs 15 deterministic fake-provider scenarios with sanitized fixture prompts, routing/skill binding assertions, and no model invocation or model-quality pass rate. |
 | Live Jira/Claude/Codex execution | Bug reporting implemented locally; chat/writes not exercised live; one Codex review exercised | Opt-in adapters with env credentials and local stub/HTTP tests; one read-only Codex review returned hypotheses, while Claude login, live Jira writes, and live chat/write paths were not exercised. |
 | GitHub CLI adapter (`gh pr view/checks/diff/comment`) | Implemented locally, not exercised live | Reads PR state and records sanitized evidence; PR comments require `--comment --confirm-mutate`. No push, PR creation, merge, or GitHub App identity. |
-| GitHub App/service identity, cloud adapters, dashboard | Planned / not implemented | Docs and interfaces exist; no live behavior was exercised. |
+| GitHub App/service identity, cloud adapters, hosted dashboard | Planned / not implemented | Docs/interfaces exist; the local dashboard snapshot is implemented, but no hosted behavior was exercised. |
 
 ## Skills shipped
 
@@ -247,13 +253,13 @@ The full catalogue across Product, Architecture, Cloud, Development, Quality, Se
 - Pre-1.0, no stable compatibility guarantees.
 - Fifteen Phase 1 skills exist, including four strongest-route review contracts; a broader catalogue is planned.
 - The fake provider is the only exercised end-to-end lifecycle provider path; one read-only Codex review was also exercised outside the lifecycle. Fake outputs are simulated and do not satisfy build/lint/test evidence gates until `ae verify` records real local results. The Claude and Codex adapters have local stub tests for command construction, session continuity, and constrained write modes; no live model conversation or live file edit was run.
-- `eval --execute` checks fixture structure only; no behavioral model evaluation or pass rate exists.
+- `eval --execute` checks fixture structure only. `--behavioral` adds deterministic fake-provider plumbing checks, not model behavior, scores, or pass rates; `modelBehaviorExecuted` remains `false`.
 - The Java, Python, Laravel, TypeScript, and aggregate `all` profiles are checked in and validated, but their external toolchains were not exercised here; see [profiles](docs/profiles.md).
-- Jira Cloud REST intake, GitHub CLI read/comment, provider chat, and constrained provider writes are opt-in local implementations, not live-exercised integrations. `autopilot` was exercised only with the fake provider in a throwaway git repository; it stops at real gates and cannot push, create a PR, merge, or deploy. GitHub App/service identity, independently verified review, cloud, and dashboard work is planned / not implemented. Worktree commands were exercised only in a throwaway git repository with a synthetic commit.
+- Jira Cloud REST intake, GitHub CLI read/comment, provider chat, and constrained provider writes are opt-in local implementations, not live-exercised integrations. `autopilot` was exercised only with the fake provider in a throwaway git repository; it stops at real gates and cannot push, create a PR, merge, or deploy. GitHub App/service identity, independently verified review, cloud adapters, and hosted/multi-user dashboard work are planned / not implemented. The local dashboard snapshot is optional and read-only. Worktree commands were exercised only in a throwaway git repository with a synthetic commit.
 - `ae review --diff` is a local pattern scan with `verified: false`; resolution evidence records human decisions but does not make hypotheses independently verified. The opt-in provider-backed review path is implemented and locally tested with stubs. A live Codex review was invoked once in a throwaway checkout and returned hypotheses, not verified findings; Claude review was blocked by CLI authentication. Independent review is still not externally verified in this tree.
-- All work is committed locally; no push, release, published module, branch creation, PR, merge, deployment, or cloud resource was created by the agent for this work. A local `git rev-parse` showed `origin/main` at `62c5fa5` while local `main` contained the subsequent live-review fix commits; those commits were not pushed by this session.
+- All work is committed locally; no push, release, published module, branch creation, PR, merge, deployment, or cloud resource was created by the agent for this work. Exact local and remote refs are recorded in `progress.md`; local commits were not pushed by this session.
 - Provider paths and model IDs/aliases were checked against official docs on 2026-11-25 but must be rechecked before use. One authorized Codex review call used the configured `gpt-6.2-astra` route; the adapter did not report an observed model, so that output could not satisfy the gate after the final hardening. Gemini mappings are forward-compatible examples because no Gemini adapter exists.
-- No security audit or penetration test has been performed; no known vulnerabilities are published.
+- No external security audit or penetration test has been performed. `ae audit` is a local, read-only report and does not approve a release; no known vulnerabilities are published. Unverified CI action SHAs are reported as `needs-authorization`.
 
 ## Roadmap
 
@@ -264,9 +270,9 @@ The full catalogue across Product, Architecture, Cloud, Development, Quality, Se
 | 2 | Offline plan/run, SQLite state, policy, evidence capture | Implemented locally with fake provider |
 | 3 | Local lifecycle, approvals, verification evidence, safe worktree preparation, traceability, evidence export, opt-in Jira/provider chat and autopilot loop | Local subset and opt-in adapters implemented; live calls and live writes not exercised; CI hooks planned |
 | 4 | Structured review evidence, finding resolution, bounded remediation, merge gates, GitHub CLI PR evidence/comments | Local subset and opt-in provider-backed review implemented; one live Codex review exercised as hypotheses; live GitHub calls not exercised; PR creation/merge planned |
-| 5 | Full skill catalogue and executed behavioral evaluation suites | Structural fixture checks implemented; behavioral suites planned / not implemented |
+| 5 | Full skill catalogue and executed behavioral evaluation suites | Structural checks and deterministic fake-provider scenarios implemented; full catalogue and model evaluation planned / not implemented |
 | 6 | Optional AWS adapters and Terraform reference architecture | Planned / not implemented |
-| 7 | Optional dashboard, multi-user features, stable 1.0 | Planned / not implemented |
+| 7 | Optional dashboard, multi-user features, stable 1.0 | Local static snapshot implemented; hosted/multi-user, stable 1.0 planned / not implemented |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for exit criteria and [`progress.md`](progress.md) for verified commands.
 

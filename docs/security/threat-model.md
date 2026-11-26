@@ -77,6 +77,6 @@ Changes touching auth, billing, tenant isolation, IAM, secrets, infrastructure, 
 ## Residual risk / not implemented
 
 - No strong sandbox for model-generated code. AE-managed detached worktrees and opt-in constrained write modes are implemented locally but were not exercised live; provider output still requires real local checks before it can pass gates.
-- `ae verify` includes a built-in credential-shape scan of the workspace; a dedicated scanner for final evidence bundles remains planned.
-- No multi-user RBAC or signed approvals; the dashboard/hosted service is planned.
+- `ae verify` includes a built-in credential-shape scan of the workspace, and `ae audit` scans authored files locally. A dedicated external scanner for final evidence bundles remains planned.
+- No multi-user RBAC or signed approvals. Local evidence bundle signatures prove local authenticity only, not external attestation; the hosted/multi-user dashboard remains planned.
 - No threat mitigation is proven by tests in this documentation; verify implementation status in the README command matrix.

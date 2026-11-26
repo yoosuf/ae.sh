@@ -11,6 +11,24 @@ without compatibility guarantees.
 
 ### Added
 
+- `ae audit`, a read-only local report covering credential shapes, embedded vs
+  canonical schemas, canonical references, generated skill copies, and CI action
+  pin status. Unverified action SHAs are reported as `needs-authorization`; the
+  report does not approve a release or satisfy an AE gate.
+- Optional local evidence signing: `ae evidence export ... --sign` accepts
+  `--key-file path` or `--key-env NAME` and writes an Ed25519 `signature.json`
+  sidecar. `ae evidence verify <run-id> --bundle DIR [--key-file path]` checks export
+  digests, chain links, and the signature offline. Key material stays in a local
+  file; the environment option supplies only a variable *name* pointing to it.
+  This is local authenticity, not external attestation.
+- `ae eval --suite skills|all --execute --behavioral`, which runs 15 deterministic
+  fake-provider scenarios over authored fixtures and asserts sanitized prompts,
+  skill/route binding, output fields, and `Simulated`/`Usage` boundaries.
+  `modelBehaviorExecuted` remains `false`; no model-quality pass rate is claimed.
+- `ae dashboard snapshot --run <id> --out DIR`, which writes a sanitized,
+  self-contained static viewer from local run, history, approval, evidence,
+  trace, and review state. An optional React/Vite/TypeScript source viewer lives
+  under `ui/`; no server, API, credentials, or workflow dependency is introduced.
 - Strongest-route review contracts: expanded `code-review` plus `security-review`,
   `architecture-review`, and `test-review` skills, matching independent
   reviewers, evaluation fixtures, and canonical checklists. All declare
@@ -145,7 +163,9 @@ without compatibility guarantees.
   object in `--json` mode.
 - Documentation and command status labels now distinguish the implemented
   local/offline subset from planned live integrations, including the boundary
-  that `eval --execute` is structural and `review --diff` is not independent
+  that `eval --execute` is structural, `--behavioral` uses only the fake provider,
+  evidence signatures are local authenticity, `audit` is not release approval, the
+  dashboard is a local read-only snapshot, and `review --diff` is not independent
   review.
 - Verification commands execute only from checked-in profiles; missing tools
   are recorded as failures, never as skipped passes.
@@ -182,6 +202,11 @@ without compatibility guarantees.
 
 ### Fixed
 
+- The canonical and embedded evidence schemas now accept `kind: github`, so
+  `autopilot --github-pr` evidence records validate instead of being rejected at
+  build time.
+- Failed `ae eval --behavioral --json` runs emit one error envelope instead of a
+  result object followed by a second JSON error.
 - `ae init` now fails closed when the selected root does not contain the
   canonical `framework/` assets, rather than writing a configuration that
   cannot be validated later.
