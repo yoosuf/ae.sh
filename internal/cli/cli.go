@@ -287,18 +287,22 @@ func (a *App) loadConfig() (config.Config, error) {
 }
 
 type repoContext struct {
-	Config          config.Config
-	Catalogue       catalog.Catalogue
-	Workflows       []workflow.Workflow
-	Policies        policy.Bundle
-	RoutingProfiles routing.Catalogue
-	Agents          map[string]bool
-	AgentRoutes     map[string]string
-	SkillRoutes     map[string]string
+	Config            config.Config
+	Catalogue         catalog.Catalogue
+	Workflows         []workflow.Workflow
+	Policies          policy.Bundle
+	RoutingProfiles   routing.Catalogue
+	Agents            map[string]bool
+	AgentWriteAllowed map[string]bool
+	AgentRoutes       map[string]string
+	SkillRoutes       map[string]string
 }
 
 type agentDefinition struct {
 	RoutingProfile string `yaml:"routingProfile"`
+	Scopes         struct {
+		Write []string `yaml:"write"`
+	} `yaml:"scopes"`
 }
 
 func (a *App) loadRepo() (repoContext, error) {
@@ -330,6 +334,7 @@ func (a *App) loadRepo() (repoContext, error) {
 		skillRoutes[skill.Slug] = resolved
 	}
 	agents := map[string]bool{}
+	agentWriteAllowed := map[string]bool{}
 	agentRoutes := map[string]string{}
 	agentDir := framework.Dir(cfg.Root, framework.Agents)
 	entries, err := os.ReadDir(agentDir)
@@ -359,6 +364,7 @@ func (a *App) loadRepo() (repoContext, error) {
 			if err := yaml.Unmarshal(raw, &definition); err != nil {
 				return repoContext{}, invalid("parse agent %s: %v", id, err)
 			}
+			agentWriteAllowed[id] = len(definition.Scopes.Write) > 0
 			if definition.RoutingProfile != "" {
 				resolved, err := routing.Normalize(definition.RoutingProfile)
 				if err != nil {
@@ -380,14 +386,15 @@ func (a *App) loadRepo() (repoContext, error) {
 		return repoContext{}, invalid("%v", err)
 	}
 	return repoContext{
-		Config:          cfg,
-		Catalogue:       cat,
-		Workflows:       workflows,
-		Policies:        bundle,
-		RoutingProfiles: routingProfiles,
-		Agents:          agents,
-		AgentRoutes:     agentRoutes,
-		SkillRoutes:     skillRoutes,
+		Config:            cfg,
+		Catalogue:         cat,
+		Workflows:         workflows,
+		Policies:          bundle,
+		RoutingProfiles:   routingProfiles,
+		Agents:            agents,
+		AgentWriteAllowed: agentWriteAllowed,
+		AgentRoutes:       agentRoutes,
+		SkillRoutes:       skillRoutes,
 	}, nil
 }
 
@@ -444,15 +451,16 @@ func (a *App) buildEngineWithStore(ctx repoContext, providerName string, store *
 		return nil, err
 	}
 	return &execution.Engine{
-		Store:       store,
-		Policies:    ctx.Policies,
-		Provider:    provider,
-		Evidence:    evidence.New(ctx.Config.EvidenceDir(), ctx.Config.ObjectsDir()),
-		Root:        ctx.Config.Root,
-		KnownSkills: ctx.Catalogue.BySlugSet(),
-		KnownAgents: ctx.Agents,
-		Routes:      ctx.Config.Provider.Routes,
-		AgentRoutes: ctx.AgentRoutes,
-		SkillRoutes: ctx.SkillRoutes,
+		Store:             store,
+		Policies:          ctx.Policies,
+		Provider:          provider,
+		Evidence:          evidence.New(ctx.Config.EvidenceDir(), ctx.Config.ObjectsDir()),
+		Root:              ctx.Config.Root,
+		KnownSkills:       ctx.Catalogue.BySlugSet(),
+		KnownAgents:       ctx.Agents,
+		AgentWriteAllowed: ctx.AgentWriteAllowed,
+		Routes:            ctx.Config.Provider.Routes,
+		AgentRoutes:       ctx.AgentRoutes,
+		SkillRoutes:       ctx.SkillRoutes,
 	}, nil
 }

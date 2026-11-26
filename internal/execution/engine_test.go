@@ -124,7 +124,10 @@ func newEngine(t *testing.T, root, tasks string) *execution.Engine {
 
 func mustWorkflow(t *testing.T, root string) workflow.Workflow {
 	t.Helper()
-	wf, err := workflow.LoadFromRepo(root, "local-flow", map[string]bool{"unit-testing": true}, nil)
+	wf, err := workflow.LoadFromRepo(root, "local-flow", map[string]bool{
+		"unit-testing": true, "code-review": true, "security-review": true,
+		"architecture-review": true, "test-review": true,
+	}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -447,6 +450,128 @@ func TestMergeGateDoesNotInventMissingEvidence(t *testing.T) {
 	blocked, err := engine.Store.GetRun(ctx, run.ID)
 	if err != nil || blocked.Status != execution.StatusBlocked || !strings.Contains(blocked.TerminalReason, "missing required evidence: format") {
 		t.Fatalf("blocked run did not record evidence gap: %+v, %v", blocked, err)
+	}
+}
+
+type recordingProvider struct {
+	requests        []integration.RunRequest
+	findingsBySkill map[string][]any
+}
+
+func (p *recordingProvider) Name() string { return "fake" }
+
+func (p *recordingProvider) Capabilities() integration.Capabilities {
+	return integration.Capabilities{StructuredOutput: true, Cancellation: true}
+}
+
+func (p *recordingProvider) Run(_ context.Context, request integration.RunRequest) (integration.RunResult, error) {
+	p.requests = append(p.requests, request)
+	findings := p.findingsBySkill[request.Skill]
+	if findings == nil {
+		findings = []any{}
+	}
+	exit := 0
+	return integration.RunResult{
+		Output: map[string]any{
+			"summary": "ok", "findings": findings, "artifacts": []any{},
+		},
+		ExitStatus: &exit,
+	}, nil
+}
+
+func (p *recordingProvider) Cancel(context.Context, string) error { return nil }
+
+func TestReviewTasksNeverReceiveWriteAccess(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	tasks := `  - id: implement
+    name: Implement
+    skill: unit-testing
+    agent: backend-engineer
+    dependsOn: []
+    on:
+      state: implementing
+  - id: review
+    name: Independent review
+    skill: unit-testing
+    agent: code-reviewer
+    routingProfile: independent-review
+    dependsOn: [implement]
+    on:
+      state: reviewing
+`
+	engine := newEngine(t, root, tasks)
+	engine.AllowWrites = true
+	engine.AgentWriteAllowed = map[string]bool{"backend-engineer": true, "code-reviewer": false}
+	provider := &recordingProvider{}
+	engine.Provider = provider
+	run, _, err := engine.Start(ctx, execution.StartOptions{
+		Workflow: mustWorkflow(t, root), Issue: testIssue(), Provider: "fake", Actor: "tester",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := engine.Continue(ctx, run.ID); err != nil {
+		t.Fatal(err)
+	}
+	if len(provider.requests) != 2 {
+		t.Fatalf("expected two provider calls, got %d", len(provider.requests))
+	}
+	if !provider.requests[0].Write {
+		t.Fatalf("implementation task lost authorized write access: %+v", provider.requests[0])
+	}
+	if provider.requests[1].Write {
+		t.Fatalf("independent review inherited write access: %+v", provider.requests[1])
+	}
+}
+
+func TestSpecialistFindingTriggersRemediation(t *testing.T) {
+	ctx := context.Background()
+	root := t.TempDir()
+	tasks := `  - id: review
+    name: General review
+    skill: code-review
+    dependsOn: []
+    on:
+      state: reviewing
+  - id: security-review
+    name: Security review
+    skill: security-review
+    dependsOn: [review]
+    on:
+      state: reviewing
+  - id: remediate
+    name: Bounded remediation
+    skill: unit-testing
+    dependsOn: [review, security-review]
+    condition: "review.findings > 0"
+    on:
+      state: remediating
+`
+	engine := newEngine(t, root, tasks)
+	provider := &recordingProvider{findingsBySkill: map[string][]any{
+		"security-review": []any{map[string]any{
+			"id": "rev-0123456789abcdef", "ruleId": "tenant-isolation", "severity": "high",
+		}},
+	}}
+	engine.Provider = provider
+	run, _, err := engine.Start(ctx, execution.StartOptions{
+		Workflow: mustWorkflow(t, root), Issue: testIssue(), Provider: "fake", Actor: "tester",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := engine.Continue(ctx, run.ID); err != nil {
+		t.Fatal(err)
+	}
+	remediationRan := false
+	for _, request := range provider.requests {
+		if request.TaskID == "remediate" {
+			remediationRan = true
+		}
+	}
+	if !remediationRan {
+		t.Fatalf("specialist finding did not trigger remediation: %+v", provider.requests)
 	}
 }
 

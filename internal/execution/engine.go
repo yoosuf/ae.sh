@@ -36,7 +36,11 @@ type Engine struct {
 	// AllowWrites permits write-capable provider tools. The CLI only enables
 	// it for an explicitly confirmed run inside an AE-managed worktree.
 	AllowWrites bool
-	Log         func(string, ...any)
+	// AgentWriteAllowed is parsed from canonical agent manifests. A nil map
+	// means no manifest data was loaded and preserves local test behavior;
+	// a loaded map fails closed for agents without an explicit write scope.
+	AgentWriteAllowed map[string]bool
+	Log               func(string, ...any)
 }
 
 // StartOptions are the inputs to a run.
@@ -339,7 +343,7 @@ func (e *Engine) Continue(ctx context.Context, runID string) (Run, error) {
 			}
 			count := findingCount(result.Output["findings"])
 			facts[task.ID+".findings"] = count
-			if task.ID == "review" {
+			if evidenceKind(task.Skill) == "review" {
 				if prior := findingCount(facts["review.findings"]); count < prior {
 					count = prior
 				}
@@ -526,7 +530,7 @@ func (e *Engine) invoke(ctx context.Context, run Run, task workflow.Task) (integ
 		Timeout:        parseDuration(task.Timeout),
 		RoutingProfile: profile,
 		RequestedModel: model,
-		Write:          e.AllowWrites,
+		Write:          e.taskWriteAllowed(task),
 	}
 	result, err := e.Provider.Run(ctx, req)
 	if err != nil {
@@ -557,6 +561,24 @@ func (e *Engine) invoke(ctx context.Context, run Run, task workflow.Task) (integ
 		return result, err
 	}
 	return result, e.Store.AppendEvidence(ctx, executionEvidenceRecord(run.ID, record))
+}
+
+// taskWriteAllowed intersects run-level write authorization with the task's
+// canonical agent scope. Independent reviewers are always read-only, even when
+// the run itself was started with --allow-writes for implementation tasks.
+func (e *Engine) taskWriteAllowed(task workflow.Task) bool {
+	if !e.AllowWrites {
+		return false
+	}
+	if evidenceKind(task.Skill) == "review" || task.RoutingProfile == routing.IndependentReview ||
+		e.AgentRoutes[task.Agent] == routing.IndependentReview || e.SkillRoutes[task.Skill] == routing.IndependentReview {
+		return false
+	}
+	if task.Agent == "" || e.AgentWriteAllowed == nil {
+		return true
+	}
+	allowed, ok := e.AgentWriteAllowed[task.Agent]
+	return ok && allowed
 }
 
 func (e *Engine) setAwaitingApproval(ctx context.Context, run *Run, state State, index int) error {
@@ -675,7 +697,9 @@ func gateEvidenceFromRecords(records []EvidenceRecord) map[string]bool {
 		case "test":
 			gate, _ := record.Data["gate"].(string)
 			passed, _ := record.Data["passed"].(bool)
-			if gate != "" && passed {
+			// A profile check can emit any gate label, but only a qualifying
+			// review record can satisfy a review gate.
+			if gate != "" && gate != routing.IndependentReview && passed {
 				out[gate] = true
 			}
 		case "review":

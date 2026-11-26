@@ -56,6 +56,12 @@ func TestGateEvidenceRequiresIndependentProviderReview(t *testing.T) {
 			gate: "unit-tests",
 			want: true,
 		},
+		{
+			name: "test evidence cannot satisfy independent review",
+			kind: "test",
+			data: map[string]any{"gate": "independent-review", "passed": true},
+			gate: "independent-review",
+		},
 	}
 	for i, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

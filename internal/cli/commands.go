@@ -284,10 +284,11 @@ func (a *App) cmdPlan(ctx context.Context, args []string) error {
 		return err
 	}
 	engine := &execution.Engine{
-		Policies:    repo.Policies,
-		Root:        repo.Config.Root,
-		KnownSkills: repo.Catalogue.BySlugSet(),
-		KnownAgents: repo.Agents,
+		Policies:          repo.Policies,
+		Root:              repo.Config.Root,
+		KnownSkills:       repo.Catalogue.BySlugSet(),
+		KnownAgents:       repo.Agents,
+		AgentWriteAllowed: repo.AgentWriteAllowed,
 	}
 	_, preview, err := engine.Start(ctx, execution.StartOptions{
 		Workflow: wf, Issue: issue, Provider: "fake", Actor: "plan", DryRun: true,

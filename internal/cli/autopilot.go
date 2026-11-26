@@ -158,7 +158,8 @@ func (a *App) cmdAutopilot(ctx context.Context, args []string) error {
 
 	if *dryRun {
 		engine := &execution.Engine{
-			Policies: repo.Policies, KnownSkills: repo.Catalogue.BySlugSet(), KnownAgents: repo.Agents,
+			Policies: repo.Policies, KnownSkills: repo.Catalogue.BySlugSet(),
+			KnownAgents: repo.Agents, AgentWriteAllowed: repo.AgentWriteAllowed,
 		}
 		_, preview, err := engine.Start(ctx, execution.StartOptions{
 			Workflow: wf, Issue: issueSource, Provider: providerName, Actor: *actorFlag, DryRun: true,
