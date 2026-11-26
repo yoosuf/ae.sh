@@ -1,0 +1,9 @@
+# Local CLI build and generated state
+/ae
+/dist/
+/ae.yaml
+/.ae/
+
+# Optional UI source artifacts
+/ui/node_modules/
+/ui/dist/

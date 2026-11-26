@@ -31,6 +31,9 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Check formatting
+        run: make fmt-check
+
       - name: Vet
         run: go vet ./...
 
@@ -45,3 +48,13 @@ jobs:
 
       - name: Build CLI
         run: go build -o dist/ae ./cmd/ae
+
+      - name: Offline E2E
+        run: scripts/e2e-offline.sh
+
+      - name: Worktree E2E
+        run: scripts/e2e-worktree.sh
+
+      - name: Optional dashboard UI tests
+        working-directory: ui
+        run: npm test --offline

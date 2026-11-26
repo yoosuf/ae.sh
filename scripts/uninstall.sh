@@ -97,7 +97,7 @@ skills_claude="$HOME/.claude/skills/"
 skills_codex="$HOME/.agents/skills/"
 skills_claude_project="$PWD/.claude/skills/"
 skills_codex_project="$PWD/.agents/skills/"
-ae_slug_pattern='^(ae-)?(acceptance-criteria|agent-handoff|backend-development|code-review|git-worktree-management|jira-intake|pull-request-management|requirement-analysis|risk-assessment|solution-architecture|technical-planning|unit-testing)$'
+ae_slug_pattern='^(ae-)?(acceptance-criteria|agent-handoff|architecture-review|backend-development|code-review|git-worktree-management|jira-intake|pull-request-management|requirement-analysis|risk-assessment|security-review|solution-architecture|technical-planning|test-review|unit-testing)$'
 
 kinds=()
 targets=()
