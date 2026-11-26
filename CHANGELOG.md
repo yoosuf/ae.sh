@@ -11,6 +11,13 @@ without compatibility guarantees.
 
 ### Added
 
+- A fail-closed Gemini provider extension point. `provider.default: gemini` is
+  accepted and reported by `ae doctor`, but every invocation returns
+  `not implemented`; no binary, API call, or model mapping is exercised.
+- A GitHub App identity config extension point. `integrations.github.mode:
+  github-app` validates an HTTPS origin, environment variable *names* for the
+  app ID and installation token, and a service actor locally; the adapter
+  refuses the mode until a live implementation is authorized.
 - `ae audit`, a read-only local report covering credential shapes, embedded vs
   canonical schemas, canonical references, generated skill copies, and CI action
   pin status. Unverified action SHAs are reported as `needs-authorization`; the

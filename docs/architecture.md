@@ -103,7 +103,9 @@ invoked in this tree. The fake provider returns outputs marked
 model. Provider name, routing profile, requested model, and actual model (when
 reported) are recorded in task evidence. Usage is stored as `known: false`
 rather than an invented zero. `ae verify` is the local path that records real
-command exit statuses. See [`model-routing.md`](model-routing.md).
+command exit statuses. The Gemini boundary is a fail-closed extension point, and
+the GitHub App config shape is validated locally but refused by the adapter;
+neither is a live integration. See [`model-routing.md`](model-routing.md).
 
 ### Evidence
 
@@ -121,6 +123,8 @@ uncovered stages as `missing`, and a read-only static dashboard snapshot. See
   local static snapshot is implemented.
 - Model-quality behavioral evaluation and the full skill catalogue; structural
   fixtures and deterministic fake-provider scenarios are implemented.
+- Live Gemini adapter and GitHub App/service identity. Their local extension
+  points are validated but fail closed.
 - Externally attested/notarized evidence and cloud artifact storage. Local
   Ed25519 bundle signing and offline verification are implemented.
 

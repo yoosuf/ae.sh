@@ -48,13 +48,15 @@ integrations:
 Two distinct modes must be kept separate:
 
 1. **Local CLI mode (implemented locally, not exercised live):** uses the user's authenticated `gh` CLI on the developer machine. Identity is the local user.
-2. **GitHub App / service identity mode (planned / not implemented):** a GitHub App with least-privilege permissions would provide auditable actor identity for approvals and PR operations. It is required for later unattended/server-side flows and does not exist today.
+2. **GitHub App / service identity config shape (implemented locally, fails closed):** `integrations.github.mode: github-app` is validated against an HTTPS origin, environment variable *names* for app ID and installation token, and a short service actor. `github.New` refuses this mode, so no identity, token, or service call exists. A least-privilege GitHub App actor for approvals and PR operations is **planned / not implemented** and requires authorization.
 
-Config validation accepts `integrations.github.mode: local-cli` (default) or
-`disabled`. `baseURL`, when set, must be an HTTPS origin with no path, query,
-fragment, or credentials. `tokenEnv` and `webhookSecretEnv` must be environment
-variable *names*. Credentials are never placed in config, flags, prompts,
-fixtures, URLs, or evidence.
+Config validation accepts `integrations.github.mode: local-cli` (default),
+`disabled`, or `github-app`. `baseURL`, when set, must be an HTTPS origin with no
+path, query, fragment, or credentials. `tokenEnv`, `webhookSecretEnv`,
+`appIDEnv`, and `installationTokenEnv` must be environment variable *names*.
+`actor` is a short local service identity label, not a credential. Credentials
+are never placed in config, flags, prompts, fixtures, URLs, or evidence. `ae
+doctor` flags `github-app` mode as not implemented.
 
 The local CLI adapter uses argument arrays and supports only:
 
@@ -107,6 +109,15 @@ findings and cannot satisfy the `independent-review` gate.
 - **`.codex/skills` is not a documented Codex skill path** — do not use or claim it.
 - Both Claude Code and Codex follow the agentskills.io open standard.
 - The Codex CLI adapter can run noninteractive prompts from argument arrays. Persistent `ae chat --provider codex --confirm-live --workspace <managed-worktree>` uses `codex exec` without `--ephemeral`; later turns use `codex exec resume <thread-id>`. `run`, `resume`, and `autopilot` additionally accept `--allow-writes`, which changes the sandbox from `read-only` to `workspace-write`. No live model run, resume, or file edit was performed; local stub tests verify both argument shapes and thread ID capture.
+
+## Gemini extension point
+
+`provider.default: gemini` is accepted so the provider-neutral boundary is
+visible, but `internal/adapters/gemini` declares no live capabilities and
+returns `not implemented` from both `Run` and `Cancel`. `ae doctor` reports the
+mode as an extension point, and config `SelfCheck` flags it. No binary, API,
+credential, session, or model mapping is exercised. A live Gemini adapter and
+verified CLI contract remain **planned / not implemented**.
 
 ## Provider model routing
 

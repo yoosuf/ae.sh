@@ -25,11 +25,11 @@ never placed in flags, config, prompts, fixtures, URLs, or commits.
 | Live provider code edits | Phase 3 | Constrained write adapters exist; not exercised live | Needs authorization + managed worktree |
 | Real CI/deploy hooks | Phase 3 | Planned / not implemented | Needs authorization; repo rules forbid deploy |
 | Federated approver identity | Phase 3, 4 | Planned / not implemented | External identity provider decision |
-| GitHub App / service identity | Phase 4 | Planned / not implemented | App registration + credentials |
+| GitHub App / service identity | Phase 4 | Config shape implemented locally; live adapter planned / not implemented | App registration + credentials; adapter fails closed today |
 | PR creation, merge, push | Phase 4 | Planned / not implemented; intentionally absent | Needs explicit authorization; repo rules forbid agent push/merge |
 | Merge signal automation | Phase 4 | Planned / not implemented | Depends on GitHub App identity + verified review |
 | Externally verified findings | Phase 4 | Planned / not implemented; provider output is untrusted hypotheses | Needs authorization + independent provider/verification design |
-| Gemini adapter | Provider compatibility | Planned / not implemented; model IDs are forward-compatibility only | Optional adapter; no core dependency |
+| Gemini adapter | Provider compatibility | Fail-closed extension point implemented locally; live adapter planned / not implemented | Optional adapter; no core dependency |
 | Full skill catalogue | Phase 5 | Planned / not implemented; 15 skills authored | Editorial work + versioning |
 | Executed behavioral evaluation | Phase 5 | Completed locally: 15 fake-provider scenarios; `modelBehaviorExecuted: false` | No live model or model-quality pass rate |
 | Optional AWS adapters + Terraform | Phase 6 | Planned / not implemented | Needs authorization; no cloud resources may be created |
@@ -64,16 +64,20 @@ never placed in flags, config, prompts, fixtures, URLs, or commits.
    generates a static, self-contained snapshot from local state/evidence/trace.
    An optional Vite + React + TypeScript source viewer lives under `ui/`. There
    is no hosted service, write API, credential use, or mandatory workflow step.
+5. **Fail-closed provider/integration extension points.** The Gemini provider
+   boundary and GitHub App config shape are validated locally; every invocation
+   returns `not implemented`. No binary, token, service, or live identity is
+   used. See §4.
 
 ### 2.2 Plan only this session (needs authorization or external identity)
 
-5. **Provider/integration adapters.** Define extension points and config shapes
-   for a Gemini adapter, GitHub App identity, PR create/merge/push, federated
-   approver identity, and externally verified review. Do not call live services
-   or implement mutation paths until separately authorized. See §4.
-6. **AWS adapters and Terraform reference architecture.** Keep as optional
+6. **Remaining provider/integration adapters.** PR create/merge/push, federated
+   approver identity, and externally verified review remain design-only. Do not
+   call live services or implement mutation paths until separately authorized.
+   See §4.
+7. **AWS adapters and Terraform reference architecture.** Keep as optional
    adapters behind ports; no cloud resource is created. See §5.
-7. **Multi-user, hosted service, stable 1.0.** Requires identity, release
+8. **Multi-user, hosted service, stable 1.0.** Requires identity, release
    signing, and compatibility commitments. See §6.
 
 ## 3. Design details for local-only work
@@ -132,14 +136,18 @@ never placed in flags, config, prompts, fixtures, URLs, or commits.
 
 | Capability | Extension point | Prerequisite | Status |
 | --- | --- | --- | --- |
-| Gemini adapter | `integration.Provider` in `internal/adapters/gemini`; route via local `provider.routes` | Credential env var, capability declaration, local stubs | Planned / not implemented |
-| GitHub App identity | `integrations.github.mode: github-app`; separate actor model in approval evidence | App registration, installation token, actor mapping | Needs authorization |
+| Gemini adapter | `integration.Provider` in `internal/adapters/gemini`; route via local `provider.routes` | Credential env var, capability declaration, live CLI contract | Extension point implemented locally and fail-closed; live adapter planned / not implemented |
+| GitHub App identity | `integrations.github.mode: github-app`; separate actor model in approval evidence | App registration, installation token, actor mapping | Config shape implemented locally and fail-closed; live identity adapter needs authorization |
 | PR create/merge/push | New adapter methods behind explicit `--confirm-mutate` and policy allowlist | GitHub App identity + human authorization | Needs authorization; intentionally absent |
 | Federated approver identity | Policy actor model + approval evidence issuer | External identity provider | Needs authorization/design |
 | Externally verified review | Review gate accepts a signed, independently attested result | Attestation format + independent verifier | Needs authorization; provider text alone is insufficient |
 
-Core packages remain provider-neutral; every item above belongs in
-`internal/adapters/` plus local config. No model ID enters canonical skills.
+The Gemini boundary declares no live capabilities and returns `not implemented`
+from `Run`/`Cancel`; the GitHub App config validates HTTPS origin, env variable
+*names*, and actor shape but `github.New` refuses the mode. Neither path reads a
+credential or calls a service. Core packages remain provider-neutral; every live
+item above belongs in `internal/adapters/` plus local config. No model ID enters
+canonical skills.
 
 ## 5. Phase 6: optional AWS adapters
 

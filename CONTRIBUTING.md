@@ -17,11 +17,12 @@ fake-provider behavioral scenarios, a read-only `audit` report, and a read-only
 local dashboard snapshot. Opt-in Jira Cloud intake and `jira report-bug`, GitHub
 CLI PR reads/comments, provider chat, constrained provider write modes, and the
 `autopilot` loop are implemented locally but were not exercised against live
-services. GitHub App/service identity, PR creation/merge/push, independently
-verified review, federated identity, cloud adapters, hosted/multi-user
-dashboard, model-quality evaluation, and remaining Phase 3–7 work are
-**planned / not implemented**. Do not open PRs that claim live integrations were
-exercised.
+services. Gemini and GitHub App config extension points are validated locally
+but fail closed. Live GitHub App/service identity, PR creation/merge/push,
+independently verified review, federated identity, cloud adapters,
+hosted/multi-user dashboard, model-quality evaluation, and remaining Phase 3–7
+work are **planned / not implemented**. Do not open PRs that claim live
+integrations were exercised.
 
 ## Getting set up
 

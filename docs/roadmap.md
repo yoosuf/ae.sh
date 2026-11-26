@@ -12,11 +12,11 @@ bounded remediation accounting, fake-provider chat continuity, opt-in Jira
 Cloud and provider-chat adapters, constrained provider write modes, a local
 GitHub CLI PR evidence/comment adapter, an opt-in `autopilot` loop, traceability
 reporting, structural evaluation checks, deterministic fake-provider scenarios,
-local evidence signing/verification, a read-only `ae audit` report, and a
-read-only local dashboard snapshot. Live service calls, live provider code
-changes, GitHub App identity, cloud adapters, hosted/multi-user dashboard, and
-remaining Phase 3–7 work are **planned / not implemented**; no dates are
-committed. [`progress.md`](../progress.md) records the commands actually verified
+local evidence signing/verification, a read-only `ae audit` report, a read-only
+local dashboard snapshot, and fail-closed Gemini/GitHub App config extension
+points. Live service calls, live provider code changes, live GitHub App identity,
+cloud adapters, hosted/multi-user dashboard, and remaining Phase 3–7 work are
+**planned / not implemented**; no dates are committed. [`progress.md`](../progress.md) records the commands actually verified
 in this tree.
 
 ## Phase 0 — Foundation (implemented locally)
@@ -73,11 +73,13 @@ reports.
 Implemented locally but not exercised live: opt-in Jira Cloud REST intake,
 Claude Code/Codex conversations with session continuity, constrained write modes
 in an AE-managed worktree, GitHub CLI reads/PR comments, and the `autopilot`
-loop that stops at gates. Still **planned / not implemented**: live service
-calls in this environment, live provider code edits, GitHub App/service identity,
-PR creation/merge/push, real CI/deploy hooks, independently verified review,
-and federated approver identity. Exit criteria: an end-to-end run from a real
-issue to a verified candidate with approvals and immutable evidence.
+loop that stops at gates. The Gemini provider boundary and GitHub App config
+shape are local extension points that fail closed. Still **planned / not
+implemented**: live service calls in this environment, live provider code edits,
+live GitHub App/service identity, PR creation/merge/push, real CI/deploy hooks,
+independently verified review, and federated approver identity. Exit criteria:
+an end-to-end run from a real issue to a verified candidate with approvals and
+immutable evidence.
 
 ## Phase 4 — Review and PR automation (local subset implemented; remainder planned / not implemented)
 
@@ -93,8 +95,9 @@ authorized comment as evidence. Opt-in `ae review --provider ...` runs the
 canonical strongest-route review skills through Claude/Codex adapters, fixes
 the route to `independent-review`, records requested/actual model evidence, and
 lets an observed, non-simulated provider review satisfy the high-risk gate;
-provider findings still need human resolution. No live provider review was
-exercised. GitHub App/service identity, PR creation/merge/push, independently
+provider findings still need human resolution. One live Codex review returned
+untrusted hypotheses that were not independently verified. GitHub App/service
+identity, PR creation/merge/push, independently
 verified findings, and merge signal automation are **planned / not
 implemented**; local scans and fake output remain blocked at
 `independent-review`. Exit criteria: review findings must be addressed or

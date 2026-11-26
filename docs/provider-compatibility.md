@@ -36,7 +36,7 @@ Reference: [OpenAI Codex skills documentation](https://developers.openai.com/cod
 | --- | --- | --- |
 | Claude Code | `claude --model <alias|name>`, `ANTHROPIC_MODEL`, settings `model`; aliases include `haiku`, `sonnet`, `opus`, and `fable`. Actual model is available from the `modelUsage` field in JSON output. | Implemented locally: `--model` is passed from the resolved route. Live invocation and model availability were **not exercised**. |
 | Codex | `codex -m`/`--model`, `codex exec -m`, or `model = "..."` in `config.toml`. Current IDs documented on 2026-11-25 include `gpt-6-luna`, `gpt-6.2-sol`, and `gpt-6.2-astra`; older IDs are retired on a schedule. | Implemented locally: `--model` is passed from the resolved route; reported `model` is captured when present. Live invocation and model availability were **not exercised**. |
-| Gemini API | `model` request field; IDs documented on 2026-11-25 include `gemini-3.5-flash-lite`, `gemini-4-hydrogen`, `gemini-4-neon`, and `gemini-4-carbon`. | Planned / not implemented: no Gemini adapter exists. Mapping examples are forward compatibility only. |
+| Gemini API | `model` request field; IDs documented on 2026-11-25 include `gemini-3.5-flash-lite`, `gemini-4-hydrogen`, `gemini-4-neon`, and `gemini-4-carbon`. | Fail-closed extension point implemented locally; live adapter planned / not implemented. Mapping examples are forward compatibility only. |
 
 References:
 [Claude Code model configuration](https://docs.claude.com/en/docs/claude-code/model-config),
@@ -53,7 +53,7 @@ fail-closed precedence.
 | modernc.org/sqlite | v1.38.2 (pure Go) |
 | santhosh-tekuri/jsonschema | v6 |
 | gopkg.in/yaml.v3 | v3.0.1 |
-| Dashboard (planned) | React + Vite + TypeScript |
+| Dashboard (local snapshot implemented; React source optional) | React + Vite + TypeScript |
 
 ## Verification checklist
 
@@ -66,7 +66,7 @@ fail-closed precedence.
 
 ## Status
 
-`ae skills install`, `uninstall`, and `export` are implemented locally: installs materialize documented paths with manifests and checksums; exports create Claude/Codex plugin bundle directories without publishing them. `ae chat --provider fake` is implemented and exercised offline. Claude Code and Codex CLI chat adapters are implemented locally with opt-in `--confirm-live`, managed worktrees, and local stub argument tests, but live model invocation was **not exercised**. `run`, `resume`, and `autopilot` add opt-in `--allow-writes`: Claude switches from `Read` to `Read,Write,Edit` without shell tools and passes temporary permission settings that block file-tool reads and writes outside the working directory (requires Claude Code v2.1.314 or later; older binaries are rejected), while Codex switches from `read-only` to `workspace-write`. These write modes were stub-tested only, not exercised with live providers. Provider name, routing profile, requested model, and actual model (when observable) are recorded in task evidence. Usage is stored as `known: false` when not reported, never as zero. `ae verify` records real local command results; live model invocation was not exercised.
+`ae skills install`, `uninstall`, and `export` are implemented locally: installs materialize documented paths with manifests and checksums; exports create Claude/Codex plugin bundle directories without publishing them. `ae chat --provider fake` is implemented and exercised offline. Claude Code and Codex CLI chat adapters are implemented locally with opt-in `--confirm-live`, managed worktrees, and local stub argument tests, but live model invocation was **not exercised**. `run`, `resume`, and `autopilot` add opt-in `--allow-writes`: Claude switches from `Read` to `Read,Write,Edit` without shell tools and passes temporary permission settings that block file-tool reads and writes outside the working directory (requires Claude Code v2.1.314 or later; older binaries are rejected), while Codex switches from `read-only` to `workspace-write`. These write modes were stub-tested only, not exercised with live providers. Provider name, routing profile, requested model, and actual model (when observable) are recorded in task evidence. Usage is stored as `known: false` when not reported, never as zero. `ae verify` records real local command results; live model invocation was not exercised. `provider.default: gemini` is accepted as a fail-closed extension point: `ae doctor` reports it, and every invocation returns `not implemented` without invoking a binary or API.
 
 ## External links
 
