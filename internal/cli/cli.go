@@ -17,6 +17,7 @@ import (
 	"github.com/yoosuf/ae.sh/internal/adapters/claude"
 	"github.com/yoosuf/ae.sh/internal/adapters/codex"
 	"github.com/yoosuf/ae.sh/internal/adapters/fake"
+	"github.com/yoosuf/ae.sh/internal/adapters/jira"
 	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
 	"github.com/yoosuf/ae.sh/internal/catalog"
 	"github.com/yoosuf/ae.sh/internal/config"
@@ -54,6 +55,9 @@ type App struct {
 	// ProviderFactory is an optional test seam. Production always uses the
 	// explicit fake/claude/codex adapters selected by --provider.
 	ProviderFactory func(string) (integration.Provider, error)
+	// JiraSourceFactory is an optional test seam for Jira writes. Production
+	// always builds the opt-in Jira Cloud adapter from local config.
+	JiraSourceFactory func(config.Integration) (*jira.Source, error)
 }
 
 // Run dispatches a command and returns a process exit code.
@@ -77,6 +81,8 @@ func (a *App) Run(ctx context.Context) int {
 		err = a.cmdValidate(args)
 	case "skills":
 		err = a.cmdSkills(args)
+	case "jira":
+		err = a.cmdJira(ctx, args)
 	case "plan":
 		err = a.cmdPlan(ctx, args)
 	case "run":
@@ -217,6 +223,7 @@ Commands:
   skills install --provider claude|codex|all --scope user|project [--version v] [--dry-run] [--force]
   skills uninstall --provider claude|codex --scope user|project [--force]
   skills export --out dist/plugins --provider claude|codex|all
+  jira report-bug --title text --description text|--description-file path --issue PROJ-101|--project PROJ [--issue-type Bug] [--run run-id] [--dry-run] [--confirm-mutate]
   plan --issue PROJ-101|--issue path/to/issue.json
   run <workflow> --issue PROJ-101 [--issue path] [--provider fake|claude|codex] [--dry-run] [--actor name] [--confirm-live] [--workspace DIR] [--allow-writes]
   status <run-id> | status --list
