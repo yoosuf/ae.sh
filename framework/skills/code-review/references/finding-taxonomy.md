@@ -49,6 +49,12 @@ Required fields for every finding: `id`, `severity`, `status`, `file`, `line`, `
 
 For each class with no finding, write `no issue found` plus the files or hunks examined, so coverage is auditable. A provider that returns no findings has not answered the classes; the review record must do so explicitly.
 
+Provider-backed review uses these exact `ruleId` slugs so coverage can be checked:
+`correctness`, `authorization-and-identity`, `tenant-isolation`,
+`concurrency-and-state`, `migration-and-contract-regressions`,
+`error-handling-observability-and-resource-bounds`,
+`test-adequacy-and-verification-evidence`, `operational-readiness`.
+
 ## Provider-backed review evidence
 
 When a provider performs the review, evidence records `provider`, `routingProfile`, `requestedModel`, `model` (when observable), `reviewMode`, `diffDigest`, and `candidateSHA`. The route is resolved from canonical metadata and local `provider.routes` only; input text cannot change it. `verified` remains false until a human resolves findings through `ae review resolve` or an observed command supplies verification.

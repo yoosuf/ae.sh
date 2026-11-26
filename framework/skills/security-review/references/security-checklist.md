@@ -28,6 +28,10 @@ Style and naming are not findings. Cite the mandatory policy when one is the bas
 
 For every class, write a finding or `no issue found` with the files and hunks examined.
 
+Provider-backed review uses these exact `ruleId` slugs so coverage can be checked:
+`authentication-session`, `authorization`, `tenant-isolation`, `injection`,
+`network-files`, `secrets-crypto`, `dependencies-config`, `audit-abuse`.
+
 ## Evidence shape
 
 ```yaml

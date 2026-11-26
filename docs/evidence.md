@@ -3,7 +3,9 @@
 ![Content-addressed plan, check, review, approval, and digest records forming an evidence chain](../assets/docs/evidence-chain.png)
 
 Each step contributes a record to the chain; a missing or invalid required
-record blocks the relevant gate instead of being treated as success.
+record blocks the relevant gate instead of being treated as success. Provider
+review appends reserve sequence and predecessor inside one SQLite transaction,
+so concurrent reviewers cannot fork the chain.
 
 Evidence is the audit trail that turns a run into a reviewable engineering
 record. Local capture, `ae verify`, local verification commands, and

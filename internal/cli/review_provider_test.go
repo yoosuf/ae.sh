@@ -320,11 +320,32 @@ func TestProviderReviewRequiresCompleteCheckCoverage(t *testing.T) {
 	}
 }
 
-func TestProviderReviewRejectsObservedModelMismatch(t *testing.T) {
+func TestRequiredReviewChecksMatchCanonicalReferences(t *testing.T) {
+	references := map[string]string{
+		"code-review":         "references/finding-taxonomy.md",
+		"security-review":     "references/security-checklist.md",
+		"architecture-review": "references/architecture-checklist.md",
+		"test-review":         "references/test-adequacy-checklist.md",
+	}
+	for skill, reference := range references {
+		raw, err := os.ReadFile(filepath.Join("..", "..", "framework", "skills", skill, filepath.FromSlash(reference)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		text := string(raw)
+		for _, check := range requiredReviewChecks[skill] {
+			if !strings.Contains(text, "`"+check+"`") {
+				t.Errorf("%s required check %q is not declared in %s", skill, check, reference)
+			}
+		}
+	}
+}
+
+func runProviderReviewEvidenceCase(t *testing.T, model, runID string) evidence.Record {
+	t.Helper()
 	ctx := context.Background()
 	root := t.TempDir()
 	cfg := initReviewRepo(t, root)
-	const runID = "run-provider-model-mismatch"
 	store, err := sqliteadapter.Open(cfg.StatePath())
 	if err != nil {
 		t.Fatal(err)
@@ -344,7 +365,7 @@ func TestProviderReviewRejectsObservedModelMismatch(t *testing.T) {
 	if err := os.WriteFile(diffPath, []byte(reviewDiff), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	stub := &reviewStubProvider{result: providerReviewJSON, model: "different-model"}
+	stub := &reviewStubProvider{result: providerReviewJSON, model: model}
 	var stdout, stderr bytes.Buffer
 	app := App{
 		Stdout: &stdout, Stderr: &stderr, Root: root, JSON: true,
@@ -368,8 +389,22 @@ func TestProviderReviewRejectsObservedModelMismatch(t *testing.T) {
 	if err := json.Unmarshal([]byte(records[0].JSON), &record); err != nil {
 		t.Fatal(err)
 	}
-	if record.Data["independentReview"] != false || record.Data["modelMatches"] != false {
+	return record
+}
+
+func TestProviderReviewRejectsObservedModelMismatch(t *testing.T) {
+	record := runProviderReviewEvidenceCase(t, "different-model", "run-provider-model-mismatch")
+	if record.Data["independentReview"] != false || record.Data["modelMatches"] != false ||
+		record.Data["modelIdentityObserved"] != true {
 		t.Fatalf("mismatched observed model earned gate credit: %+v", record.Data)
+	}
+}
+
+func TestProviderReviewWithoutObservedModelCannotSatisfyGate(t *testing.T) {
+	record := runProviderReviewEvidenceCase(t, "", "run-provider-model-unobserved")
+	if record.Data["independentReview"] != false || record.Data["modelMatches"] != false ||
+		record.Data["modelIdentityObserved"] != false {
+		t.Fatalf("unobserved model identity earned gate credit: %+v", record.Data)
 	}
 }
 

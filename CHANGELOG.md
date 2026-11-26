@@ -20,8 +20,10 @@ without compatibility guarantees.
   `independent-review` route from local config, strictly parses findings as
   hypotheses, records requested/actual model evidence, and fails closed on
   stale SHAs, missing mappings, malformed output, or unconfirmed live calls.
-  The offline fake provider returns a simulated no-op review. No live provider
-  review was invoked.
+  The offline fake provider returns a simulated no-op review. A live Codex
+  review was later invoked once in a throwaway checkout and returned nine
+  hypotheses; Claude review was attempted but the CLI was not logged in. Those
+  findings are not externally verified results.
 - Specialist review tasks in the full `feature-development` lifecycle and
   risk-specific security, migration, and release workflows. Only an observed,
   non-simulated, model-selected provider review can satisfy the high-risk
@@ -222,6 +224,31 @@ without compatibility guarantees.
   are passed through credential-shape redaction before persistence.
 - Config validation rejects credential literals in every environment-name
   field regardless of integration mode.
+- Live provider reviews now resolve both pinned commits, require the base to be
+  an ancestor of the candidate, require workspace HEAD to equal the candidate,
+  reject uncommitted workspace changes, and verify the supplied diff digest
+  against the committed change before any provider call. Run-supplied SHAs that
+  conflict with persisted pins fail closed.
+- Gate-eligible reviews must answer every required check class for the selected
+  skill; empty, partial, or unknown-class coverage no longer earns credit.
+  A provider that reports a different observed model, or cannot observe model
+  identity at all, cannot satisfy `independent-review`; requested and observed
+  identities are recorded explicitly and no unobserved identity is guessed.
+- A passing test record labelled `independent-review` can no longer satisfy the
+  review gate; only qualifying review evidence can.
+- Review tasks inherit run-level write authorization no longer: independent
+  reviewers are forced read-only, and every task is intersected with its
+  canonical agent write scope.
+- Specialist review findings now feed the shared `review.findings` fact in the
+  same run, so a clean general review with one specialist finding still runs
+  bounded remediation.
+- Concurrent provider review appends reserve sequence and predecessor inside
+  one immediate SQLite transaction; files are persisted only after the row
+  commits, and immutable records can be rewritten safely if needed.
+- Diff reading now rejects non-regular paths and enforces the 1 MiB limit while
+  reading instead of after loading the whole file.
+- The 100-finding limit applies only to provider-backed results; local pattern
+  scans keep their previous unbounded behavior and remain schema-valid.
 
 ### Security
 

@@ -681,8 +681,9 @@ func (e *Engine) gateEvidence(ctx context.Context, runID string) map[string]bool
 }
 
 // gateEvidenceFromRecords accepts observed test evidence and only the review
-// gate produced by a non-simulated, model-selected provider review. A local
-// pattern scan or a fake provider can never satisfy independent-review.
+// gate produced by a non-simulated provider review whose observed model matches
+// the configured model. A local pattern scan, a fake provider, or an adapter
+// that cannot observe model identity can never satisfy independent-review.
 func gateEvidenceFromRecords(records []EvidenceRecord) map[string]bool {
 	out := map[string]bool{}
 	for _, item := range records {
@@ -710,9 +711,10 @@ func gateEvidenceFromRecords(records []EvidenceRecord) map[string]bool {
 			profile, _ := record.Data["routingProfile"].(string)
 			provider, _ := record.Data["provider"].(string)
 			model, _ := record.Data["requestedModel"].(string)
+			identityObserved, _ := record.Data["modelIdentityObserved"].(bool)
 			if gate == "independent-review" && independent && !simulated &&
 				mode == "provider-backed-review" && profile == "independent-review" &&
-				provider != "" && provider != "fake" && model != "" {
+				provider != "" && provider != "fake" && model != "" && identityObserved {
 				out[gate] = true
 			}
 		}

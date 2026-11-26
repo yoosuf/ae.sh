@@ -45,9 +45,21 @@ func TestGateEvidenceRequiresIndependentProviderReview(t *testing.T) {
 				"gate": "independent-review", "mode": "provider-backed-review",
 				"routingProfile": "independent-review", "provider": "claude",
 				"requestedModel": "fable", "independentReview": true, "simulated": false,
+				"modelIdentityObserved": true,
 			},
 			gate: "independent-review",
 			want: true,
+		},
+		{
+			name: "unobserved model identity cannot satisfy independent review",
+			kind: "review",
+			data: map[string]any{
+				"gate": "independent-review", "mode": "provider-backed-review",
+				"routingProfile": "independent-review", "provider": "claude",
+				"requestedModel": "fable", "independentReview": true, "simulated": false,
+				"modelIdentityObserved": false,
+			},
+			gate: "independent-review",
 		},
 		{
 			name: "observed test evidence satisfies its own gate",

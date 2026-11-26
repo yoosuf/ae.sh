@@ -86,6 +86,17 @@ provider credentials in the provider's own environment only.
   actual model, the field is omitted rather than guessed.
 - The `fake` provider echoes the route in simulated output for offline tests.
   It never calls a model.
+- Gate-eligible provider reviews must answer every required check class for the
+  selected skill, bind the supplied diff to the pinned base/candidate commits
+  and workspace HEAD, and report an observed model that matches the configured
+  model. If an adapter cannot observe the actual model, evidence records
+  `modelIdentityObserved: false` and the review cannot satisfy
+  `independent-review`; the requested model is still recorded from local config
+  but no unobserved identity is guessed.
+- One live Codex review was exercised in a throwaway checkout using the fixed
+  `independent-review` route. Claude review was attempted but the CLI was not
+  logged in. Findings from the live call are untrusted hypotheses, not verified
+  results.
 
 ## What is not implemented
 

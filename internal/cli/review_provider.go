@@ -46,8 +46,8 @@ var (
 		"code-review": {
 			"correctness", "authorization-and-identity", "tenant-isolation",
 			"concurrency-and-state", "migration-and-contract-regressions",
-			"error-handling-observability-resource-bounds",
-			"test-adequacy-verification-evidence", "operational-readiness",
+			"error-handling-observability-and-resource-bounds",
+			"test-adequacy-and-verification-evidence", "operational-readiness",
 		},
 		"security-review": {
 			"authentication-session", "authorization", "tenant-isolation",
@@ -276,12 +276,14 @@ func (a *App) reviewWithProvider(ctx context.Context, req reviewRequest) error {
 		if !ok {
 			return invalid("review result is not a JSON object")
 		}
-		modelMatches := strings.TrimSpace(response.Model) == "" ||
+		observedModel := strings.TrimSpace(response.Model) != ""
+		modelMatches := observedModel &&
 			strings.EqualFold(strings.TrimSpace(response.Model), strings.TrimSpace(result.RequestedModel))
 		data["gate"] = "independent-review"
-		data["independentReview"] = !response.Simulated && provider.Name() != "fake" && result.RequestedModel != "" && modelMatches
+		data["independentReview"] = !response.Simulated && provider.Name() != "fake" &&
+			result.RequestedModel != "" && observedModel && modelMatches
 		data["modelMatches"] = modelMatches
-		data["modelIdentityObserved"] = strings.TrimSpace(response.Model) != ""
+		data["modelIdentityObserved"] = observedModel
 		data["simulated"] = response.Simulated
 		record, err := appendRunEvidence(ctx, cfg, store, req.RunID, "review",
 			"Provider review "+skill.Slug, "ae-review-"+provider.Name(), data, response.ExitStatus, &response.Usage)

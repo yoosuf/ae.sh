@@ -25,6 +25,10 @@ Use this reference with `architecture-review`. Claims must be tied to code, conf
 
 For each row, produce a finding or `no issue found` with files and hunks examined.
 
+Provider-backed review uses these exact `ruleId` slugs so coverage can be checked:
+`boundary-ownership`, `contract-compatibility`, `data-integrity`,
+`failure-semantics`, `operability`, `scale-profile`, `scope-discipline`.
+
 ## Evidence shape
 
 ```yaml

@@ -25,6 +25,10 @@ Use this reference with `test-review`. Test review is evidence review: a green s
 
 For each row, produce a finding or `no issue found` with files and hunks examined.
 
+Provider-backed review uses these exact `ruleId` slugs so coverage can be checked:
+`happy-path`, `boundary`, `error`, `authorization-denial`,
+`idempotency-concurrency`, `regression`, `verification-claim`.
+
 ## Evidence shape
 
 ```yaml
