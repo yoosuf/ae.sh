@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Phase 0 architecture decision). Evidence capture, local verification evidence, JSON/Markdown export, optional local Ed25519 signatures with offline verification, and a read-only local audit report are implemented; external attestation/notarization and cloud storage remain planned.
+Accepted (Phase 0 architecture decision). Evidence capture, local verification evidence, JSON/Markdown export, optional local Ed25519 signatures with offline verification, and a read-only local audit report are implemented; an external-attestation config boundary is validated but fails closed, while live attestation/notarization and cloud storage remain planned.
 
 ## Context
 

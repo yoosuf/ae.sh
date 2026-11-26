@@ -18,6 +18,13 @@ without compatibility guarantees.
   github-app` validates an HTTPS origin, environment variable *names* for the
   app ID and installation token, and a service actor locally; the adapter
   refuses the mode until a live implementation is authorized.
+- Fail-closed federated identity and external review attestation extension
+  points. `integrations.identity.mode: federated` and
+  `integrations.review.mode: external-attestation` validate HTTPS issuers,
+  environment variable *names*, and short labels locally; `ae doctor` and config
+  `SelfCheck` flag them, and both adapter boundaries return `not implemented`.
+  No token, verifier, service call, approval claim, or gate satisfaction is
+  added.
 - `ae audit`, a read-only local report covering credential shapes, embedded vs
   canonical schemas, canonical references, generated skill copies, and CI action
   pin status. Unverified action SHAs are reported as `needs-authorization`; the

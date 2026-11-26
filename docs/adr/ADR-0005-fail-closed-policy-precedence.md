@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Phase 0 architecture decision). Policy evaluation and local approval identity capture are implemented; federated identity remains planned.
+Accepted (Phase 0 architecture decision). Policy evaluation and local approval identity capture are implemented; a federated identity config boundary is validated locally but fails closed, and a live verifier remains planned.
 
 ## Context
 

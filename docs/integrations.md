@@ -119,6 +119,47 @@ mode as an extension point, and config `SelfCheck` flags it. No binary, API,
 credential, session, or model mapping is exercised. A live Gemini adapter and
 verified CLI contract remain **planned / not implemented**.
 
+## Federated approver identity (config extension point)
+
+```yaml
+integrations:
+  identity:
+    mode: federated
+    issuer: https://id.example.com/realms/ae
+    tokenEnv: AE_IDENTITY_TOKEN
+    audience: ae-cli
+    actorClaim: preferred_username
+```
+
+Config validation accepts `local-manual` (default) or `federated`. Federated
+mode requires an HTTPS issuer with no userinfo, query, or fragment; a path such
+as an OIDC realm is allowed. `tokenEnv` must be an environment variable *name*;
+`audience` and `actorClaim` are short labels. No token value is read or stored.
+`ae doctor` reports `identity/federated` as an extension point and config
+`SelfCheck` flags it. `internal/adapters/identity.New` refuses federated mode and
+`Verify` always fails closed. Approvals remain `local-manual` and cannot satisfy
+critical-change or organization-identity gates. A live verifier and issuer
+contract are **planned / not implemented**.
+
+## External review attestation (config extension point)
+
+```yaml
+integrations:
+  review:
+    mode: external-attestation
+    issuer: https://attest.example.com
+    verifierEnv: AE_REVIEW_VERIFIER
+```
+
+Config validation accepts `local` (default) or `external-attestation`.
+External mode requires an HTTPS issuer with no userinfo, query, or fragment and
+a verifier environment variable *name*, never a credential or executable path in
+config. `ae doctor` reports `review/external-attestation` as an extension point
+and config `SelfCheck` flags it. `internal/adapters/attestation.New` refuses the
+mode and `Verify` always fails closed. No attestation is accepted as evidence and
+no review gate is satisfied by this boundary. An independent verifier and signed
+attestation format are **planned / not implemented**.
+
 ## Provider model routing
 
 Provider tasks resolve a routing profile from the workflow task, skill metadata

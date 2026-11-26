@@ -32,7 +32,7 @@ Status: design-level STRIDE-style review for Phase 0–2. No penetration test or
 
 | Category | Representative threat | Mitigation (implemented in Phase 0–2 unless noted) |
 | --- | --- | --- |
-| Spoofing | Forged approver identity; malicious MCP server impersonating Jira | Local approver identity, role, candidate SHA, artifact digest, and `identitySource: local-manual` are implemented; federated identity remains planned. Require explicit server allowlist; never infer identity from issue text. |
+| Spoofing | Forged approver identity; malicious MCP server impersonating Jira | Local approver identity, role, candidate SHA, artifact digest, and `identitySource: local-manual` are implemented; the federated identity config boundary validates shapes but fails closed, and a live verifier remains planned. Require explicit server allowlist; never infer identity from issue text. |
 | Tampering | Modified `SKILL.md` or provider copy; altered evidence | Canonical skills are source Markdown; generated provider manifests carry SHA-256 checksums and pinned versions. `skills install` rejects divergent unmanaged files unless forced; evidence is content-addressed and immutable. |
 | Repudiation | Claimed test success with no record | `ae verify` records the command, sanitized output, and real exit status; missing tools fail closed. Fake-provider output is `simulated: true` and does not satisfy gates. Provider usage is `known: false` when unavailable, never zero-by-default. |
 | Information disclosure | Tokens in flags/prompts/fixtures; sensitive issue text in exports | No credentials in flags/config/prompts/fixtures; use env/external store. Sanitize inputs before evidence export; redact secrets. |

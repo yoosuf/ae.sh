@@ -24,11 +24,11 @@ never placed in flags, config, prompts, fixtures, URLs, or commits.
 | Live Jira/Claude/Codex/GitHub calls | Phase 3 | Implemented locally as opt-in adapters; not exercised live | Needs authorization + credentials |
 | Live provider code edits | Phase 3 | Constrained write adapters exist; not exercised live | Needs authorization + managed worktree |
 | Real CI/deploy hooks | Phase 3 | Planned / not implemented | Needs authorization; repo rules forbid deploy |
-| Federated approver identity | Phase 3, 4 | Planned / not implemented | External identity provider decision |
+| Federated approver identity | Phase 3, 4 | Fail-closed config/adapter boundary implemented locally; live verifier planned / not implemented | External identity provider decision |
 | GitHub App / service identity | Phase 4 | Config shape implemented locally; live adapter planned / not implemented | App registration + credentials; adapter fails closed today |
 | PR creation, merge, push | Phase 4 | Planned / not implemented; intentionally absent | Needs explicit authorization; repo rules forbid agent push/merge |
 | Merge signal automation | Phase 4 | Planned / not implemented | Depends on GitHub App identity + verified review |
-| Externally verified findings | Phase 4 | Planned / not implemented; provider output is untrusted hypotheses | Needs authorization + independent provider/verification design |
+| Externally verified findings | Phase 4 | Fail-closed config/verifier boundary implemented locally; provider output is untrusted hypotheses | Needs authorization + independent provider/verification design |
 | Gemini adapter | Provider compatibility | Fail-closed extension point implemented locally; live adapter planned / not implemented | Optional adapter; no core dependency |
 | Full skill catalogue | Phase 5 | Planned / not implemented; 15 skills authored | Editorial work + versioning |
 | Executed behavioral evaluation | Phase 5 | Completed locally: 15 fake-provider scenarios; `modelBehaviorExecuted: false` | No live model or model-quality pass rate |
@@ -68,16 +68,21 @@ never placed in flags, config, prompts, fixtures, URLs, or commits.
    boundary and GitHub App config shape are validated locally; every invocation
    returns `not implemented`. No binary, token, service, or live identity is
    used. See §4.
+6. **Fail-closed identity and attestation boundaries.** Federated approver
+   identity and external review attestation config shapes validate HTTPS issuers,
+   environment variable *names*, and short labels. `ae doctor` and config
+   `SelfCheck` flag them; both adapter `Verify` methods return `not implemented`.
+   Neither boundary changes approvals or review gates. See §4.
 
 ### 2.2 Plan only this session (needs authorization or external identity)
 
-6. **Remaining provider/integration adapters.** PR create/merge/push, federated
-   approver identity, and externally verified review remain design-only. Do not
+7. **Remaining provider/integration adapters.** PR create/merge/push and live
+   federated or externally verified review adapters remain design-only. Do not
    call live services or implement mutation paths until separately authorized.
    See §4.
-7. **AWS adapters and Terraform reference architecture.** Keep as optional
+8. **AWS adapters and Terraform reference architecture.** Keep as optional
    adapters behind ports; no cloud resource is created. See §5.
-8. **Multi-user, hosted service, stable 1.0.** Requires identity, release
+9. **Multi-user, hosted service, stable 1.0.** Requires identity, release
    signing, and compatibility commitments. See §6.
 
 ## 3. Design details for local-only work
@@ -132,22 +137,37 @@ never placed in flags, config, prompts, fixtures, URLs, or commits.
   mark provider findings as untrusted hypotheses; show `missing` trace stages
   honestly.
 
-## 4. Provider/integration adapter plan (not implemented here)
+### 3.5 Fail-closed identity and attestation boundaries
+
+- `integrations.identity.mode: federated` validates an HTTPS issuer (paths
+  allowed, userinfo/query/fragment rejected), an environment variable *name*,
+  an audience, and an actor claim. `internal/adapters/identity.New` refuses the
+  mode and `Verify` never returns an identity claim.
+- `integrations.review.mode: external-attestation` validates an HTTPS issuer and
+  a verifier environment variable *name*. `internal/adapters/attestation.New`
+  refuses the mode and `Verify` never marks bytes as verified.
+- `ae doctor` and config `SelfCheck` report both boundaries as unimplemented.
+  Approvals remain `local-manual`; provider or attestation text cannot satisfy
+  organization identity or `independent-review` gates.
+
+## 4. Provider/integration adapter plan (live items not implemented here)
 
 | Capability | Extension point | Prerequisite | Status |
 | --- | --- | --- | --- |
 | Gemini adapter | `integration.Provider` in `internal/adapters/gemini`; route via local `provider.routes` | Credential env var, capability declaration, live CLI contract | Extension point implemented locally and fail-closed; live adapter planned / not implemented |
 | GitHub App identity | `integrations.github.mode: github-app`; separate actor model in approval evidence | App registration, installation token, actor mapping | Config shape implemented locally and fail-closed; live identity adapter needs authorization |
 | PR create/merge/push | New adapter methods behind explicit `--confirm-mutate` and policy allowlist | GitHub App identity + human authorization | Needs authorization; intentionally absent |
-| Federated approver identity | Policy actor model + approval evidence issuer | External identity provider | Needs authorization/design |
-| Externally verified review | Review gate accepts a signed, independently attested result | Attestation format + independent verifier | Needs authorization; provider text alone is insufficient |
+| Federated approver identity | `integrations.identity` + `internal/adapters/identity`; approval evidence issuer remains local | External identity provider and verifier contract | Config/adapter boundary implemented locally and fail-closed; live identity needs authorization |
+| Externally verified review | `integrations.review` + `internal/adapters/attestation`; review gate accepts a signed, independently attested result | Attestation format + independent verifier | Config/verifier boundary implemented locally and fail-closed; live verification needs authorization |
 
 The Gemini boundary declares no live capabilities and returns `not implemented`
 from `Run`/`Cancel`; the GitHub App config validates HTTPS origin, env variable
-*names*, and actor shape but `github.New` refuses the mode. Neither path reads a
-credential or calls a service. Core packages remain provider-neutral; every live
-item above belongs in `internal/adapters/` plus local config. No model ID enters
-canonical skills.
+*names*, and actor shape but `github.New` refuses the mode. The federated identity
+and external attestation configs validate HTTPS issuers, env variable *names*,
+and short labels, while their adapter `Verify` methods return `not implemented`.
+None of these paths reads a credential, calls a service, or changes a gate.
+Core packages remain provider-neutral; every live item above belongs in
+`internal/adapters/` plus local config. No model ID enters canonical skills.
 
 ## 5. Phase 6: optional AWS adapters
 

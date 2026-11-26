@@ -5,8 +5,10 @@ GitHub CLI PR reads/comments, provider chat, constrained provider writes, and th
 `autopilot` loop are implemented locally but were not exercised against live
 services. A read-only local audit report, local evidence signing/verification,
 fake-provider behavioral scenarios, and a read-only local dashboard snapshot are
-implemented. GitHub App/service identity, PR creation/merge/push, independently
-verified review, cloud adapters, and hosted/multi-user dashboard behavior are
+implemented. Gemini, GitHub App, federated identity, and external review
+attestation config extension points are validated locally but fail closed.
+Live GitHub App/service identity, PR creation/merge/push, independently verified
+review, cloud adapters, and hosted/multi-user dashboard behavior are
 **planned / not implemented**; see the command status matrix in the
 [README](../README.md).
 

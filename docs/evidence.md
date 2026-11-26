@@ -135,6 +135,7 @@ not approve a release or satisfy a gate.
 - Notarized/externally attested bundles, external transparency logs, and cloud
   artifact storage (planned Phase 6). Local signing and offline verification are
   implemented as described above.
-- Federated approver identity and PR-linked authorization; local identity/role
-  capture is implemented.
-- Live CI/deploy references and independently verified review findings. All review findings are hypotheses until corroborated; `review resolve` records human decisions without claiming independent verification. The provider-backed review command is locally tested with stubs but was not exercised against a live model.
+- Live federated approver identity and PR-linked authorization; local identity/role
+  capture, a validated config shape, and a fail-closed adapter boundary are
+  implemented.
+- Live CI/deploy references and independently verified review findings. All review findings are hypotheses until corroborated; `review resolve` records human decisions without claiming independent verification. The external-attestation config shape and verifier boundary fail closed. The provider-backed review command is locally tested with stubs but was not exercised against a live model.

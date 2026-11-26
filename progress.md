@@ -12,7 +12,7 @@ what was actually run in this tree. It is not a release report.
 | `make fmt-check` / `gofmt -l cmd internal` | Passed; no unformatted Go files. |
 | `go build ./...` | Passed. |
 | `go vet ./...` | Passed. |
-| `go test ./...` | Passed. Packages with tests: `internal/adapters/claude`, `internal/adapters/codex`, `internal/adapters/github`, `internal/adapters/jira`, `internal/adapters/sqlite`, `internal/catalog`, `internal/cli`, `internal/config`, `internal/execution`, `internal/framework`, `internal/policy`, `internal/routing`, `internal/schema`, `internal/util`, `internal/workflow`. Other packages have no test files. |
+| `go test ./...` | Passed. Packages with tests: `internal/adapters/attestation`, `internal/adapters/claude`, `internal/adapters/codex`, `internal/adapters/github`, `internal/adapters/identity`, `internal/adapters/jira`, `internal/adapters/sqlite`, `internal/catalog`, `internal/cli`, `internal/config`, `internal/execution`, `internal/framework`, `internal/policy`, `internal/routing`, `internal/schema`, `internal/util`, `internal/workflow`. Other packages have no test files. |
 | `go test -race ./...` | Passed with the same package coverage. |
 | `gofmt -w internal/execution internal/adapters/sqlite` and targeted `go test ./internal/execution ./internal/adapters/sqlite ./internal/cli` | Passed while adding review-evidence approval invalidation. |
 | `scripts/check-schemas.sh` | Passed; `validate` reported `status: valid`, 15 skills, 10 workflows, 2 policies, 15 agents, 12 profiles (`go`, `java`, `python`, `dotnet`, `nodejs`, `typescript`, `react`, `vue`, `astro`, `laravel`, `aws`, `all`), 5 routing profiles, and `evaluations: authored; no behavioral/model evaluation executed`. |
@@ -41,11 +41,13 @@ what was actually run in this tree. It is not a release report.
 | `cmp -s framework/schemas/evidence.schema.json internal/schema/assets/evidence.schema.json`, `go test ./internal/evidence ./internal/schema -count=1`, and `go test ./internal/cli/... -run TestAutopilot -count=1` | Passed after adding the `github` evidence kind; canonical and embedded schemas match and evidence builds validate. |
 | `go run ./cmd/ae audit --json` | Exited 0 with overall `incomplete`: `credential-shapes`, `embedded-schemas`, and `canonical-references` passed; `generated-skill-copies` was `skipped` (no installed copies); `ci-action-pinning` was `needs-authorization`. This is a local report, not release approval. |
 | `go run ./cmd/ae eval --suite all --execute --behavioral --json` | Exited 0 with `status: passed`, `mode: structural-fixture-checks+behavioral-fake-provider`, `provider: fake`, `executed: true`, `modelBehaviorExecuted: false`, and 15/15 fake-provider cases passed. No model was invoked. |
+| `go run ./cmd/ae doctor --json` after adding the extension points | Exited 0 with `provider/gemini`, `identity/federated`, and `review/external-attestation` reported as `extension-point`; no live verifier or service was called. |
 | `go run ./cmd/ae --help` | Exposed `audit`, `jira report-bug`, `evidence verify`, `dashboard snapshot`, and `eval ... [--behavioral]`. |
 | `npm test --offline` in `ui/` | Passed: 2 Node tests verified no runtime network/write path and the embedded-snapshot element. |
 | `npm install --offline --no-audit --no-fund` in `ui/` | Failed with `ENOTCACHED` for `@types/react` from the configured npm registry. UI `typecheck` and `build` were therefore **not run**; the CLI does not depend on npm. |
 | `make check` after all local hardening, schema fix, and docs updates | Passed: format check, build, vet, unit tests, race tests, schema validation, offline E2E, and worktree E2E. |
 | `git diff --check` after final edits | Passed; no whitespace errors in tracked changes. |
+| Targeted `go test ./internal/config ./internal/adapters/identity ./internal/adapters/attestation ./internal/cli -count=1` after adding extension points | Passed: config validation rejects HTTP/userinfo/query issuers, credential values in env-name fields, unsafe labels, and unknown modes; both adapter `Verify` methods fail closed without reading env values; `ae doctor` reports both extension points. No live verifier or service was called. |
 
 ### Local hardening observed
 
@@ -305,7 +307,11 @@ rules that particular output would not satisfy the gate.
 - `review --diff` is a local pattern scan with `verified: false`, not an
   independent code review. The provider-backed path returned one live Codex
   hypothesis set, but no result has been independently verified.
-- Federated approver identity; local identity and role capture are implemented.
+- Live federated approver identity; only a validated config shape and a
+  fail-closed adapter boundary exist. Local identity and role capture are
+  implemented.
+- Externally verified review; only a validated config shape and a fail-closed
+  verifier boundary exist. No attestation was verified or accepted by a gate.
 
 Except for the authorized Codex review above, the opt-in adapters in this
 section were implemented and locally tested with HTTP or executable stubs.
@@ -316,11 +322,13 @@ review-resolution behavior were exercised offline.
 ## Planned / not implemented
 
 - Remaining Phase 3 work: authorized live issue/provider calls, real code
-  changes, federated approver identity, and real CI/deploy integration.
-- Phase 4: independently verified findings, GitHub PR creation/merge/push, and
-  merge signal. One authorized live provider review was exercised; the local
-  provider path can record the `independent-review` gate only when an observed,
-  non-simulated provider result matches the configured model.
+  changes, live federated approver identity, and real CI/deploy integration.
+- Phase 4: independently verified findings, live external review attestation,
+  GitHub PR creation/merge/push, and merge signal. One authorized live provider
+  review was exercised; the local provider path can record the
+  `independent-review` gate only when an observed, non-simulated provider result
+  matches the configured model. The external-attestation config boundary does
+  not satisfy that gate.
 - Phase 5: full skill catalogue and real model behavioral evaluation. Structural
   checks and deterministic fake-provider scenarios are implemented.
 - Phase 6: optional AWS adapters and Terraform reference architecture.
