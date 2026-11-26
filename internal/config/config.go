@@ -102,6 +102,11 @@ type Integration struct {
 	BaseURL          string `yaml:"baseURL,omitempty" json:"baseURL,omitempty"`
 	TokenEnv         string `yaml:"tokenEnv,omitempty" json:"tokenEnv,omitempty"`
 	WebhookSecretEnv string `yaml:"webhookSecretEnv,omitempty" json:"webhookSecretEnv,omitempty"`
+	// GitHub App/service identity extension point. These fields are validated
+	// locally but no adapter uses them yet; github-app mode fails closed.
+	AppIDEnv             string `yaml:"appIDEnv,omitempty" json:"appIDEnv,omitempty"`
+	InstallationTokenEnv string `yaml:"installationTokenEnv,omitempty" json:"installationTokenEnv,omitempty"`
+	Actor                string `yaml:"actor,omitempty" json:"actor,omitempty"`
 }
 
 // Check is a local verification command from a canonical profile. Commands
@@ -229,6 +234,8 @@ func Load(path string) (Config, error) {
 		{"integrations.jira.webhookSecretEnv", cfg.Integrations.Jira.WebhookSecretEnv},
 		{"integrations.github.tokenEnv", cfg.Integrations.GitHub.TokenEnv},
 		{"integrations.github.webhookSecretEnv", cfg.Integrations.GitHub.WebhookSecretEnv},
+		{"integrations.github.appIDEnv", cfg.Integrations.GitHub.AppIDEnv},
+		{"integrations.github.installationTokenEnv", cfg.Integrations.GitHub.InstallationTokenEnv},
 	}
 	for _, entry := range envFields {
 		if entry.value != "" && !IsEnvName(entry.value) {
@@ -253,6 +260,19 @@ func Load(path string) (Config, error) {
 	case "", "local-cli":
 		cfg.Integrations.GitHub.Mode = "local-cli"
 	case "disabled":
+	case "github-app":
+		if !httpsOrigin(cfg.Integrations.GitHub.BaseURL) {
+			return Config{}, fmt.Errorf("integrations.github.baseURL must be an https origin with no path, query, or credentials")
+		}
+		if !IsEnvName(cfg.Integrations.GitHub.AppIDEnv) {
+			return Config{}, fmt.Errorf("integrations.github.appIDEnv must be an environment variable name")
+		}
+		if !IsEnvName(cfg.Integrations.GitHub.InstallationTokenEnv) {
+			return Config{}, fmt.Errorf("integrations.github.installationTokenEnv must be an environment variable name")
+		}
+		if !validGitHubAppActor(cfg.Integrations.GitHub.Actor) {
+			return Config{}, fmt.Errorf("integrations.github.actor must be a short service identity")
+		}
 	default:
 		return Config{}, fmt.Errorf("unsupported integrations.github.mode %q", cfg.Integrations.GitHub.Mode)
 	}
@@ -270,10 +290,13 @@ func httpsOrigin(value string) bool {
 
 var profileIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 var envNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+var githubAppActorPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$`)
 
 // IsEnvName reports whether name is a safe environment variable name. Config
 // stores env names only; secrets must never be written into ae.yaml.
 func IsEnvName(name string) bool { return envNamePattern.MatchString(name) }
+
+func validGitHubAppActor(actor string) bool { return githubAppActorPattern.MatchString(actor) }
 
 // LoadProfile reads a checked-in profile definition. Verification commands
 // are accepted only from this canonical source, never from untrusted input.
@@ -440,6 +463,9 @@ func (c Config) SelfCheck() []string {
 	}
 	if c.Provider.Default == "gemini" {
 		problems = append(problems, "provider/gemini: local extension point only; live invocation is not implemented")
+	}
+	if c.Integrations.GitHub.Mode == "github-app" {
+		problems = append(problems, "integrations.github: GitHub App identity is configured but not implemented")
 	}
 	for _, p := range c.Profiles {
 		if !validProfile(p) {

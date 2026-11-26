@@ -24,6 +24,19 @@ func githubStub(t *testing.T, body string) (string, string) {
 	return script, argsPath
 }
 
+func TestNewRejectsGitHubAppExtensionPoint(t *testing.T) {
+	_, err := New(config.Integration{
+		Mode:                 "github-app",
+		BaseURL:              "https://github.example.com",
+		AppIDEnv:             "AE_GITHUB_APP_ID",
+		InstallationTokenEnv: "AE_GITHUB_INSTALLATION_TOKEN",
+		Actor:                "ae-bot",
+	})
+	if err == nil || !strings.Contains(err.Error(), "not implemented") {
+		t.Fatalf("GitHub App identity did not fail closed: %v", err)
+	}
+}
+
 func TestViewPRChecksAndDiffUseReadOnlyArguments(t *testing.T) {
 	script, argsPath := githubStub(t, `{"number":12,"title":"Add [REDACTED] feature","state":"OPEN","headRefOid":"abc1234","baseRefName":"main","reviewDecision":"CHANGES_REQUESTED","reviews":[{"author":{"login":"reviewer"},"state":"CHANGES_REQUESTED","body":"please fix"}],"comments":[{"author":{"login":"user"},"body":"note","createdAt":"2026-01-01T00:00:00Z"}]}`)
 	source := &Source{Binary: script}

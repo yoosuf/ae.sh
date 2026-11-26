@@ -245,6 +245,63 @@ integrations:
 	}
 }
 
+func TestLoadValidatesGitHubAppExtensionPoint(t *testing.T) {
+	cases := []struct {
+		name       string
+		baseURL    string
+		appIDEnv   string
+		tokenEnv   string
+		actor      string
+		wantLoaded bool
+	}{
+		{name: "valid-shape", baseURL: "https://github.example.com", appIDEnv: "AE_GITHUB_APP_ID", tokenEnv: "AE_GITHUB_INSTALLATION_TOKEN", actor: "ae-bot", wantLoaded: true},
+		{name: "http-base-url", baseURL: "http://github.example.com", appIDEnv: "AE_GITHUB_APP_ID", tokenEnv: "AE_GITHUB_INSTALLATION_TOKEN", actor: "ae-bot"},
+		{name: "app-id-value", baseURL: "https://github.example.com", appIDEnv: "12345", tokenEnv: "AE_GITHUB_INSTALLATION_TOKEN", actor: "ae-bot"},
+		{name: "token-value", baseURL: "https://github.example.com", appIDEnv: "AE_GITHUB_APP_ID", tokenEnv: "installation_token", actor: "ae-bot"},
+		{name: "missing-actor", baseURL: "https://github.example.com", appIDEnv: "AE_GITHUB_APP_ID", tokenEnv: "AE_GITHUB_INSTALLATION_TOKEN"},
+		{name: "actor-with-spaces", baseURL: "https://github.example.com", appIDEnv: "AE_GITHUB_APP_ID", tokenEnv: "AE_GITHUB_INSTALLATION_TOKEN", actor: "service bot"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), FileName)
+			content := fmt.Sprintf(`schemaVersion: %q
+integrations:
+  github:
+    mode: github-app
+    baseURL: %q
+    appIDEnv: %q
+    installationTokenEnv: %q
+    actor: %q
+`, version.SchemaVersion, tc.baseURL, tc.appIDEnv, tc.tokenEnv, tc.actor)
+			if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			cfg, err := Load(path)
+			if !tc.wantLoaded {
+				if err == nil {
+					t.Fatal("invalid GitHub App config was accepted")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg.Integrations.GitHub.Mode != "github-app" || cfg.Integrations.GitHub.Actor != "ae-bot" {
+				t.Fatalf("GitHub App shape was not preserved: %+v", cfg.Integrations.GitHub)
+			}
+			found := false
+			for _, problem := range cfg.SelfCheck() {
+				if strings.Contains(problem, "GitHub App identity is configured but not implemented") {
+					found = true
+				}
+			}
+			if !found {
+				t.Fatalf("SelfCheck did not flag the GitHub App extension point: %v", cfg.SelfCheck())
+			}
+		})
+	}
+}
+
 func TestLoadRejectsCredentialValuesInEnvNameFields(t *testing.T) {
 	cases := []struct {
 		name         string

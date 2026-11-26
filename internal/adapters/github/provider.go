@@ -98,7 +98,12 @@ type Source struct {
 }
 
 // New validates a GitHub local-cli integration without reading credentials.
+// GitHub App identity is a validated config extension point only and fails
+// closed here until a live adapter is authorized and implemented.
 func New(cfg config.Integration) (*Source, error) {
+	if cfg.Mode == "github-app" {
+		return nil, fmt.Errorf("GitHub App/service identity is configured but not implemented; use integrations.github.mode: local-cli")
+	}
 	if cfg.Mode != "local-cli" {
 		return nil, fmt.Errorf("GitHub adapter requires integrations.github.mode: local-cli")
 	}
