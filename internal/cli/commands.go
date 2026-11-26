@@ -882,6 +882,7 @@ func (a *App) cmdDoctor(ctx context.Context, args []string) error {
 			add("provider/"+binary, "ok", path)
 		}
 	}
+	add("provider/gemini", "extension-point", "live Gemini adapter not implemented")
 	a.emit(map[string]any{"checks": checks})
 	return nil
 }

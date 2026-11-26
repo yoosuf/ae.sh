@@ -17,6 +17,7 @@ import (
 	"github.com/yoosuf/ae.sh/internal/adapters/claude"
 	"github.com/yoosuf/ae.sh/internal/adapters/codex"
 	"github.com/yoosuf/ae.sh/internal/adapters/fake"
+	"github.com/yoosuf/ae.sh/internal/adapters/gemini"
 	"github.com/yoosuf/ae.sh/internal/adapters/jira"
 	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
 	"github.com/yoosuf/ae.sh/internal/catalog"
@@ -438,6 +439,8 @@ func newProvider(name string) (integration.Provider, error) {
 		return claude.New(), nil
 	case "codex":
 		return codex.New(), nil
+	case "gemini":
+		return gemini.New(), nil
 	default:
 		return nil, usage("unsupported provider %q", name)
 	}

@@ -207,7 +207,7 @@ func Load(path string) (Config, error) {
 		cfg.Provider.Default = "fake"
 	}
 	switch cfg.Provider.Default {
-	case "fake", "claude", "codex":
+	case "fake", "claude", "codex", "gemini":
 	default:
 		return Config{}, fmt.Errorf("unsupported provider %q", cfg.Provider.Default)
 	}
@@ -437,6 +437,9 @@ func (c Config) SelfCheck() []string {
 	var problems []string
 	if err := util.EnsureDir(filepath.Dir(c.StatePath())); err != nil {
 		problems = append(problems, fmt.Sprintf("state directory: %v", err))
+	}
+	if c.Provider.Default == "gemini" {
+		problems = append(problems, "provider/gemini: local extension point only; live invocation is not implemented")
 	}
 	for _, p := range c.Profiles {
 		if !validProfile(p) {

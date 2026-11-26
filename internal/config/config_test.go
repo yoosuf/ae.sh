@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/yoosuf/ae.sh/internal/framework"
@@ -95,6 +96,31 @@ func TestDefaultRoutesCoverCanonicalProfiles(t *testing.T) {
 				t.Errorf("default route %s/%s: %v", profile, provider, err)
 			}
 		}
+	}
+}
+
+func TestLoadAcceptsGeminiExtensionPointButFlagsIt(t *testing.T) {
+	path := filepath.Join(t.TempDir(), FileName)
+	content := fmt.Sprintf("schemaVersion: %q\nprovider:\n  default: gemini\n", version.SchemaVersion)
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Provider.Default != "gemini" {
+		t.Fatalf("Gemini default was not preserved: %q", cfg.Provider.Default)
+	}
+	problems := cfg.SelfCheck()
+	found := false
+	for _, problem := range problems {
+		if strings.Contains(problem, "live invocation is not implemented") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("SelfCheck did not flag the Gemini extension point: %v", problems)
 	}
 }
 
