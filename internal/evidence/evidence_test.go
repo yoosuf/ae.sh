@@ -10,6 +10,25 @@ import (
 	"github.com/yoosuf/ae.sh/internal/evidence"
 )
 
+func TestBuildAcceptsDocumentedEvidenceKinds(t *testing.T) {
+	manager := evidence.New(t.TempDir(), t.TempDir())
+	kinds := []string{
+		"input", "plan", "risk", "approval", "provider", "github", "test",
+		"review", "remediation", "gate", "artifact", "transition", "merge",
+		"deployment", "note",
+	}
+	for _, kind := range kinds {
+		if _, err := manager.Build(context.Background(), "run-evidence-kind", 0, kind,
+			"subject", "tester", map[string]any{"value": "ok"}, nil, nil, ""); err != nil {
+			t.Errorf("schema rejected evidence kind %q: %v", kind, err)
+		}
+	}
+	if _, err := manager.Build(context.Background(), "run-evidence-kind", 0, "unknown-kind",
+		"subject", "tester", map[string]any{"value": "ok"}, nil, nil, ""); err == nil {
+		t.Error("schema accepted an unknown evidence kind")
+	}
+}
+
 func TestWriteSanitizesIdentityFields(t *testing.T) {
 	root := t.TempDir()
 	recordsDir := filepath.Join(root, "records")
