@@ -77,6 +77,8 @@ func (a *App) Run(ctx context.Context) int {
 		err = a.cmdInit(args)
 	case "doctor":
 		err = a.cmdDoctor(ctx, args)
+	case "audit":
+		err = a.cmdAudit(args)
 	case "validate":
 		err = a.cmdValidate(args)
 	case "skills":
@@ -218,6 +220,7 @@ Usage: ae [--root DIR] [--json] <command> [options]
 Commands:
   init --profile go,react [--force]
   doctor
+  audit
   validate
   skills list
   skills install --provider claude|codex|all --scope user|project [--version v] [--dry-run] [--force]
