@@ -111,7 +111,7 @@ these paths as hardened for hostile repositories or untrusted collaborators.
 | Workflow gates | Some canonical approval gates have no matching policy approval rule, and `validate` does not cross-check them. | Expect those gates to fail closed as unknown; do not assume they are configured. |
 | Skill install | A target changed after `plan` can be overwritten because `apply` does not recheck digests. | Re-run `plan` immediately before install and use `--force` only deliberately. |
 | Error placeholders | Some marshal failures become `{}` or `{"error":"unserializable"}` instead of errors. | Treat empty evidence or output as a failure, not a pass. |
-| `ae doctor` | Self-check creates directories, a DB handle can be left open, and schema success is reported unconditionally. | Use `doctor` as a hint, not as the sole installation verdict. |
+| `ae doctor` | Self-check still creates the state directory, so `doctor` is not strictly read-only. | Use `doctor` as a hint, not as the sole installation verdict. |
 | Verification runner | Profile commands use `sh -c`, so verification is Unix-only and treats commands as executable config. | Run `verify` only in trusted checkouts on a POSIX shell; Windows is not supported for this path. |
 
 These gaps are recorded as limitations, not as released mitigations. Addressing

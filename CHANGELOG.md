@@ -252,6 +252,8 @@ without compatibility guarantees.
   before writing a bundle, so a nonexistent run cannot produce export files.
 - Claude and Codex adapter stderr is credential-redacted before truncation and
   inclusion in CLI errors.
+- `ae doctor` now reports schema failures accurately instead of always reporting
+  `schemas: ok`, and closes the state database handle it opens.
 - `docs/security/threat-model.md` now records verified static-review gaps that
   remain unmitigated, including non-atomic evidence appends, gate-name-specific
   enforcement, advisory candidate SHAs, partial signature coverage, and

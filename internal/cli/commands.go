@@ -854,12 +854,18 @@ func (a *App) cmdDoctor(ctx context.Context, args []string) error {
 	}
 	add("framework", "ok", version.Version)
 	add("go", runtime.Version(), runtime.GOOS+"/"+runtime.GOARCH)
+	schemaFailures := 0
 	for _, name := range schema.Names {
 		if _, err := schema.Asset(name); err != nil {
+			schemaFailures++
 			add("schema/"+name, "fail", err.Error())
 		}
 	}
-	add("schemas", "ok", strings.Join(schema.Names, ", "))
+	if schemaFailures > 0 {
+		add("schemas", "fail", fmt.Sprintf("%d of %d embedded schemas failed to load", schemaFailures, len(schema.Names)))
+	} else {
+		add("schemas", "ok", strings.Join(schema.Names, ", "))
+	}
 	repo, err := a.loadRepo()
 	if err != nil {
 		add("repository", "fail", err.Error())
@@ -868,10 +874,15 @@ func (a *App) cmdDoctor(ctx context.Context, args []string) error {
 		for _, problem := range repo.Config.SelfCheck() {
 			add("config", "fail", problem)
 		}
-		if _, err := sqliteadapter.Open(repo.Config.StatePath()); err != nil {
+		if store, err := sqliteadapter.Open(repo.Config.StatePath()); err != nil {
 			add("state", "fail", err.Error())
 		} else {
-			add("state", "ok", repo.Config.StatePath())
+			closeErr := store.Close()
+			if closeErr != nil {
+				add("state", "fail", closeErr.Error())
+			} else {
+				add("state", "ok", repo.Config.StatePath())
+			}
 		}
 		plan := map[string]any{
 			"provider":               "fake",

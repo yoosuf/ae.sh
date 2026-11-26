@@ -35,6 +35,14 @@ func TestDoctorReportsIdentityAndReviewExtensionPoints(t *testing.T) {
 		"identity/federated":          "approvals remain local-manual",
 		"review/external-attestation": "provider text remains untrusted",
 	}
+	for _, check := range report.Checks {
+		if check.Name == "schemas" && check.Status != "ok" {
+			t.Errorf("schemas status = %q, want ok: %s", check.Status, check.Detail)
+		}
+		if check.Name == "state" && check.Status != "ok" {
+			t.Errorf("state status = %q, want ok: %s", check.Status, check.Detail)
+		}
+	}
 	seen := map[string]bool{}
 	for _, check := range report.Checks {
 		if expected, ok := want[check.Name]; ok {

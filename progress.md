@@ -58,6 +58,7 @@ what was actually run in this tree. It is not a release report.
 | `gofmt -w internal/config internal/cli internal/workflow internal/execution` and `go test ./internal/config ./internal/cli ./internal/workflow ./internal/execution -count=1` | Passed after adding config path containment, fail-closed secret scanning, and task timeout validation. The new tests cover absolute/traversal/symlink config paths, symlink skip and unreadable-root failure in the secret scan, and invalid/valid timeout bounds. |
 | `go run ./cmd/ae audit --json` after the new tests | Exited 0 with overall `incomplete` and the same `needs-authorization` CI pinning note; the credential-shape check stayed `passed` because test secrets are built at runtime rather than committed as literals. |
 | `gofmt -w` on catalog/CLI/provider files and `go test ./internal/catalog ./internal/cli ./internal/adapters/claude ./internal/adapters/codex -count=1` | Passed after adding manifest path/slug validation for uninstall, run ID/existence checks for evidence export, and stderr redaction in both live adapters. No live provider, Jira, or GitHub call was made. |
+| `go test ./internal/cli -run TestDoctor -count=1` | Passed after making `doctor` report schema failures accurately and close its state DB handle. |
 
 ### Local hardening observed
 
