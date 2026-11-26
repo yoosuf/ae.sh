@@ -93,8 +93,30 @@ type Deployment struct {
 }
 
 type Integrations struct {
-	Jira   Integration `yaml:"jira" json:"jira"`
-	GitHub Integration `yaml:"github" json:"github"`
+	Jira     Integration         `yaml:"jira" json:"jira"`
+	GitHub   Integration         `yaml:"github" json:"github"`
+	Identity IdentityIntegration `yaml:"identity,omitempty" json:"identity,omitempty"`
+	Review   ReviewIntegration   `yaml:"review,omitempty" json:"review,omitempty"`
+}
+
+// IdentityIntegration reserves the federated approver identity boundary. The
+// federated mode is validated but no verifier exists; local approvals remain
+// local-manual and cannot satisfy organization identity checks.
+type IdentityIntegration struct {
+	Mode       string `yaml:"mode" json:"mode"`
+	Issuer     string `yaml:"issuer,omitempty" json:"issuer,omitempty"`
+	Audience   string `yaml:"audience,omitempty" json:"audience,omitempty"`
+	TokenEnv   string `yaml:"tokenEnv,omitempty" json:"tokenEnv,omitempty"`
+	ActorClaim string `yaml:"actorClaim,omitempty" json:"actorClaim,omitempty"`
+}
+
+// ReviewIntegration reserves the externally verified review boundary. The
+// external-attestation mode is validated but no independent verifier exists;
+// provider text alone never becomes verified review evidence.
+type ReviewIntegration struct {
+	Mode        string `yaml:"mode" json:"mode"`
+	Issuer      string `yaml:"issuer,omitempty" json:"issuer,omitempty"`
+	VerifierEnv string `yaml:"verifierEnv,omitempty" json:"verifierEnv,omitempty"`
 }
 
 type Integration struct {
@@ -160,8 +182,10 @@ func Default() Config {
 		Provider:      Provider{Default: "fake", Routes: DefaultRoutes()},
 		Deployment:    Deployment{Scope: "local"},
 		Integrations: Integrations{
-			Jira:   Integration{Mode: "fixture", TokenEnv: "AE_JIRA_TOKEN", WebhookSecretEnv: "AE_JIRA_WEBHOOK_SECRET"},
-			GitHub: Integration{Mode: "local-cli", TokenEnv: "AE_GITHUB_TOKEN", WebhookSecretEnv: "AE_GITHUB_WEBHOOK_SECRET"},
+			Jira:     Integration{Mode: "fixture", TokenEnv: "AE_JIRA_TOKEN", WebhookSecretEnv: "AE_JIRA_WEBHOOK_SECRET"},
+			GitHub:   Integration{Mode: "local-cli", TokenEnv: "AE_GITHUB_TOKEN", WebhookSecretEnv: "AE_GITHUB_WEBHOOK_SECRET"},
+			Identity: IdentityIntegration{Mode: "local-manual"},
+			Review:   ReviewIntegration{Mode: "local"},
 		},
 	}
 }
@@ -236,6 +260,8 @@ func Load(path string) (Config, error) {
 		{"integrations.github.webhookSecretEnv", cfg.Integrations.GitHub.WebhookSecretEnv},
 		{"integrations.github.appIDEnv", cfg.Integrations.GitHub.AppIDEnv},
 		{"integrations.github.installationTokenEnv", cfg.Integrations.GitHub.InstallationTokenEnv},
+		{"integrations.identity.tokenEnv", cfg.Integrations.Identity.TokenEnv},
+		{"integrations.review.verifierEnv", cfg.Integrations.Review.VerifierEnv},
 	}
 	for _, entry := range envFields {
 		if entry.value != "" && !IsEnvName(entry.value) {
@@ -279,6 +305,49 @@ func Load(path string) (Config, error) {
 	if cfg.Integrations.GitHub.Mode == "local-cli" && cfg.Integrations.GitHub.BaseURL != "" && !httpsOrigin(cfg.Integrations.GitHub.BaseURL) {
 		return Config{}, fmt.Errorf("integrations.github.baseURL must be an https origin with no path, query, or credentials")
 	}
+	switch cfg.Integrations.Identity.Mode {
+	case "", "local-manual":
+		cfg.Integrations.Identity.Mode = "local-manual"
+	case "federated":
+		if !httpsIssuer(cfg.Integrations.Identity.Issuer) {
+			return Config{}, fmt.Errorf("integrations.identity.issuer must be an https URL with no credentials, query, or fragment")
+		}
+		if !IsEnvName(cfg.Integrations.Identity.TokenEnv) {
+			return Config{}, fmt.Errorf("integrations.identity.tokenEnv must be an environment variable name")
+		}
+		if !validExtensionLabel(cfg.Integrations.Identity.Audience) {
+			return Config{}, fmt.Errorf("integrations.identity.audience must be a short label")
+		}
+		if !validExtensionLabel(cfg.Integrations.Identity.ActorClaim) {
+			return Config{}, fmt.Errorf("integrations.identity.actorClaim must be a short claim name")
+		}
+	default:
+		return Config{}, fmt.Errorf("unsupported integrations.identity.mode %q", cfg.Integrations.Identity.Mode)
+	}
+	switch cfg.Integrations.Review.Mode {
+	case "", "local":
+		cfg.Integrations.Review.Mode = "local"
+	case "external-attestation":
+		if !httpsIssuer(cfg.Integrations.Review.Issuer) {
+			return Config{}, fmt.Errorf("integrations.review.issuer must be an https URL with no credentials, query, or fragment")
+		}
+		if !IsEnvName(cfg.Integrations.Review.VerifierEnv) {
+			return Config{}, fmt.Errorf("integrations.review.verifierEnv must be an environment variable name")
+		}
+	default:
+		return Config{}, fmt.Errorf("unsupported integrations.review.mode %q", cfg.Integrations.Review.Mode)
+	}
+	extensionFields := []struct{ field, value string }{
+		{"integrations.identity.issuer", cfg.Integrations.Identity.Issuer},
+		{"integrations.identity.audience", cfg.Integrations.Identity.Audience},
+		{"integrations.identity.actorClaim", cfg.Integrations.Identity.ActorClaim},
+		{"integrations.review.issuer", cfg.Integrations.Review.Issuer},
+	}
+	for _, entry := range extensionFields {
+		if util.SecretShapeCount(entry.value) > 0 {
+			return Config{}, fmt.Errorf("%s contains a credential-shaped value", entry.field)
+		}
+	}
 	return cfg, nil
 }
 
@@ -288,15 +357,26 @@ func httpsOrigin(value string) bool {
 		parsed.Path == "" && parsed.RawQuery == "" && parsed.Fragment == ""
 }
 
+// httpsIssuer allows an HTTPS path (for example an OIDC realm) but never
+// userinfo, query strings, or fragments that could carry credentials.
+func httpsIssuer(value string) bool {
+	parsed, err := url.Parse(value)
+	return err == nil && parsed.Scheme == "https" && parsed.Host != "" && parsed.User == nil &&
+		parsed.RawQuery == "" && parsed.Fragment == ""
+}
+
 var profileIDPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 var envNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 var githubAppActorPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$`)
+var extensionLabelPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$`)
 
 // IsEnvName reports whether name is a safe environment variable name. Config
 // stores env names only; secrets must never be written into ae.yaml.
 func IsEnvName(name string) bool { return envNamePattern.MatchString(name) }
 
 func validGitHubAppActor(actor string) bool { return githubAppActorPattern.MatchString(actor) }
+
+func validExtensionLabel(value string) bool { return extensionLabelPattern.MatchString(value) }
 
 // LoadProfile reads a checked-in profile definition. Verification commands
 // are accepted only from this canonical source, never from untrusted input.
@@ -466,6 +546,12 @@ func (c Config) SelfCheck() []string {
 	}
 	if c.Integrations.GitHub.Mode == "github-app" {
 		problems = append(problems, "integrations.github: GitHub App identity is configured but not implemented")
+	}
+	if c.Integrations.Identity.Mode == "federated" {
+		problems = append(problems, "integrations.identity: federated approver identity is configured but not implemented; approvals remain local-manual")
+	}
+	if c.Integrations.Review.Mode == "external-attestation" {
+		problems = append(problems, "integrations.review: external review attestation is configured but no independent verifier is implemented")
 	}
 	for _, p := range c.Profiles {
 		if !validProfile(p) {

@@ -302,6 +302,137 @@ integrations:
 	}
 }
 
+func TestLoadValidatesFederatedIdentityExtensionPoint(t *testing.T) {
+	cases := []struct {
+		name       string
+		issuer     string
+		tokenEnv   string
+		audience   string
+		actorClaim string
+		wantLoaded bool
+	}{
+		{name: "valid-shape", issuer: "https://id.example.com/realms/ae", tokenEnv: "AE_IDENTITY_TOKEN", audience: "ae-cli", actorClaim: "preferred_username", wantLoaded: true},
+		{name: "http-issuer", issuer: "http://id.example.com/realms/ae", tokenEnv: "AE_IDENTITY_TOKEN", audience: "ae-cli", actorClaim: "preferred_username"},
+		{name: "userinfo-issuer", issuer: "https://user@id.example.com/realms/ae", tokenEnv: "AE_IDENTITY_TOKEN", audience: "ae-cli", actorClaim: "preferred_username"},
+		{name: "token-value", issuer: "https://id.example.com/realms/ae", tokenEnv: "identity-token", audience: "ae-cli", actorClaim: "preferred_username"},
+		{name: "missing-audience", issuer: "https://id.example.com/realms/ae", tokenEnv: "AE_IDENTITY_TOKEN", actorClaim: "preferred_username"},
+		{name: "unsafe-actor-claim", issuer: "https://id.example.com/realms/ae", tokenEnv: "AE_IDENTITY_TOKEN", audience: "ae-cli", actorClaim: "name with spaces"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), FileName)
+			content := fmt.Sprintf(`schemaVersion: %q
+integrations:
+  identity:
+    mode: federated
+    issuer: %q
+    tokenEnv: %q
+    audience: %q
+    actorClaim: %q
+`, version.SchemaVersion, tc.issuer, tc.tokenEnv, tc.audience, tc.actorClaim)
+			if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			cfg, err := Load(path)
+			if !tc.wantLoaded {
+				if err == nil {
+					t.Fatal("invalid federated identity config was accepted")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg.Integrations.Identity.Mode != "federated" || cfg.Integrations.Identity.Audience != "ae-cli" {
+				t.Fatalf("federated identity shape was not preserved: %+v", cfg.Integrations.Identity)
+			}
+			found := false
+			for _, problem := range cfg.SelfCheck() {
+				if strings.Contains(problem, "federated approver identity is configured but not implemented") {
+					found = true
+				}
+			}
+			if !found {
+				t.Fatalf("SelfCheck did not flag the federated identity extension point: %v", cfg.SelfCheck())
+			}
+		})
+	}
+}
+
+func TestLoadValidatesExternalReviewExtensionPoint(t *testing.T) {
+	cases := []struct {
+		name        string
+		issuer      string
+		verifierEnv string
+		wantLoaded  bool
+	}{
+		{name: "valid-shape", issuer: "https://attest.example.com", verifierEnv: "AE_REVIEW_VERIFIER", wantLoaded: true},
+		{name: "http-issuer", issuer: "http://attest.example.com", verifierEnv: "AE_REVIEW_VERIFIER"},
+		{name: "query-issuer", issuer: "https://attest.example.com?token=abc", verifierEnv: "AE_REVIEW_VERIFIER"},
+		{name: "verifier-value", issuer: "https://attest.example.com", verifierEnv: "./verify"},
+		{name: "missing-verifier", issuer: "https://attest.example.com"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), FileName)
+			content := fmt.Sprintf(`schemaVersion: %q
+integrations:
+  review:
+    mode: external-attestation
+    issuer: %q
+    verifierEnv: %q
+`, version.SchemaVersion, tc.issuer, tc.verifierEnv)
+			if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			cfg, err := Load(path)
+			if !tc.wantLoaded {
+				if err == nil {
+					t.Fatal("invalid external review config was accepted")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg.Integrations.Review.Mode != "external-attestation" || cfg.Integrations.Review.VerifierEnv != "AE_REVIEW_VERIFIER" {
+				t.Fatalf("external review shape was not preserved: %+v", cfg.Integrations.Review)
+			}
+			found := false
+			for _, problem := range cfg.SelfCheck() {
+				if strings.Contains(problem, "external review attestation is configured but no independent verifier is implemented") {
+					found = true
+				}
+			}
+			if !found {
+				t.Fatalf("SelfCheck did not flag the external review extension point: %v", cfg.SelfCheck())
+			}
+		})
+	}
+}
+
+func TestLoadRejectsUnknownExtensionModes(t *testing.T) {
+	cases := []struct {
+		name         string
+		integrations string
+	}{
+		{name: "identity", integrations: "  identity:\n    mode: oidc\n"},
+		{name: "review", integrations: "  review:\n    mode: signed\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), FileName)
+			content := fmt.Sprintf("schemaVersion: %q\nintegrations:\n%s", version.SchemaVersion, tc.integrations)
+			if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Load(path); err == nil {
+				t.Fatal("unknown extension mode was accepted")
+			}
+		})
+	}
+}
+
 func TestLoadRejectsCredentialValuesInEnvNameFields(t *testing.T) {
 	cases := []struct {
 		name         string
@@ -310,6 +441,8 @@ func TestLoadRejectsCredentialValuesInEnvNameFields(t *testing.T) {
 		{name: "jira-fixture-webhook", integrations: "  jira:\n    mode: fixture\n    webhookSecretEnv: FAKE-webhook-secret\n"},
 		{name: "jira-cloud-webhook", integrations: "  jira:\n    mode: jira-cloud\n    baseURL: https://example.atlassian.net\n    tokenEnv: AE_JIRA_TOKEN\n    webhookSecretEnv: FAKE-webhook-secret\n"},
 		{name: "github-disabled-token", integrations: "  github:\n    mode: disabled\n    tokenEnv: FAKE-github-token\n"},
+		{name: "identity-token-value", integrations: "  identity:\n    mode: federated\n    issuer: https://id.example.com\n    tokenEnv: FAKE-identity-token\n    audience: ae-cli\n    actorClaim: sub\n"},
+		{name: "review-verifier-value", integrations: "  review:\n    mode: external-attestation\n    issuer: https://attest.example.com\n    verifierEnv: FAKE-verifier-path\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

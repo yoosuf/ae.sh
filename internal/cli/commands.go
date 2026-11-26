@@ -883,6 +883,8 @@ func (a *App) cmdDoctor(ctx context.Context, args []string) error {
 		}
 	}
 	add("provider/gemini", "extension-point", "live Gemini adapter not implemented")
+	add("identity/federated", "extension-point", "federated approver identity not implemented; approvals remain local-manual")
+	add("review/external-attestation", "extension-point", "externally verified review not implemented; provider text remains untrusted")
 	a.emit(map[string]any{"checks": checks})
 	return nil
 }
