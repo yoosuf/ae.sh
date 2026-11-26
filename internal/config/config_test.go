@@ -458,6 +458,63 @@ func TestLoadRejectsCredentialValuesInEnvNameFields(t *testing.T) {
 	}
 }
 
+func TestLoadRejectsPathsOutsideConfigRoot(t *testing.T) {
+	cases := []struct {
+		name    string
+		section string
+	}{
+		{name: "absolute-state", section: "state:\n  path: /tmp/attacker.db\n"},
+		{name: "traversal-state", section: "state:\n  path: ../outside.db\n"},
+		{name: "absolute-evidence", section: "evidence:\n  dir: /tmp/evidence\n"},
+		{name: "traversal-objects", section: "evidence:\n  objectsDir: ../../victim/objects\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), FileName)
+			content := fmt.Sprintf("schemaVersion: %q\n%s", version.SchemaVersion, tc.section)
+			if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Load(path); err == nil {
+				t.Fatal("path outside the config root was accepted")
+			}
+		})
+	}
+}
+
+func TestLoadRejectsSymlinkEscapeForStatePath(t *testing.T) {
+	base := t.TempDir()
+	root := filepath.Join(base, "project")
+	outside := filepath.Join(base, "outside")
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(outside, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(root, ".ae")); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	path := filepath.Join(root, FileName)
+	content := fmt.Sprintf("schemaVersion: %q\nstate:\n  path: .ae/state.db\n", version.SchemaVersion)
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(path); err == nil {
+		t.Fatal("state path escaping through a symlink was accepted")
+	}
+}
+
+func TestLoadAcceptsContainedDefaultPaths(t *testing.T) {
+	path := filepath.Join(t.TempDir(), FileName)
+	if err := os.WriteFile(path, []byte("schemaVersion: \""+version.SchemaVersion+"\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(path); err != nil {
+		t.Fatalf("default contained paths were rejected: %v", err)
+	}
+}
+
 func writeTestProfile(t *testing.T, root, id, extra string) {
 	t.Helper()
 	dir := framework.Dir(root, framework.Profiles, id)

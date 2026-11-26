@@ -167,39 +167,7 @@ func (a *App) runProfileCheck(ctx context.Context, root string, manager *evidenc
 func (a *App) runSecretScan(ctx context.Context, root string, manager *evidence.Manager, store *sqliteadapter.Store, runID string) (verificationResult, error) {
 	const gate = "secret-scan"
 	const command = "ae builtin secret-scan"
-	filesScanned := 0
-	findings := 0
-	paths := []string{}
-	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if entry.IsDir() {
-			switch entry.Name() {
-			case ".git", ".ae", "dist", "node_modules", "vendor":
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		info, err := entry.Info()
-		if err != nil || info.Size() > 1<<20 {
-			return nil
-		}
-		raw, err := os.ReadFile(path)
-		if err != nil || bytes.IndexByte(raw, 0) >= 0 {
-			return nil
-		}
-		filesScanned++
-		if count := util.SecretShapeCount(string(raw)); count > 0 {
-			findings += count
-			rel, relErr := filepath.Rel(root, path)
-			if relErr != nil {
-				rel = path
-			}
-			paths = append(paths, filepath.ToSlash(rel))
-		}
-		return nil
-	})
+	filesScanned, findings, paths, err := scanSecretShapes(root)
 	if err != nil {
 		return verificationResult{}, err
 	}
@@ -220,6 +188,69 @@ func (a *App) runSecretScan(ctx context.Context, root string, manager *evidence.
 		Gate: gate, Command: command, Workspace: filepath.ToSlash(root), Passed: passed, ExitStatus: exit,
 		Output: fmt.Sprintf("scanned %d files; %d credential-shaped matches", filesScanned, findings),
 	}, nil
+}
+
+// scanSecretShapes counts credential-shaped strings in bounded text files under
+// root. Symlinks are skipped because os.ReadFile follows them: a link to a
+// device or a very large file would bypass the DirEntry size bound. Unreadable
+// paths are scan failures, not silent skips: a partial scan must never be
+// reported as passed.
+func scanSecretShapes(root string) (filesScanned, findings int, paths []string, err error) {
+	paths = []string{}
+	failures := []string{}
+	recordFailure := func(path string, cause error) {
+		failures = append(failures, filepath.ToSlash(path)+": "+cause.Error())
+	}
+	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			recordFailure(path, walkErr)
+			return nil
+		}
+		if entry.Type()&os.ModeSymlink != 0 {
+			return nil
+		}
+		if entry.IsDir() {
+			switch entry.Name() {
+			case ".git", ".ae", "dist", "node_modules", "vendor":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		info, infoErr := entry.Info()
+		if infoErr != nil {
+			recordFailure(path, infoErr)
+			return nil
+		}
+		if info.Size() > 1<<20 {
+			return nil
+		}
+		raw, readErr := os.ReadFile(path)
+		if readErr != nil {
+			recordFailure(path, readErr)
+			return nil
+		}
+		if bytes.IndexByte(raw, 0) >= 0 {
+			return nil
+		}
+		filesScanned++
+		if count := util.SecretShapeCount(string(raw)); count > 0 {
+			findings += count
+			rel, relErr := filepath.Rel(root, path)
+			if relErr != nil {
+				rel = path
+			}
+			paths = append(paths, filepath.ToSlash(rel))
+		}
+		return nil
+	})
+	if len(failures) > 0 {
+		detail := strings.Join(failures, "; ")
+		if len(failures) > 5 {
+			detail = strings.Join(failures[:5], "; ") + "; ..."
+		}
+		return filesScanned, findings, paths, fmt.Errorf("secret scan could not read %d path(s): %s", len(failures), detail)
+	}
+	return filesScanned, findings, paths, err
 }
 
 func writeVerificationEvidence(ctx context.Context, manager *evidence.Manager, store *sqliteadapter.Store, runID, root, gate, command, output string, passed bool, exit *int, profileID string) error {

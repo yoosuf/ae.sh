@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -231,6 +232,15 @@ func Load(path string) (Config, error) {
 	}
 	if cfg.Evidence.ObjectsDir == "" {
 		cfg.Evidence.ObjectsDir = DefaultObjects
+	}
+	for _, entry := range []struct{ field, value string }{
+		{"state.path", cfg.State.Path},
+		{"evidence.dir", cfg.Evidence.Dir},
+		{"evidence.objectsDir", cfg.Evidence.ObjectsDir},
+	} {
+		if err := validateContainedPath(entry.field, entry.value, cfg.Root); err != nil {
+			return Config{}, err
+		}
 	}
 	if cfg.Provider.Default == "" {
 		cfg.Provider.Default = "fake"
@@ -516,6 +526,47 @@ func Write(path string, cfg Config, overwrite bool) error {
 		return err
 	}
 	return os.WriteFile(path, raw, 0o600)
+}
+
+// validateContainedPath rejects absolute paths, ".." traversal, and symlink
+// escapes. A checked-in ae.yaml is untrusted input: without this check it
+// could redirect state or evidence writes outside the project.
+func validateContainedPath(field, value, root string) error {
+	if value == "" {
+		return nil
+	}
+	if filepath.IsAbs(value) {
+		return fmt.Errorf("%s must be relative to the config root", field)
+	}
+	clean := filepath.Clean(value)
+	if clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return fmt.Errorf("%s must stay inside the config root", field)
+	}
+
+	target := filepath.Join(root, clean)
+	ancestor := target
+	for {
+		if _, err := os.Lstat(ancestor); err == nil {
+			resolved, err := filepath.EvalSymlinks(ancestor)
+			if err != nil {
+				return fmt.Errorf("%s: %w", field, err)
+			}
+			resolvedRoot, err := filepath.EvalSymlinks(root)
+			if err != nil {
+				return fmt.Errorf("%s: %w", field, err)
+			}
+			rel, err := filepath.Rel(resolvedRoot, resolved)
+			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				return fmt.Errorf("%s must stay inside the config root", field)
+			}
+			return nil
+		}
+		parent := filepath.Dir(ancestor)
+		if parent == ancestor {
+			return nil
+		}
+		ancestor = parent
+	}
 }
 
 // Abs resolves a configured path relative to the config root.

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -16,6 +17,10 @@ import (
 	"github.com/yoosuf/ae.sh/internal/schema"
 	"github.com/yoosuf/ae.sh/internal/util"
 )
+
+// MaxTaskTimeout bounds a single provider task. Canonical workflows use up to
+// 120m for long-running implementation and verification tasks.
+const MaxTaskTimeout = 120 * time.Minute
 
 // Task is a node in the workflow DAG.
 type Task struct {
@@ -160,6 +165,12 @@ func (w Workflow) Validate(knownSkills, knownAgents map[string]bool) error {
 			max, ok := task.BoundedRetries["max"].(int)
 			if !ok || max < 0 || max > 5 {
 				return fmt.Errorf("task %s has invalid boundedRetries.max", task.ID)
+			}
+		}
+		if task.Timeout != "" {
+			d, err := time.ParseDuration(task.Timeout)
+			if err != nil || d <= 0 || d > MaxTaskTimeout {
+				return fmt.Errorf("task %s has invalid timeout %q (want positive duration up to %s)", task.ID, task.Timeout, MaxTaskTimeout)
 			}
 		}
 		if value, ok := task.On["state"]; ok {

@@ -97,6 +97,51 @@ tasks:
 	}
 }
 
+func TestParseRejectsInvalidTaskTimeout(t *testing.T) {
+	for _, timeout := range []string{"not-a-duration", "0s", "-5m", "1000000h"} {
+		t.Run(timeout, func(t *testing.T) {
+			raw := workflowHeader + `
+tasks:
+  - id: plan
+    name: Plan
+    type: skill
+    skill: unit-testing
+    timeout: ` + timeout + `
+    dependsOn: []
+  - id: approve-plan
+    name: Approve plan
+    type: approval
+    gate: architecture
+    dependsOn: [plan]
+`
+			_, err := Parse(framework.Relative(framework.Workflows, "bad-timeout.yaml"), []byte(raw), map[string]bool{"unit-testing": true}, nil)
+			if err == nil || !strings.Contains(err.Error(), "timeout") {
+				t.Fatalf("expected timeout rejection for %q, got %v", timeout, err)
+			}
+		})
+	}
+}
+
+func TestParseAcceptsBoundedTaskTimeout(t *testing.T) {
+	raw := workflowHeader + `
+tasks:
+  - id: plan
+    name: Plan
+    type: skill
+    skill: unit-testing
+    timeout: 15m
+    dependsOn: []
+  - id: approve-plan
+    name: Approve plan
+    type: approval
+    gate: architecture
+    dependsOn: [plan]
+`
+	if _, err := Parse(framework.Relative(framework.Workflows, "good-timeout.yaml"), []byte(raw), map[string]bool{"unit-testing": true}, nil); err != nil {
+		t.Fatalf("valid timeout rejected: %v", err)
+	}
+}
+
 func TestParseRejectsUnknownSkillAndState(t *testing.T) {
 	base := `
 tasks:

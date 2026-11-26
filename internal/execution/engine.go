@@ -520,6 +520,10 @@ func (e *Engine) invoke(ctx context.Context, run Run, task workflow.Task) (integ
 	if err != nil {
 		return integration.RunResult{}, err
 	}
+	timeout, err := parseDuration(task.Timeout)
+	if err != nil {
+		return integration.RunResult{}, err
+	}
 	req := integration.RunRequest{
 		RunID:          run.ID,
 		TaskID:         task.ID,
@@ -527,7 +531,7 @@ func (e *Engine) invoke(ctx context.Context, run Run, task workflow.Task) (integ
 		Agent:          task.Agent,
 		Prompt:         prompt,
 		Workspace:      workspace,
-		Timeout:        parseDuration(task.Timeout),
+		Timeout:        timeout,
 		RoutingProfile: profile,
 		RequestedModel: model,
 		Write:          e.taskWriteAllowed(task),
@@ -980,12 +984,20 @@ func evidenceKind(skill string) string {
 	}
 }
 
-func parseDuration(value string) time.Duration {
+// parseDuration fails closed: an invalid or unbounded timeout is an error,
+// never a silent fallback that changes the intended budget.
+func parseDuration(value string) (time.Duration, error) {
+	if value == "" {
+		return 5 * time.Minute, nil
+	}
 	d, err := time.ParseDuration(value)
 	if err != nil {
-		return 5 * time.Minute
+		return 0, fmt.Errorf("invalid timeout %q: %w", value, err)
 	}
-	return d
+	if d <= 0 || d > workflow.MaxTaskTimeout {
+		return 0, fmt.Errorf("timeout %q must be positive and at most %s", value, workflow.MaxTaskTimeout)
+	}
+	return d, nil
 }
 
 func candidateSHA(issue integration.Issue, planDigest string) string {

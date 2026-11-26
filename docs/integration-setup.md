@@ -69,7 +69,9 @@ you only need to edit the sections for an integration you explicitly want.
 
 All `tokenEnv`, `appIDEnv`, `installationTokenEnv`, `webhookSecretEnv`, and
 `verifierEnv` values are validated as environment variable names. A value that
-looks like a credential is rejected by `ae validate` and `ae audit`.
+looks like a credential is rejected by `ae validate` and `ae audit`. State and
+evidence paths must be relative to the config root; absolute paths, `..`
+traversal, and symlink escapes are rejected before any file is opened.
 
 ## Setup matrix
 

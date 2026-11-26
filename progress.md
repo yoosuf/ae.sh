@@ -55,6 +55,8 @@ what was actually run in this tree. It is not a release report.
 | `cd ui && npm test --offline` | Passed: 2 Node tests verified no runtime network/write path and the embedded-snapshot element. |
 | `bash -n scripts/uninstall.sh` | Passed; updated allowlist syntax is valid. |
 | `git diff --check` and a credential-shape grep over docs/scripts/config/source | Passed; no whitespace errors and no real credential values. Only pre-existing synthetic `FAKE`/`EXAMPLE` test fixtures matched. |
+| `gofmt -w internal/config internal/cli internal/workflow internal/execution` and `go test ./internal/config ./internal/cli ./internal/workflow ./internal/execution -count=1` | Passed after adding config path containment, fail-closed secret scanning, and task timeout validation. The new tests cover absolute/traversal/symlink config paths, symlink skip and unreadable-root failure in the secret scan, and invalid/valid timeout bounds. |
+| `go run ./cmd/ae audit --json` after the new tests | Exited 0 with overall `incomplete` and the same `needs-authorization` CI pinning note; the credential-shape check stayed `passed` because test secrets are built at runtime rather than committed as literals. |
 
 ### Local hardening observed
 

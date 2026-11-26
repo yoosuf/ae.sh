@@ -36,7 +36,7 @@ Status: design-level STRIDE-style review for Phase 0–2. No penetration test or
 | Tampering | Modified `SKILL.md` or provider copy; altered evidence | Canonical skills are source Markdown; generated provider manifests carry SHA-256 checksums and pinned versions. `skills install` rejects divergent unmanaged files unless forced; evidence is content-addressed and immutable. |
 | Repudiation | Claimed test success with no record | `ae verify` records the command, sanitized output, and real exit status; missing tools fail closed. Fake-provider output is `simulated: true` and does not satisfy gates. Provider usage is `known: false` when unavailable, never zero-by-default. |
 | Information disclosure | Tokens in flags/prompts/fixtures; sensitive issue text in exports | No credentials in flags/config/prompts/fixtures; use env/external store. Sanitize inputs before evidence export; redact secrets. |
-| Denial of service | Cyclic DAGs, unbounded remediation, path explosion | Reject cycles; bounded remediation loops; timeouts/budgets planned with real execution. Validate DAG before run. |
+| Denial of service | Cyclic DAGs, unbounded remediation, path explosion | Reject cycles; bounded remediation loops; task timeouts must be positive and at most 120m and are validated when workflows load. Validate DAG before run. |
 | Elevation of privilege | Issue text instructing agent to change policy; malicious hook; symlink escape | Fail-closed policy precedence (runtime safety > org > repo > workflow defaults > agent instructions > untrusted content); no automatic hook execution; realpath/path containment checks. |
 
 ## Specific risks and required controls
@@ -55,10 +55,20 @@ configuration, not passive data. Review them before running `verify`, use the
 command only in repositories you trust, and never derive commands from issue
 text, model output, or CLI flags. Output is sanitized and exit statuses are
 recorded, but sanitization does not make an untrusted command safe to execute.
+`ae autopilot` also invokes this local verification path implicitly after a run
+starts, so autopilot must only be used in repositories whose checked-in
+profiles you have reviewed. There is no separate confirmation for profile
+commands yet.
 
 ### Symlink and path traversal
 
 Any feature that writes files (skill install, worktree creation, evidence export) must resolve real paths and reject paths outside allowed roots, `..` traversal, and symlink escapes. Dry-run must show the resolved target. Do not follow symlinks when verifying checksums.
+
+`ae.yaml` is checked-in input, so `state.path`, `evidence.dir`, and
+`evidence.objectsDir` are validated at config load: absolute paths, `..`
+traversal, and symlink escapes are rejected. The built-in secret scan skips
+symlinks and fails closed when a path cannot be read, so a partial scan is never
+reported as passed.
 
 ### Tenant crossover
 
@@ -80,3 +90,28 @@ Changes touching auth, billing, tenant isolation, IAM, secrets, infrastructure, 
 - `ae verify` includes a built-in credential-shape scan of the workspace, and `ae audit` scans authored files locally. A dedicated external scanner for final evidence bundles remains planned.
 - No multi-user RBAC or signed approvals. Local evidence bundle signatures prove local authenticity only, not external attestation; the hosted/multi-user dashboard remains planned.
 - No threat mitigation is proven by tests in this documentation; verify implementation status in the README command matrix.
+
+### Verified static-review gaps not yet mitigated
+
+A read-only review of this tree found the following concrete gaps. They were
+checked against source, but no fix or live exploit test exists yet. Do not treat
+these paths as hardened for hostile repositories or untrusted collaborators.
+
+| Area | Verified gap | Practical caution |
+| --- | --- | --- |
+| Evidence append path | Some engine, verify, and worktree appenders read the last record with an empty predecessor and use a non-atomic read-max/insert instead of the chained append helper. | Concurrent writers can fork evidence sequences. Use single-writer local runs for now. |
+| Required gates | Required-evidence and unresolved-finding checks are keyed to gates literally named `merge` or `release`. | Other terminal approval gates can complete without those checks. Review gate evidence manually. |
+| Candidate SHA | The candidate SHA comes from issue metadata or the plan digest, not the managed workspace HEAD after implementation. | Confirm SHAs and diff digests yourself before approving a real change. |
+| Signed bundles | The signature binds sequence, record ID, data digest, and previous digest, not every record field. | Treat a signature as local authenticity only; verify record metadata separately. |
+| Workflow policies | `workflow.policies` references are path-validated but the CLI loads only its fixed two-policy bundle. | Do not add custom workflow policy files expecting them to be enforced. |
+| Workflow gates | Some canonical approval gates have no matching policy approval rule, and `validate` does not cross-check them. | Expect those gates to fail closed as unknown; do not assume they are configured. |
+| Skill uninstall | Manifest-controlled target directories and slugs reach recursive deletion without revalidation. | Run `skills uninstall --dry-run` and inspect the manifest before removal. |
+| Skill install | A target changed after `plan` can be overwritten because `apply` does not recheck digests. | Re-run `plan` immediately before install and use `--force` only deliberately. |
+| Provider stderr | Adapter stderr is truncated but not passed through credential redaction before being returned. | Avoid pasting provider error output into shared channels. |
+| Error placeholders | Some marshal failures become `{}` or `{"error":"unserializable"}` instead of errors. | Treat empty evidence or output as a failure, not a pass. |
+| Evidence export path | A crafted run ID can affect the default output path; nonexistent runs can still produce bundle files. | Pass an explicit `--out` inside your own directory and confirm the run exists. |
+| `ae doctor` | Self-check creates directories, a DB handle can be left open, and schema success is reported unconditionally. | Use `doctor` as a hint, not as the sole installation verdict. |
+| Verification runner | Profile commands use `sh -c`, so verification is Unix-only and treats commands as executable config. | Run `verify` only in trusted checkouts on a POSIX shell; Windows is not supported for this path. |
+
+These gaps are recorded as limitations, not as released mitigations. Addressing
+them requires separate, reviewed changes with tests.

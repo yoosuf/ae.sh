@@ -237,6 +237,19 @@ without compatibility guarantees.
 
 ### Fixed
 
+- `ae.yaml` state and evidence paths are validated at load: absolute paths,
+  `..` traversal, and symlink escapes outside the config root are rejected
+  before a database or evidence file is opened.
+- The built-in secret scan skips symlinks instead of following them past its
+  size bound, and now fails closed when a path cannot be read instead of
+  reporting a partial scan as passed.
+- Workflow task timeouts must be a positive duration no greater than 120m.
+  Invalid or oversized values fail closed at validation and execution instead
+  of silently falling back to a different budget.
+- `docs/security/threat-model.md` now records verified static-review gaps that
+  remain unmitigated, including non-atomic evidence appends, gate-name-specific
+  enforcement, advisory candidate SHAs, partial signature coverage, and
+  unchecked workflow policy references.
 - `scripts/uninstall.sh` now recognizes the `security-review`,
   `architecture-review`, and `test-review` canonical skills, so an
   all-profile install can be fully removed with the provided script.
