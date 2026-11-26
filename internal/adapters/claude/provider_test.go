@@ -11,6 +11,14 @@ import (
 	"github.com/yoosuf/ae.sh/internal/integration"
 )
 
+func TestSanitizeShortRedactsCredentialShapes(t *testing.T) {
+	secret := "sk-" + strings.Repeat("a", 20)
+	got := sanitizeShort("provider failed with " + secret)
+	if strings.Contains(got, secret) || !strings.Contains(got, "[REDACTED]") {
+		t.Fatalf("stderr was not redacted: %q", got)
+	}
+}
+
 func TestResumeUsesClaudeResumeFlag(t *testing.T) {
 	argsPath := filepath.Join(t.TempDir(), "args.txt")
 	script := filepath.Join(t.TempDir(), "claude-stub")

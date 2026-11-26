@@ -16,6 +16,7 @@ import (
 	sqliteadapter "github.com/yoosuf/ae.sh/internal/adapters/sqlite"
 	"github.com/yoosuf/ae.sh/internal/config"
 	"github.com/yoosuf/ae.sh/internal/evidence"
+	"github.com/yoosuf/ae.sh/internal/execution"
 )
 
 func writeSigningKeyPair(t *testing.T, dir string) (string, string) {
@@ -150,6 +151,15 @@ func appendTestEvidence(t *testing.T, root, runID string) {
 		t.Fatal(err)
 	}
 	defer store.Close()
+	run := execution.Run{
+		ID: runID, WorkflowID: "feature-development", WorkflowVersion: "1.0.0",
+		IssueKey: "PROJ-101", State: "awaiting_approval", Status: "awaiting-approval",
+		Risk: "low", Provider: "fake", Profiles: []string{"go"}, Actor: "tester",
+		CreatedAt: "2026-01-01T00:00:00Z", UpdatedAt: "2026-01-01T00:00:00Z", Version: 1,
+	}
+	if err := store.CreateRun(context.Background(), run); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := appendRunEvidence(context.Background(), cfg, store, runID, "note", "local test", "tester", map[string]any{"step": "recorded"}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
@@ -166,6 +176,18 @@ func runEvidenceCLI(t *testing.T, root string, args ...string) (int, map[string]
 		t.Fatalf("parse evidence output (%d): %v: %s %s", code, err, stdout.String(), stderr.String())
 	}
 	return code, payload
+}
+
+func TestEvidenceCLIExportRejectsUnknownOrUnsafeRunID(t *testing.T) {
+	root := initEvidenceTestRepo(t)
+	code, payload := runEvidenceCLI(t, root, "export", "run-does-not-exist")
+	if code != ExitError {
+		t.Fatalf("export of an unknown run succeeded: %d %+v", code, payload)
+	}
+	code, payload = runEvidenceCLI(t, root, "export", "../escape")
+	if code != ExitValidation {
+		t.Fatalf("traversal run id was accepted: %d %+v", code, payload)
+	}
 }
 
 func TestEvidenceCLIExportSignAndVerify(t *testing.T) {

@@ -68,7 +68,11 @@ Any feature that writes files (skill install, worktree creation, evidence export
 `evidence.objectsDir` are validated at config load: absolute paths, `..`
 traversal, and symlink escapes are rejected. The built-in secret scan skips
 symlinks and fails closed when a path cannot be read, so a partial scan is never
-reported as passed.
+reported as passed. `skills uninstall` recomputes the expected provider base and
+validates manifest slugs before any recursive deletion. Evidence export accepts
+only constrained run IDs and verifies the run exists before writing a bundle.
+Provider stderr is passed through credential redaction before it is returned in
+errors.
 
 ### Tenant crossover
 
@@ -105,11 +109,8 @@ these paths as hardened for hostile repositories or untrusted collaborators.
 | Signed bundles | The signature binds sequence, record ID, data digest, and previous digest, not every record field. | Treat a signature as local authenticity only; verify record metadata separately. |
 | Workflow policies | `workflow.policies` references are path-validated but the CLI loads only its fixed two-policy bundle. | Do not add custom workflow policy files expecting them to be enforced. |
 | Workflow gates | Some canonical approval gates have no matching policy approval rule, and `validate` does not cross-check them. | Expect those gates to fail closed as unknown; do not assume they are configured. |
-| Skill uninstall | Manifest-controlled target directories and slugs reach recursive deletion without revalidation. | Run `skills uninstall --dry-run` and inspect the manifest before removal. |
 | Skill install | A target changed after `plan` can be overwritten because `apply` does not recheck digests. | Re-run `plan` immediately before install and use `--force` only deliberately. |
-| Provider stderr | Adapter stderr is truncated but not passed through credential redaction before being returned. | Avoid pasting provider error output into shared channels. |
 | Error placeholders | Some marshal failures become `{}` or `{"error":"unserializable"}` instead of errors. | Treat empty evidence or output as a failure, not a pass. |
-| Evidence export path | A crafted run ID can affect the default output path; nonexistent runs can still produce bundle files. | Pass an explicit `--out` inside your own directory and confirm the run exists. |
 | `ae doctor` | Self-check creates directories, a DB handle can be left open, and schema success is reported unconditionally. | Use `doctor` as a hint, not as the sole installation verdict. |
 | Verification runner | Profile commands use `sh -c`, so verification is Unix-only and treats commands as executable config. | Run `verify` only in trusted checkouts on a POSIX shell; Windows is not supported for this path. |
 

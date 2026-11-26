@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/yoosuf/ae.sh/internal/framework"
 	"github.com/yoosuf/ae.sh/internal/util"
+	"github.com/yoosuf/ae.sh/internal/version"
 )
 
 func TestInstallPlanApplyConflictAndUninstall(t *testing.T) {
@@ -115,10 +117,10 @@ func TestInstallPlanApplyConflictAndUninstall(t *testing.T) {
 	if err := os.WriteFile(keep, []byte("do not delete\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Uninstall(manifestPath, false); err == nil {
+	if _, err := Uninstall(manifestPath, base, false); err == nil {
 		t.Fatal("uninstall should refuse unmanaged files without force")
 	}
-	removed, err := Uninstall(manifestPath, true)
+	removed, err := Uninstall(manifestPath, base, true)
 	if err != nil || len(removed) != 1 {
 		t.Fatalf("forced uninstall failed: %v, %v", removed, err)
 	}
@@ -127,6 +129,36 @@ func TestInstallPlanApplyConflictAndUninstall(t *testing.T) {
 	}
 	if _, err := os.Stat(keep); err != nil {
 		t.Errorf("unmanaged file was removed: %v", err)
+	}
+}
+
+func TestUninstallRejectsManifestControlledTargetAndSlug(t *testing.T) {
+	base := t.TempDir()
+	outside := t.TempDir()
+	manifestPath := filepath.Join(base, manifestName)
+	writeManifest := func(target, slug string) {
+		t.Helper()
+		m := Manifest{
+			SchemaVersion: version.SchemaVersion,
+			TargetDir:     target,
+			Skills:        []ManifestSkill{{Slug: slug, Path: slug + "/SKILL.md", SHA256: "sha256:test"}},
+		}
+		raw, err := json.Marshal(m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(manifestPath, raw, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeManifest(outside, "test-skill")
+	if _, err := Uninstall(manifestPath, base, true); err == nil {
+		t.Fatal("manifest redirected recursive deletion outside the expected base")
+	}
+	writeManifest(base, "../escape")
+	if _, err := Uninstall(manifestPath, base, true); err == nil {
+		t.Fatal("manifest supplied a non-canonical skill slug")
 	}
 }
 

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 // Claude Code added the settings keys that make file tools refuse paths
@@ -234,7 +235,7 @@ func (p *Provider) unregister(key string) {
 }
 
 func sanitizeShort(s string) string {
-	s = strings.TrimSpace(s)
+	s = strings.TrimSpace(util.Sanitize(s))
 	if len(s) > 500 {
 		s = s[:500] + "…"
 	}

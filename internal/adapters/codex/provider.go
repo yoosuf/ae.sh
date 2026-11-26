@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/yoosuf/ae.sh/internal/integration"
+	"github.com/yoosuf/ae.sh/internal/util"
 )
 
 // Provider invokes `codex exec --json` with a read-only sandbox by default.
@@ -175,7 +176,7 @@ func (p *Provider) unregister(key string) {
 }
 
 func sanitizeShort(s string) string {
-	s = strings.TrimSpace(s)
+	s = strings.TrimSpace(util.Sanitize(s))
 	if len(s) > 500 {
 		s = s[:500] + "…"
 	}

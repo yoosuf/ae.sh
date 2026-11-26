@@ -181,7 +181,7 @@ func (a *App) cmdSkills(args []string) error {
 		} else {
 			return usage("unsupported provider %q", *provider)
 		}
-		removed, err := catalog.Uninstall(filepath.Join(base, ".ae-manifest.json"), *force)
+		removed, err := catalog.Uninstall(filepath.Join(base, ".ae-manifest.json"), base, *force)
 		if err != nil {
 			return &PolicyError{Message: err.Error()}
 		}
@@ -739,6 +739,9 @@ func (a *App) cmdEvidenceExport(ctx context.Context, args []string) error {
 		return usage("evidence export requires a run id")
 	}
 	runID := args[0]
+	if !worktreeRunIDPattern.MatchString(runID) {
+		return invalid("invalid run id %q", runID)
+	}
 	fs := newFlagSet("evidence export")
 	format := fs.String("format", "both", "json, markdown, or both")
 	out := fs.String("out", "", "output directory (default .ae/evidence/export)")
@@ -759,6 +762,9 @@ func (a *App) cmdEvidenceExport(ctx context.Context, args []string) error {
 		return err
 	}
 	defer store.Close()
+	if _, err := store.GetRun(ctx, runID); err != nil {
+		return err
+	}
 	records, err := store.Evidence(ctx, runID)
 	if err != nil {
 		return err

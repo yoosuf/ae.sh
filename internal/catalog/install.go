@@ -230,8 +230,10 @@ func LoadManifest(path string) (*Manifest, error) {
 }
 
 // Uninstall removes only files listed in a manifest and preserves everything
-// else. It is deliberately conservative: unknown files block removal.
-func Uninstall(manifestPath string, force bool) ([]string, error) {
+// else. It is deliberately conservative: unknown files block removal. The
+// expected base is supplied by the caller, never trusted from the manifest,
+// because recursive deletion must not be controlled by a checked-in file.
+func Uninstall(manifestPath, expectedBase string, force bool) ([]string, error) {
 	m, err := LoadManifest(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("read manifest: %w", err)
@@ -242,6 +244,25 @@ func Uninstall(manifestPath string, force bool) ([]string, error) {
 	base := m.TargetDir
 	if base == "" {
 		return nil, fmt.Errorf("manifest has no targetDir")
+	}
+	if expectedBase == "" {
+		return nil, fmt.Errorf("uninstall requires the expected target directory")
+	}
+	resolvedBase, err := filepath.EvalSymlinks(base)
+	if err != nil {
+		return nil, fmt.Errorf("manifest targetDir: %w", err)
+	}
+	resolvedExpected, err := filepath.EvalSymlinks(expectedBase)
+	if err != nil {
+		return nil, fmt.Errorf("expected targetDir: %w", err)
+	}
+	if resolvedBase != resolvedExpected {
+		return nil, fmt.Errorf("manifest targetDir %q does not match expected %q", base, expectedBase)
+	}
+	for _, skill := range m.Skills {
+		if !validManifestSlug(skill.Slug) {
+			return nil, fmt.Errorf("manifest contains invalid skill slug %q", skill.Slug)
+		}
 	}
 	if extras := scanUnmanaged(base, manifestSlugs(m)); len(extras) > 0 && !force {
 		return nil, fmt.Errorf("refusing to remove %s: unmanaged files present (%s)", base, strings.Join(extras, ", "))
@@ -261,6 +282,21 @@ func Uninstall(manifestPath string, force bool) ([]string, error) {
 		return nil, err
 	}
 	return removed, nil
+}
+
+func validManifestSlug(slug string) bool {
+	if slug == "" || len(slug) > 64 {
+		return false
+	}
+	for i, r := range slug {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+		case r == '-' && i > 0 && i < len(slug)-1:
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func manifestSlugs(m *Manifest) []string {

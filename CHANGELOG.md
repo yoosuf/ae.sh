@@ -246,6 +246,12 @@ without compatibility guarantees.
 - Workflow task timeouts must be a positive duration no greater than 120m.
   Invalid or oversized values fail closed at validation and execution instead
   of silently falling back to a different budget.
+- `skills uninstall` now validates the manifest target directory against the
+  caller's expected provider base and restricts slugs before recursive deletion.
+- `ae evidence export` rejects unsafe run IDs and verifies that the run exists
+  before writing a bundle, so a nonexistent run cannot produce export files.
+- Claude and Codex adapter stderr is credential-redacted before truncation and
+  inclusion in CLI errors.
 - `docs/security/threat-model.md` now records verified static-review gaps that
   remain unmitigated, including non-atomic evidence appends, gate-name-specific
   enforcement, advisory candidate SHAs, partial signature coverage, and
