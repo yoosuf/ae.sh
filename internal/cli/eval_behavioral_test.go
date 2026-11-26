@@ -83,16 +83,11 @@ func TestBehavioralEvalFailsClosedOnAuthoredScenarioDrift(t *testing.T) {
 		t.Fatal(err)
 	}
 	code, payload := runEvalCLI(t, root, "--suite", "skills", "--behavioral")
-	if code != ExitValidation || payload.Status != "failed" || payload.Behavioral.Failed == 0 {
-		t.Fatalf("scenario drift was not reported: %d %+v", code, payload)
+	if code != ExitValidation || payload.Error == "" ||
+		!strings.Contains(payload.Error, "eval behavioral checks failed: 1 case(s)") {
+		t.Fatalf("scenario drift was not reported as one error envelope: %d %+v", code, payload)
 	}
-	found := false
-	for _, result := range payload.Behavioral.Results {
-		if !result.Passed && strings.Contains(result.Reason, "missing-field") {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatalf("no failed case explained the missing field: %+v", payload.Behavioral.Results)
+	if payload.Behavioral.Cases != 0 || payload.Status != "" {
+		t.Fatalf("failed behavioral eval emitted a result payload: %+v", payload)
 	}
 }

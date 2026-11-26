@@ -128,8 +128,7 @@ func (a *App) cmdEval(ctx context.Context, args []string) error {
 		}
 		result["behavioral"] = report
 		if report.Status != "passed" {
-			result["status"] = "failed"
-			a.emit(result)
+			// Keep --json output to one error envelope when checks fail.
 			return invalid("eval behavioral checks failed: %d case(s)", report.Failed)
 		}
 		result["status"] = "passed"
