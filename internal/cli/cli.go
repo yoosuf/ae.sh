@@ -111,6 +111,8 @@ func (a *App) Run(ctx context.Context) int {
 		err = a.cmdTrace(ctx, args)
 	case "evidence":
 		err = a.cmdEvidence(ctx, args)
+	case "dashboard":
+		err = a.cmdDashboard(ctx, args)
 	case "eval":
 		err = a.cmdEval(ctx, args)
 	case "version":
@@ -243,6 +245,7 @@ Commands:
   trace <run-id> [--format json|markdown] [--out FILE]
   evidence export <run-id> --format json|markdown|both [--out dir] [--sign --key-file path|--key-env NAME]
   evidence verify <run-id> --bundle DIR [--key-file path]
+  dashboard snapshot --run <id> --out DIR
   eval --suite security|skills|all [--execute] [--behavioral]
   version
 
